@@ -1,0 +1,7 @@
+spell duplicate {
+  target ray 5;
+  target ray 6;
+  heal self 1;
+  cooldown 1s;
+  cooldown 2s;
+}

@@ -1,0 +1,26 @@
+{
+  "id": "valid-mend",
+  "result": {
+    "canonicalHex": "7363726962652d636f6d70696c65722f302e317c7370656c6c7c6d656e647c0a6865616c7c73656c667c343031343030303030303030303030300a636f6f6c646f776e7c34303230303030303030303030303030",
+    "compilerVersion": "scribe-compiler/0.1",
+    "identitySha256": "c4a3159449c84516e8aef09869eb36fa7d53b541b5c2ddc68b94882959cc0ef5",
+    "name": "mend",
+    "operations": [
+      {
+        "damageType": null,
+        "opcode": "heal",
+        "target": "self",
+        "valueBits": "4014000000000000"
+      },
+      {
+        "damageType": null,
+        "opcode": "cooldown",
+        "target": null,
+        "valueBits": "4020000000000000"
+      }
+    ],
+    "status": "accepted"
+  },
+  "schemaVersion": 1,
+  "source": "spell mend {\n  heal self 5;\n  cooldown 8s;\n}\n"
+}

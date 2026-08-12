@@ -1,0 +1,7 @@
+spell boundaries {
+  target ray 32;
+  damage target fire 20;
+  heal self 0.5;
+  push target 3;
+  cooldown 60s;
+}

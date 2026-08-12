@@ -1,0 +1,1 @@
+spell ember_bolt {target ray 16.0;damage target fire 4.00;push target 0.60;cooldown 3.0s;}

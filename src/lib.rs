@@ -1,5 +1,6 @@
 pub mod ast;
 pub mod canonical;
+pub mod conformance;
 pub mod diagnostic;
 pub mod lexer;
 pub mod parser;

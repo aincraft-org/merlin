@@ -1,0 +1,7 @@
+spell excessive {
+  damage target fire 1;
+  heal self 1;
+  push target 1;
+  damage target frost 1;
+  heal self 1;
+}

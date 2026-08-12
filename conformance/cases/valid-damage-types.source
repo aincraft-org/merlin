@@ -1,0 +1,6 @@
+spell elements {
+  damage target physical 1;
+  damage target fire 2;
+  damage target frost 3;
+  damage target arcane 4;
+}

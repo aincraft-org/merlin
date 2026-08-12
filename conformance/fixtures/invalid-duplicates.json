@@ -1,0 +1,26 @@
+{
+  "id": "invalid-duplicates",
+  "result": {
+    "diagnostics": [
+      {
+        "code": "E1008",
+        "column": 1,
+        "endByte": 97,
+        "line": 1,
+        "message": "program may declare only one target",
+        "startByte": 0
+      },
+      {
+        "code": "E1010",
+        "column": 1,
+        "endByte": 97,
+        "line": 1,
+        "message": "program may declare only one cooldown",
+        "startByte": 0
+      }
+    ],
+    "status": "rejected"
+  },
+  "schemaVersion": 1,
+  "source": "spell duplicate {\n  target ray 5;\n  target ray 6;\n  heal self 1;\n  cooldown 1s;\n  cooldown 2s;\n}\n"
+}
