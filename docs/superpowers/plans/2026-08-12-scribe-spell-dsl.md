@@ -79,7 +79,7 @@ Bounds are inclusive: ray `1..32`, damage and healing `0.5..20`, push `0.1..3`, 
 - [ ] Fix lexer iteration with `source[pos..].chars().next()` and maintain end-exclusive UTF-8 spans.
 - [ ] Make every parser and validator diagnostic source-aware before sorting.
 - [ ] Enforce limits without panic, overflow, partial output, or spans inside a Unicode scalar.
-- [ ] Replace implementation-dependent debug canonicalization with a frozen UTF-8 grammar using lowercase operation names, `Double`-equivalent finite decimal normalization, LF separators, and no trailing newline.
+- [ ] Replace implementation-dependent debug canonicalization with a frozen UTF-8 grammar using lowercase operation names, each finite number encoded as exactly 16 lowercase hexadecimal IEEE-754 bits, LF separators, and no trailing newline.
 - [ ] Run `cargo fmt --all --check && cargo test -- --nocapture && cargo clippy --all-targets --all-features -- -D warnings`.
 - [ ] Commit: `feat: stabilize Rust Scribe compiler contract`.
 
