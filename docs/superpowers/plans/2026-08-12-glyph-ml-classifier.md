@@ -15,7 +15,7 @@
 - Preserve ordered points and stroke boundaries; timestamps are provenance, not model features.
 - Offline Python owns training and export; the server never executes Python or trains online.
 - Runtime targets Java 21 and CPU inference.
-- Package ONNX Runtime as an implementation dependency of the classifier-bearing artifact; do not relocate its native libraries or shade its classes.
+- Package ONNX Runtime with the `mapgui-integration` Paper plugin through a custom Paper `PluginLoader` and `MavenLibraryResolver`. The loader resolves the exact upstream CPU JAR from `MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR`; ONNX Runtime then performs its own native extraction. Do not unpack, merge, relocate, or shade ONNX classes/native resources into the plugin JAR.
 - Missing, corrupt, incompatible, failed, or uncertain inference returns typed rejection; no template fallback.
 - Do not claim or run model training until the data gate in Task 3 passes.
 - Never collect player drawings or identity implicitly.
@@ -340,6 +340,10 @@ git commit -m "feat: preprocess glyphs for ML inference"
 
 **Files:**
 - Modify: `java-compiler/build.gradle.kts`
+- Modify: `mapgui-integration/build.gradle.kts`
+- Modify: `mapgui-integration/src/main/resources/paper-plugin.yml`
+- Create: `mapgui-integration/src/main/java/dev/jlo/wizardry/mapgui/GlyphPluginLoader.java`
+- Test: `mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/OnnxRuntimePackagingTest.java`
 - Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/GlyphModelManifest.java`
 - Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/GlyphModelBundle.java`
 - Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/OnnxGlyphClassifier.java`
@@ -347,7 +351,8 @@ git commit -m "feat: preprocess glyphs for ML inference"
 - Test: `java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml/OnnxGlyphClassifierTest.java`
 
 **Interfaces:**
-- Add `implementation("com.microsoft.onnxruntime:onnxruntime:1.29.0")` and a production JSON parser dependency; keep CPU artifact only.
+- Add `compileOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")` to `java-compiler` for classifier compilation and `testRuntimeOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")` for focused core tests; the library module does not claim to package runtime dependencies.
+- Add `compileOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")` and matching test runtime dependency to `mapgui-integration`. Add `loader: dev.jlo.wizardry.mapgui.GlyphPluginLoader` to `paper-plugin.yml`. `GlyphPluginLoader implements io.papermc.paper.plugin.loader.PluginLoader`; in `classloader(PluginClasspathBuilder)`, construct `MavenLibraryResolver`, add `new DefaultArtifact("com.microsoft.onnxruntime:onnxruntime:1.29.0")`, add a `RemoteRepository` using `MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR`, then pass the resolver to `classpathBuilder.addLibrary`. The deployable plugin remains one JAR, Paper resolves the original dependency before plugin loading, and ONNX Runtime owns extraction of its native library.
 - `GlyphModelBundle.load(Path) -> GlyphModelBundle` verifies the manifest and every checksum before creating an ONNX session.
 - `OnnxGlyphClassifier.classify(GlyphDraft) -> GlyphClassification` never throws for input/model/inference failures; it returns typed rejection.
 - `OnnxGlyphClassifier implements AutoCloseable` and owns one immutable `OrtSession`.
@@ -360,30 +365,42 @@ Cover missing files, altered checksum, wrong catalog/preprocessing version, wron
 
 Cover ranked finite probabilities, `reject` top class, low probability, low margin, model exception, non-finite output, and repeated use of one session.
 
-- [ ] **Step 3: Run focused tests and observe failure**
+- [ ] **Step 3: Write runtime packaging tests**
+
+Build the plugin JAR; parse `paper-plugin.yml` and assert its exact `loader` class; load `GlyphPluginLoader`, invoke `classloader` against a recording `PluginClasspathBuilder`, and assert one `MavenLibraryResolver` containing exact artifact `com.microsoft.onnxruntime:onnxruntime:1.29.0` and repository URL `MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR`. Resolve that recorded classpath and launch a JVM from it. Assert `ai.onnxruntime.OrtEnvironment.getEnvironment()` loads successfully, ONNX Runtime extracts its native library, and `mapgui-integration.jar` contains no `ai/onnxruntime` classes or merged ONNX native resources.
+
+- [ ] **Step 4: Run focused tests and observe failure**
 
 Run: `./gradlew :java-compiler:test --tests '*GlyphModelBundleTest*' --tests '*OnnxGlyphClassifierTest*'`
 
 Expected: FAIL because loader/classifier do not exist.
 
-- [ ] **Step 4: Implement strict bundle validation**
+- [ ] **Step 5: Implement strict bundle validation**
 
 Parse the manifest, compare exact ordered labels and tensor schemas, hash files with SHA-256, reject path traversal, and create the ONNX session only after all metadata validates.
 
-- [ ] **Step 5: Implement bounded ONNX inference**
+- [ ] **Step 6: Implement bounded ONNX inference**
 
 Create fixed-shape `OnnxTensor` values from preprocessed arrays, run one shared session, copy twelve logits once, verify finite values, apply manifest temperature softmax, sort candidates deterministically by probability then label ID, and apply frozen top-probability/margin gates.
 
-- [ ] **Step 6: Verify Java model loading and inference**
+- [ ] **Step 7: Implement and verify server runtime packaging**
+
+Implement `GlyphPluginLoader` with Paper's documented `MavenLibraryResolver` mechanism and exact ONNX Runtime 1.29.0 coordinate. Keep the upstream JAR intact so its platform-native extraction logic works. Fail plugin enable with `MODEL_UNAVAILABLE` when the class or native initialization is unavailable; never mutate `java.library.path` or extract native files manually.
+
+Run: `./gradlew :mapgui-integration:test --tests '*OnnxRuntimePackagingTest*'`
+
+Expected: PASS for dependency metadata, isolated class loading, native environment initialization, and absence of shaded ONNX contents.
+
+- [ ] **Step 8: Verify Java model loading and inference**
 
 Run: `./gradlew :java-compiler:test --tests '*GlyphModelBundleTest*' --tests '*OnnxGlyphClassifierTest*'`
 
 Expected: PASS using the exported tiny golden ONNX fixture.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add java-compiler/build.gradle.kts java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml java-compiler/src/test/resources/dev/jlo/wizardry/glyph/ml
+git add java-compiler/build.gradle.kts java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml java-compiler/src/test/resources/dev/jlo/wizardry/glyph/ml mapgui-integration/build.gradle.kts mapgui-integration/src/main/java/dev/jlo/wizardry/mapgui/GlyphPluginLoader.java mapgui-integration/src/main/resources/paper-plugin.yml mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/OnnxRuntimePackagingTest.java
 git commit -m "feat: classify glyphs with ONNX Runtime"
 ```
 
@@ -450,8 +467,10 @@ git commit -m "feat: classify drawn glyphs asynchronously"
 
 **Files:**
 - Modify: `.github/workflows/ci.yml`
+- Modify: `mapgui-integration/build.gradle.kts`
 - Create: `glyph-training/tests/test_java_parity.py`
 - Create: `java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml/GlyphClassifierSmokeTest.java`
+- Create: `mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/OnnxRuntimePackagingTest.java`
 
 **Interfaces:**
 - CI validates Python tooling without requiring private player data or training a release model.
@@ -474,7 +493,11 @@ Invoke a narrow Java test fixture from Python or compare committed golden tensor
 
 Construct a real `GlyphDraft`, load the golden bundle, classify it, and assert the expected accepted label; classify a hard-negative fixture and assert typed rejection.
 
-- [ ] **Step 5: Run all verification commands**
+- [ ] **Step 5: Verify the deployable plugin distribution**
+
+Build the plugin JAR on Linux; assert `paper-plugin.yml` names `GlyphPluginLoader`; exercise the loader against a recording Paper classpath builder; verify the recorded Maven resolver uses exact ONNX Runtime 1.29.0 and Paper's central mirror; resolve and launch that classpath; and assert the plugin JAR has neither `ai/onnxruntime/**` classes nor merged native libraries. CI must exercise ONNX Runtime's own native extraction rather than relying on the developer machine's classpath.
+
+- [ ] **Step 6: Run all verification commands**
 
 Run:
 
@@ -487,14 +510,14 @@ python3.12 -m pytest glyph-training/tests -q
 
 Expected: all Python and Gradle checks PASS. If root Gradle configuration fails because CI lacks the module’s Java 25 toolchain, provision Java 25 in CI for `mapgui-integration` while retaining Java 21 for `java-compiler`; do not lower or silently change module targets.
 
-- [ ] **Step 6: Run the runtime smoke scenario**
+- [ ] **Step 7: Run the runtime smoke scenario**
 
 Start the test server with the pinned ONNX CPU native artifact available, draw a fixture glyph, request classification, observe the expected label on the MapGUI screen, then remove the model bundle and observe `MODEL_UNAVAILABLE` without server-tick failure.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add .github/workflows/ci.yml glyph-training/tests/test_java_parity.py java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml/GlyphClassifierSmokeTest.java
+git add .github/workflows/ci.yml mapgui-integration/build.gradle.kts mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/OnnxRuntimePackagingTest.java glyph-training/tests/test_java_parity.py java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml/GlyphClassifierSmokeTest.java
 git commit -m "test: verify glyph classifier release contract"
 ```
 
@@ -505,6 +528,7 @@ Implementation is complete only when:
 - reviewed seed and player/reject data meet the Task 3 gate;
 - a real model has been trained, calibrated, evaluated, and exported from that data;
 - the model bundle passes Python and Java checksum/schema/parity tests;
+- the deployable MapGUI plugin declares and exercises `GlyphPluginLoader`, resolves exact upstream ONNX Runtime 1.29.0 through Paper's Maven resolver, initializes its native environment through the resolved classpath, and contains no shaded ONNX classes/native resources;
 - Java 21 ONNX inference classifies held-out glyphs and safely rejects uncertainty and model failures;
 - MapGUI invokes inference off the server tick thread and displays accepted labels or typed rejection;
 - template matching has no production call sites;
