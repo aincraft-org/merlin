@@ -10,7 +10,7 @@ def _sha256(path: Path) -> str:
 
 
 def export_bundle(model, inputs, output: Path, labels, *, metadata=None):
-    """Export a bundle; fixture metadata is explicit and never release-ready."""
+    """Export a fixture or calibrated release bundle with a fixed Java-compatible contract."""
     import torch
 
     output = Path(output)
@@ -33,7 +33,7 @@ def export_bundle(model, inputs, output: Path, labels, *, metadata=None):
         "preprocessing_id": metadata.get("preprocessing_id", "preprocessing-fixture"),
         "training_id": metadata.get("training_id", "train-fixture"),
         "dataset_id": metadata.get("dataset_id", "dataset-fixture"),
-        "release_ready": False,
+        "release_ready": bool(metadata.get("release_ready", False)),
         "labels": list(labels),
         "input_schema": {
             "vectors": {"shape": [None, 64, 32, 8], "dtype": "float32"},
@@ -43,7 +43,7 @@ def export_bundle(model, inputs, output: Path, labels, *, metadata=None):
         "output_schema": {"logits": {"shape": [None, len(labels)], "dtype": "float32"}},
         "calibration": {"temperature": float(metadata.get("temperature", 1.0)), "top_threshold": metadata.get("top_threshold"), "margin": metadata.get("margin")},
         "files": files,
-        "metrics": {"fixture": True, "onnx_parity": {"rtol": 1e-4, "atol": 1e-5}},
+        "metrics": metadata.get("metrics", {"fixture": True, "onnx_parity": {"rtol": 1e-4, "atol": 1e-5}}),
         "golden_fixture": {"inputs": [x.detach().cpu().tolist() for x in inputs], "logits": golden},
         "opset": 17,
     }
