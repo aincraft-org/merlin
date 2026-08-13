@@ -16,29 +16,28 @@ Command:
 
 Result: `20 passed in 0.06s`.
 
-## Follow-up fixture migration evidence
+## Follow-up fixture and immutable augmentation evidence
 
 Commands:
 
 `uv run --python 3.12 python -m pytest tests/test_schema.py tests/test_preprocess_augment.py -q`
 
-Result: `20 passed in 0.07s`.
+Result: `21 passed in 0.14s`.
 
 `uv run --python 3.12 python -m pytest -q`
 
-Result: `33 passed, 8 warnings in 8.43s`.
+Result: `34 passed, 8 warnings in 11.55s`.
 
-Migrated legacy test fixture builders in `glyph-training/tests/test_train_end_to_end.py` and `glyph-training/tests/test_validate_dataset.py` to emit stable lineage values derived from source, label, and existing grouping identity. This preserves fixture grouping semantics while satisfying the mandatory schema.
+Changes:
 
-Self-review: searched all glyph-training `GlyphExample(...)` call sites and JSON fixture builders; no remaining direct constructor or generated test record omits lineage. Only test fixture builders were changed in the follow-up; production corpus generation and splitter behavior remain untouched.
+- Added `lineage_group` as a required non-empty string property in `glyph-training/dataset/schema-v1.json`; the existing root `additionalProperties: false` remains in force.
+- Added a real immutable `GlyphExample` augmentation test.
+- Reworked augmentation to build new immutable `GlyphStrokeData`/`GlyphPointData` values instead of mutating frozen nested dataclasses; mutable records retain their existing mutation path and lineage.
+- Migrated legacy test fixture builders to stable lineage values.
 
-## Full-suite evidence (initial run)
+Self-review: production schema, augmentation, and all focused/full tests were checked; no corpus generation or splitter behavior was changed. Warnings are existing ONNX/torch export deprecation warnings only.
 
-Command:
-
-`uv run --python 3.12 python -m pytest -q`
-
-Result: `5 failed, 28 passed, 4 warnings in 4.43s` before fixture migration; failures were legacy records missing `lineage_group`.
+## Initial full-suite evidence
 
 ## Changes
 

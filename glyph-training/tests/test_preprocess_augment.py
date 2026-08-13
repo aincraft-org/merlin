@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-
+from wizardry_glyphs.schema import GlyphExample, GlyphPointData, GlyphStrokeData
 from wizardry_glyphs.augment import augment_example
 from wizardry_glyphs.preprocess import preprocess_example
 
@@ -67,3 +67,16 @@ def test_augmentation_seed_provenance_grouping_bounds_and_determinism():
     assert all(0 <= p.x < 128 and 0 <= p.y < 128 for s in a.strokes for p in s.points)
     assert all(0 < s.brush_width <= 32 for s in a.strokes)
     assert np.all((preprocess_example(a)["raster"] >= 0) & (preprocess_example(a)["raster"] <= 1))
+
+def test_immutable_glyph_example_augmentation_preserves_parent():
+    example = GlyphExample(
+        "glyph-dataset-v1", "e1", "fire", "canonical", "template:cast:0", "seed-1",
+        "author", "session", "split", True,
+        (GlyphStrokeData((GlyphPointData(8, 8), GlyphPointData(40, 8)), 2, 0),),
+    )
+    augmented = augment_example(example, seed=7)
+    assert augmented is not example
+    assert augmented.lineage_group == example.lineage_group
+    assert augmented.example_id != example.example_id
+    assert augmented.seed_id == "7"
+    assert example.strokes[0].points[0].x == 8.0
