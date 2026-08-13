@@ -1,0 +1,1 @@
+{"catalog":"../catalog-v1.json","seeds":"../dataset/reviewed-seeds.jsonl","review":"../dataset/review-manifest-v1.json","player_data":"../dataset/player-private","output":"artifacts/train-v1","seed":1729,"labels":12}

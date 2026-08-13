@@ -7,7 +7,16 @@ name = "wizardry-glyphs"
 version = "0.1.0"
 description = "Validated glyph training data contracts"
 requires-python = ">=3.12"
+dependencies = [
+  "numpy>=2.0,<3",
+  "torch>=2.4,<3",
+  "onnx>=1.18,<2",
+  "onnxruntime>=1.18,<2",
+  "onnxscript>=0.3",
+]
 
+[project.optional-dependencies]
+test = ["pytest>=8.0,<9"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
