@@ -1,0 +1,17 @@
+{
+  "catalog_version": "glyph-catalog-v1",
+  "labels": [
+    {"id": "target-ray", "display_name": "Target Ray"},
+    {"id": "damage", "display_name": "Damage"},
+    {"id": "heal", "display_name": "Heal"},
+    {"id": "push", "display_name": "Push"},
+    {"id": "cooldown", "display_name": "Cooldown"},
+    {"id": "self", "display_name": "Self"},
+    {"id": "target", "display_name": "Target"},
+    {"id": "physical", "display_name": "Physical"},
+    {"id": "fire", "display_name": "Fire"},
+    {"id": "frost", "display_name": "Frost"},
+    {"id": "arcane", "display_name": "Arcane"},
+    {"id": "reject", "display_name": "Reject"}
+  ]
+}

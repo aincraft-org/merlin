@@ -4,3 +4,8 @@
 /run/
 .idea/
 *.iml
+glyph-training/.venv/
+glyph-training/build/
+glyph-training/artifacts/
+glyph-training/dataset/generated/
+glyph-training/dataset/player-private/
