@@ -12,9 +12,11 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 dependencies {
+    compileOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
+    testRuntimeOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
