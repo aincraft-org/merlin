@@ -87,5 +87,11 @@ def test_augmentation_falls_back_for_uncopyable_mutable_input():
             raise RuntimeError("cannot copy")
 
     example = Uncopyable(sample().strokes)
+    original = [(p.x, p.y) for s in example.strokes for p in s.points]
     augmented = augment_example(example, seed=7)
-    assert augmented is example
+    transformed = [(p.x, p.y) for s in augmented.strokes for p in s.points]
+    assert augmented is not example
+    assert augmented.lineage_group == example.lineage_group
+    assert augmented.example_id != example.example_id
+    assert transformed != original
+    assert [(p.x, p.y) for s in example.strokes for p in s.points] == original

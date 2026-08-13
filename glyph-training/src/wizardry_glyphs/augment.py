@@ -51,9 +51,16 @@ def augment_example(example: Any, seed: int, *, translation: float = 8.0, scale:
     try:
         out = copy.deepcopy(example)
     except Exception:
-        out = None
-    if out is None:
-        return example
+        out = type(example).__new__(type(example))
+        if hasattr(example, "__dict__"):
+            out.__dict__ = dict(example.__dict__)
+        out.strokes = [
+            type(stroke)(
+                [type(point)(point.x, point.y) for point in _get(stroke, "points", ())],
+                _get(stroke, "brush_width", 1.0),
+            )
+            for stroke in _get(example, "strokes", ())
+        ]
     for stroke, (width, points, _) in zip(_get(out, "strokes", ()), transformed):
         _set(stroke, "brush_width", width)
         for point, (x, y) in zip(_get(stroke, "points", ()), points):

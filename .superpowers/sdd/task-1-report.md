@@ -22,21 +22,19 @@ Commands:
 
 `uv run --python 3.12 python -m pytest tests/test_schema.py tests/test_preprocess_augment.py -q`
 
-Result: `23 passed in 0.11s`.
+Result: `23 passed in 0.12s`.
 
 `uv run --python 3.12 python -m pytest -q`
 
-Result: `36 passed, 8 warnings in 7.95s`.
+Result: `36 passed, 8 warnings in 11.21s`.
 
 Changes:
 
-- JSON Schema `lineage_group` now requires a non-whitespace character via `pattern: .*\\S.*`; focused coverage rejects whitespace-only values.
-- Mutable augmentation restores guarded `deepcopy` fallback behavior for uncopyable inputs; immutable `GlyphExample` reconstruction remains explicit and non-mutating.
-- Added an uncopyable mutable-input regression test.
+- JSON Schema `lineage_group` rejects whitespace-only values via `pattern: .*\\S.*`.
+- Uncopyable mutable-style inputs receive an independent manually reconstructed result and normal geometric transformation; the function never silently returns the original.
+- Regression coverage asserts transformed fallback geometry differs, parent geometry remains unchanged, result identity is distinct, and lineage is preserved.
 
-Self-review: focused and full suites pass; only existing ONNX/torch warnings remain. No corpus-generation or splitter behavior changed.
-
-## Prior evidence
+Self-review: all focused and full tests pass; only existing ONNX/torch export warnings remain. No corpus-generation or splitter behavior changed.
 
 ## Initial full-suite evidence
 
