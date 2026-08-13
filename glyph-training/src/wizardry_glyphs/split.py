@@ -50,21 +50,19 @@ def grouped_cross_validation_split(rows, *, folds=5, test_ratio=0.15, seed=0):
     by_label = defaultdict(list)
     for lineage, group_rows in groups.items():
         by_label[group_rows[0]["label"]].append((lineage, group_rows))
-    for label, label_groups in by_label.items():
-        if len(label_groups) < folds + 1:
-            raise ValueError(f"label {label!r}: required 6 independent lineages (required 6), actual count {len(label_groups)}")
+    deficiencies = [(label, folds + 1, len(gs)) for label, gs in by_label.items() if len(gs) < folds + 1]
+    if deficiencies:
+        details = "; ".join(f"label {label!r}: required {required}, actual {actual}" for label, required, actual in sorted(deficiencies, key=lambda x: str(x[0])))
+        raise ValueError(f"insufficient lineage groups: {details}")
     test, folds_out = [], [[] for _ in range(folds)]
     rng = random.Random(seed)
     for label in sorted(by_label, key=str):
-        groups_for_label = list(by_label[label])
-        rng.shuffle(groups_for_label)
-        reserve = min(max(1, round(len(groups_for_label) * test_ratio)), len(groups_for_label) - folds)
-        test.extend(row for _, group in groups_for_label[:reserve] for row in group)
+        gs = list(by_label[label]); rng.shuffle(gs)
+        reserve = min(max(1, round(len(gs) * test_ratio)), len(gs) - folds)
+        test.extend(row for _, group in gs[:reserve] for row in group)
         counts = [0] * folds
-        for _, group in groups_for_label[reserve:]:
-            index = min(range(folds), key=lambda i: (counts[i], i))
-            folds_out[index].extend(group)
-            counts[index] += len(group)
+        for _, group in gs[reserve:]:
+            i = min(range(folds), key=lambda i: (counts[i], i)); folds_out[i].extend(group); counts[i] += len(group)
     return {"test": test, "folds": folds_out}
 
 
@@ -72,14 +70,16 @@ def validate_partition_isolation(partitions):
     if not partitions:
         raise ValueError("partitions must not be empty")
     corpus_labels = {row["label"] for partition in partitions for row in partition}
-    seen = set()
-    for partition in partitions:
+    lineage_partition = {}
+    for partition_index, partition in enumerate(partitions):
         labels = {row["label"] for row in partition}
         missing = corpus_labels - labels
         if missing:
             raise ValueError(f"partition missing corpus label(s): {sorted(missing, key=str)}")
         for row in partition:
             lineage = row.get("lineage_group")
-            if lineage in seen:
+            if not lineage:
+                raise ValueError("row requires nonempty lineage_group")
+            prior = lineage_partition.setdefault(lineage, partition_index)
+            if prior != partition_index:
                 raise ValueError(f"lineage_group overlap: {lineage!r}")
-            seen.add(lineage)

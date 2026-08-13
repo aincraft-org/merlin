@@ -22,7 +22,7 @@ def test_invalid_rows_and_parameters():
             {"label": "a", "lineage_group": "shared"},
             {"label": "b", "lineage_group": "shared"},
         ])
-    with pytest.raises(ValueError, match=r"label 'a'.*required 6.*actual count 5"):
+    with pytest.raises(ValueError, match=r"label \x27a\x27.*required 6.*actual 5"):
         grouped_cross_validation_split(make_rows(groups=(5, 6)))
     with pytest.raises(ValueError, match="folds"):
         grouped_cross_validation_split(make_rows(), folds=1)

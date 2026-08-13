@@ -18,3 +18,9 @@ The implementation requires nonempty `lineage_group`, rejects mixed-label lineag
 
 ## Concerns
 The existing legacy `grouped_split` remains unchanged for compatibility; new Task 2 behavior uses `lineage_group` exclusively.
+
+## Follow-up review fixes
+- Updated validator to allow repeated rows within a partition, reject cross-partition lineage reuse, and reject missing lineage.
+- Feasibility now aggregates all deficient labels and reports dynamic folds+1 required counts.
+- Follow-up focused: 3 passed. Full Python 3.12 suite: 39 passed, 8 warnings.
+- Follow-up commit: 7e69123 (`fix: tighten grouped fold isolation validation`).
