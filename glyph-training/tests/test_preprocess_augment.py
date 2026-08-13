@@ -80,3 +80,12 @@ def test_immutable_glyph_example_augmentation_preserves_parent():
     assert augmented.example_id != example.example_id
     assert augmented.seed_id == "7"
     assert example.strokes[0].points[0].x == 8.0
+
+def test_augmentation_falls_back_for_uncopyable_mutable_input():
+    class Uncopyable(Example):
+        def __deepcopy__(self, memo):
+            raise RuntimeError("cannot copy")
+
+    example = Uncopyable(sample().strokes)
+    augmented = augment_example(example, seed=7)
+    assert augmented is example

@@ -61,6 +61,10 @@ def test_lineage_group_exposed(tmp_path):
 def test_empty_lineage_group_rejected(tmp_path):
     with pytest.raises(ValueError, match="lineage_group"):
         load_examples(write_jsonl(tmp_path, record(lineage_group="")))
+
+def test_whitespace_lineage_group_rejected(tmp_path):
+    with pytest.raises(ValueError, match="lineage_group"):
+        load_examples(write_jsonl(tmp_path, record(lineage_group=" \t")))
  
 
 

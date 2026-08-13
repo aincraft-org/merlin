@@ -48,7 +48,12 @@ def augment_example(example: Any, seed: int, *, translation: float = 8.0, scale:
             example.session_group, example.split_group, example.consent, out_strokes,
             dict(example.generation) if example.generation is not None else None,
         )
-    out = copy.deepcopy(example)
+    try:
+        out = copy.deepcopy(example)
+    except Exception:
+        out = None
+    if out is None:
+        return example
     for stroke, (width, points, _) in zip(_get(out, "strokes", ()), transformed):
         _set(stroke, "brush_width", width)
         for point, (x, y) in zip(_get(stroke, "points", ()), points):

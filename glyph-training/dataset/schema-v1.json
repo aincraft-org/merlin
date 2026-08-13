@@ -8,7 +8,7 @@
     "example_id": {"type": "string", "minLength": 1},
     "label": {"enum": ["target-ray", "damage", "heal", "push", "cooldown", "self", "target", "physical", "fire", "frost", "arcane", "reject"]},
     "source": {"enum": ["canonical", "synthetic", "player", "reject"]},
-    "lineage_group": {"type": "string", "minLength": 1},
+    "lineage_group": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
     "seed_id": {"type": ["string", "null"], "minLength": 1},
     "author_group": {"type": "string", "minLength": 1},
     "session_group": {"type": "string", "minLength": 1},

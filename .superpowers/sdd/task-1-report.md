@@ -16,26 +16,27 @@ Command:
 
 Result: `20 passed in 0.06s`.
 
-## Follow-up fixture and immutable augmentation evidence
+## Final review-fix evidence
 
 Commands:
 
 `uv run --python 3.12 python -m pytest tests/test_schema.py tests/test_preprocess_augment.py -q`
 
-Result: `21 passed in 0.14s`.
+Result: `23 passed in 0.11s`.
 
 `uv run --python 3.12 python -m pytest -q`
 
-Result: `34 passed, 8 warnings in 11.55s`.
+Result: `36 passed, 8 warnings in 7.95s`.
 
 Changes:
 
-- Added `lineage_group` as a required non-empty string property in `glyph-training/dataset/schema-v1.json`; the existing root `additionalProperties: false` remains in force.
-- Added a real immutable `GlyphExample` augmentation test.
-- Reworked augmentation to build new immutable `GlyphStrokeData`/`GlyphPointData` values instead of mutating frozen nested dataclasses; mutable records retain their existing mutation path and lineage.
-- Migrated legacy test fixture builders to stable lineage values.
+- JSON Schema `lineage_group` now requires a non-whitespace character via `pattern: .*\\S.*`; focused coverage rejects whitespace-only values.
+- Mutable augmentation restores guarded `deepcopy` fallback behavior for uncopyable inputs; immutable `GlyphExample` reconstruction remains explicit and non-mutating.
+- Added an uncopyable mutable-input regression test.
 
-Self-review: production schema, augmentation, and all focused/full tests were checked; no corpus generation or splitter behavior was changed. Warnings are existing ONNX/torch export deprecation warnings only.
+Self-review: focused and full suites pass; only existing ONNX/torch warnings remain. No corpus-generation or splitter behavior changed.
+
+## Prior evidence
 
 ## Initial full-suite evidence
 
