@@ -17,6 +17,8 @@ def test_invalid_rows_and_parameters():
         grouped_cross_validation_split([{"label": "a"}])
     with pytest.raises(ValueError, match="lineage_group"):
         grouped_cross_validation_split([{"label": "a", "lineage_group": ""}])
+    with pytest.raises(ValueError, match="lineage_group"):
+        grouped_cross_validation_split([{"label": "a", "lineage_group": "   "}])
     with pytest.raises(ValueError, match="mixed labels"):
         grouped_cross_validation_split([
             {"label": "a", "lineage_group": "shared"},
@@ -39,8 +41,22 @@ def test_stratified_complete_deterministic_group_folds():
     assert first != other
     assert len(first["folds"]) == 5
     assert all({row["label"] for row in fold} == {"a", "b"} for fold in first["folds"])
-    for partition in [first["test"], *first["folds"]]:
-        assert len({row["lineage_group"] for row in partition}) == len({row["lineage_group"] for row in partition})
+    partitions = [first["test"], *first["folds"]]
+    validate_partition_isolation(partitions)
+    locations = {}
+    for partition_index, partition in enumerate(partitions):
+        for row in partition:
+            locations.setdefault(row["id"], set()).add(partition_index)
+    assert all(len(indexes) == 1 for indexes in locations.values())
+    input_by_lineage = {}
+    for row in rows:
+        input_by_lineage.setdefault(row["lineage_group"], set()).add(row["id"])
+    output_by_lineage = {}
+    for partition_index, partition in enumerate(partitions):
+        for row in partition:
+            output_by_lineage.setdefault(row["lineage_group"], set()).add((partition_index, row["id"]))
+    assert {lineage: {row_id for _, row_id in entries} for lineage, entries in output_by_lineage.items()} == input_by_lineage
+    assert all(len({partition_index for partition_index, _ in entries}) == 1 for entries in output_by_lineage.values())
 
 
 def test_isolation_validator_rejects_overlap_and_missing_label():

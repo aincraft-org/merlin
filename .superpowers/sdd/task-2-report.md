@@ -24,3 +24,9 @@ The existing legacy `grouped_split` remains unchanged for compatibility; new Tas
 - Feasibility now aggregates all deficient labels and reports dynamic folds+1 required counts.
 - Follow-up focused: 3 passed. Full Python 3.12 suite: 39 passed, 8 warnings.
 - Follow-up commit: 7e69123 (`fix: tighten grouped fold isolation validation`).
+
+## Final review fixes
+- Replaced tautological test with complete row-membership and partition-isolation assertions; validator runs on real split output.
+- Assignment and validator reject non-string or whitespace-only lineage groups.
+- Focused: 3 passed. Full Python 3.12: 39 passed, 8 warnings.
+- Commit: bca88f5 (`fix: validate complete lineage assignment`).

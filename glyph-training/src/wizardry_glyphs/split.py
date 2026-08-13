@@ -30,7 +30,7 @@ def _validated_groups(rows):
         if "label" not in row:
             raise ValueError("row requires label")
         lineage = row.get("lineage_group")
-        if not lineage:
+        if not isinstance(lineage, str) or not lineage.strip():
             raise ValueError("row requires nonempty lineage_group")
         groups[lineage].append(row)
         labels.add(row["label"])
@@ -78,7 +78,7 @@ def validate_partition_isolation(partitions):
             raise ValueError(f"partition missing corpus label(s): {sorted(missing, key=str)}")
         for row in partition:
             lineage = row.get("lineage_group")
-            if not lineage:
+            if not isinstance(lineage, str) or not lineage.strip():
                 raise ValueError("row requires nonempty lineage_group")
             prior = lineage_partition.setdefault(lineage, partition_index)
             if prior != partition_index:
