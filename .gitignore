@@ -9,3 +9,7 @@ glyph-training/build/
 glyph-training/artifacts/
 glyph-training/dataset/generated/
 glyph-training/dataset/player-private/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
