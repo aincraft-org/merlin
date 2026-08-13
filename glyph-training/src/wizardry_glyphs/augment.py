@@ -52,8 +52,7 @@ def augment_example(example: Any, seed: int, *, translation: float = 8.0, scale:
             from .schema import GlyphStrokeData
             transformed.append(GlyphStrokeData(tuple(points), width, int(_get(stroke, "started_at_millis", 0))))
     if out is None:
-        from .schema import GlyphExample
-        out = GlyphExample(_get(example, "schema_version"), f"{_get(example, 'example_id', 'example')}:aug:{seed}", _get(example, "label"), _get(example, "source"), str(seed), _get(example, "author_group"), _get(example, "session_group"), _get(example, "split_group"), _get(example, "consent"), tuple(transformed), _get(example, "generation"))
+        out = GlyphExample(_get(example, "schema_version"), f"{_get(example, 'example_id', 'example')}:aug:{seed}", _get(example, "label"), _get(example, "source"), _get(example, "lineage_group"), str(seed), _get(example, "author_group"), _get(example, "session_group"), _get(example, "split_group"), _get(example, "consent"), tuple(transformed), _get(example, "generation"))
         return out
     for stroke, original_points in zip(_get(out, "strokes", ()), transformed):
         _set(stroke, "brush_width", width)

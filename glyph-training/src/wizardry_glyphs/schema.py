@@ -68,6 +68,7 @@ class GlyphExample:
     example_id: str
     label: str
     source: str
+    lineage_group: str
     seed_id: str | None
     author_group: str
     session_group: str
@@ -83,7 +84,7 @@ class GlyphExample:
             raise ValueError(f"unknown label: {self.label}")
         if self.source not in SOURCES:
             raise ValueError(f"unknown source: {self.source}")
-        for field in ("author_group", "session_group", "split_group"):
+        for field in ("lineage_group", "author_group", "session_group", "split_group"):
             _text(getattr(self, field), field)
         seed = _text(self.seed_id, "seed_id", optional=True)
         consent = self.consent
@@ -116,7 +117,7 @@ class GlyphExample:
 def _record(raw: Any, line: int) -> GlyphExample:
     if not isinstance(raw, dict):
         raise ValueError(f"line {line}: record must be an object")
-    required = ("schema_version", "example_id", "label", "source", "author_group", "session_group", "split_group", "strokes")
+    required = ("schema_version", "example_id", "label", "source", "lineage_group", "author_group", "session_group", "split_group", "strokes")
     missing = [key for key in required if key not in raw]
     if missing:
         raise ValueError(f"line {line}: missing required field {missing[0]}")
@@ -127,7 +128,7 @@ def _record(raw: Any, line: int) -> GlyphExample:
                 raise ValueError("stroke must be an object")
             points = tuple(GlyphPointData(p["x"], p["y"]) for p in stroke["points"])
             strokes.append(GlyphStrokeData(points, stroke["brush_width"], stroke["started_at_millis"]))
-        return GlyphExample(raw["schema_version"], raw["example_id"], raw["label"], raw["source"], raw.get("seed_id"), raw["author_group"], raw["session_group"], raw["split_group"], raw.get("consent"), tuple(strokes), raw.get("generation"))
+        return GlyphExample(raw["schema_version"], raw["example_id"], raw["label"], raw["source"], raw["lineage_group"], raw.get("seed_id"), raw["author_group"], raw["session_group"], raw["split_group"], raw.get("consent"), tuple(strokes), raw.get("generation"))
     except (KeyError, TypeError) as exc:
         raise ValueError(f"line {line}: malformed record field {exc}") from exc
     except ValueError as exc:

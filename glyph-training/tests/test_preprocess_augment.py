@@ -22,8 +22,8 @@ class Example:
         self.label = "circle"
         self.source = "test"
         self.seed_id = None
+        self.lineage_group = "template:cast:0"
         self.split_group = "g1"
-
 
 def sample():
     return Example([
@@ -61,6 +61,7 @@ def test_augmentation_seed_provenance_grouping_bounds_and_determinism():
     a = augment_example(e, seed=7)
     b = augment_example(e, seed=7)
     assert a.example_id != e.example_id
+    assert a.lineage_group == e.lineage_group
     assert a.seed_id == b.seed_id and a.split_group == e.split_group
     assert [(p.x, p.y) for s in a.strokes for p in s.points] == [(p.x, p.y) for s in b.strokes for p in s.points]
     assert all(0 <= p.x < 128 and 0 <= p.y < 128 for s in a.strokes for p in s.points)

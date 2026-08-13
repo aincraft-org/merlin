@@ -16,6 +16,7 @@ def record(**overrides):
         "example_id": "ex-1",
         "label": LABEL,
         "source": "canonical",
+        "lineage_group": "template:cast:0",
         "seed_id": "seed-1",
         "author_group": "reviewers",
         "session_group": "session-1",
@@ -44,6 +45,23 @@ def test_valid_record_loads_as_immutable_dataclasses(tmp_path):
         examples[0].label = "water"
     with pytest.raises(AttributeError):
         examples[0].strokes.append(None)
+
+def test_missing_lineage_group_rejected(tmp_path):
+    value = record()
+    del value["lineage_group"]
+    with pytest.raises(ValueError, match="missing required field lineage_group"):
+        load_examples(write_jsonl(tmp_path, value))
+
+
+def test_lineage_group_exposed(tmp_path):
+    example = load_examples(write_jsonl(tmp_path, record()))[0]
+    assert example.lineage_group == "template:cast:0"
+
+
+def test_empty_lineage_group_rejected(tmp_path):
+    with pytest.raises(ValueError, match="lineage_group"):
+        load_examples(write_jsonl(tmp_path, record(lineage_group="")))
+ 
 
 
 @pytest.mark.parametrize(
