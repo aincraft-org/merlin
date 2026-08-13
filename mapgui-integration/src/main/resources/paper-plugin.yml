@@ -1,0 +1,19 @@
+name: WizardryGlyphMapGUI
+version: 1.0.0-SNAPSHOT
+main: dev.jlo.wizardry.mapgui.GlyphMapGuiPlugin
+loader: dev.jlo.wizardry.mapgui.GlyphPluginLoader
+api-version: '1.21'
+author: jlo
+dependencies:
+  server:
+    MapGUI:
+      load: BEFORE
+      required: true
+      join-classpath: true
+commands:
+  glyph:
+    description: Open the Glyphcraft drawing canvas
+    permission: wizardry.glyph.draw
+permissions:
+  wizardry.glyph.draw:
+    default: true
