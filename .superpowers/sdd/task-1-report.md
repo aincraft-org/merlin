@@ -16,15 +16,29 @@ Command:
 
 Result: `20 passed in 0.06s`.
 
-## Full-suite evidence
+## Follow-up fixture migration evidence
+
+Commands:
+
+`uv run --python 3.12 python -m pytest tests/test_schema.py tests/test_preprocess_augment.py -q`
+
+Result: `20 passed in 0.07s`.
+
+`uv run --python 3.12 python -m pytest -q`
+
+Result: `33 passed, 8 warnings in 8.43s`.
+
+Migrated legacy test fixture builders in `glyph-training/tests/test_train_end_to_end.py` and `glyph-training/tests/test_validate_dataset.py` to emit stable lineage values derived from source, label, and existing grouping identity. This preserves fixture grouping semantics while satisfying the mandatory schema.
+
+Self-review: searched all glyph-training `GlyphExample(...)` call sites and JSON fixture builders; no remaining direct constructor or generated test record omits lineage. Only test fixture builders were changed in the follow-up; production corpus generation and splitter behavior remain untouched.
+
+## Full-suite evidence (initial run)
 
 Command:
 
 `uv run --python 3.12 python -m pytest -q`
 
-Result: `5 failed, 28 passed, 4 warnings in 4.43s`.
-
-The five failures are pre-existing fixture/integration expectations that construct JSON records without the newly mandatory `lineage_group`; they fail with `missing required field lineage_group` and prevent the old complete-fixture paths from reaching their assertions. No corpus-generation or splitter code was changed.
+Result: `5 failed, 28 passed, 4 warnings in 4.43s` before fixture migration; failures were legacy records missing `lineage_group`.
 
 ## Changes
 
