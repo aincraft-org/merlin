@@ -17,7 +17,8 @@ def _stroke(label_index, variant):
 def _record(example_id, label, source, group, strokes, consent=None):
     return {
         "schema_version": "glyph-dataset-v1", "example_id": example_id, "label": label,
-        "source": source, "seed_id": example_id if source == "canonical" else None,
+        "source": source, "independent_source": f"fixture-source:{label}:{group}", "lineage_group": f"{source}:{label}:{group}",
+        "seed_id": example_id if source == "canonical" else None,
         "author_group": group, "session_group": group, "split_group": group,
         "consent": consent, "strokes": strokes,
     }
@@ -77,6 +78,42 @@ def test_complete_corpus_trains_and_exports_java_compatible_bundle(tmp_path):
     assert manifest["calibration"]["temperature"] > 0
     assert manifest["files"]["model.onnx"]
 
+def test_checkpoint_is_reloadable_in_fresh_cpu_process(tmp_path):
+    config = _complete_config(tmp_path)
+    assert main(["--config", str(config)]) in (0, 3)
+    script = """
+import torch, json
+from wizardry_glyphs.model import VectorClassifier, RasterClassifier, FusedClassifier
+checkpoint = torch.load('artifact/model.pt', map_location='cpu', weights_only=True)
+constructors = {'vector': VectorClassifier, 'raster': RasterClassifier, 'fused': FusedClassifier}
+model = constructors[checkpoint['model']](checkpoint['classes'], checkpoint['embedding_dim'])
+if checkpoint['model'] == 'vector':
+    output = model(torch.zeros(1,64,32,8), torch.zeros(1,64,32))
+elif checkpoint['model'] == 'raster':
+    output = model(torch.zeros(1,1,64,64))
+else:
+    output = model(torch.zeros(1,64,32,8), torch.zeros(1,64,32), torch.zeros(1,1,64,64))
+assert output.device.type == 'cpu'
+"""
+    import subprocess, sys
+    result = subprocess.run([sys.executable, "-c", script], cwd=tmp_path, env={"PYTHONPATH": str(Path(__file__).parents[1] / "src")}, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+def test_main_sealed_evaluation_after_calibration_and_selection(tmp_path, monkeypatch):
+    import wizardry_glyphs.train as train
+    config = _complete_config(tmp_path)
+    events = []
+    original_rank = train.rank_candidates
+    monkeypatch.setattr(train, "rank_candidates", lambda candidates: (events.append("selection") or original_rank(candidates)))
+    original_calibrate = train.calibrate_temperature
+    monkeypatch.setattr(train, "calibrate_temperature", lambda logits, labels: (events.append("calibration") or original_calibrate(logits, labels)))
+    original_sealed = train.evaluate_sealed_once
+    def sealed(*args, **kwargs):
+        events.append("sealed")
+        return original_sealed(*args, **kwargs)
+    monkeypatch.setattr(train, "evaluate_sealed_once", sealed)
+    assert main(["--config", str(config)]) in (0, 3)
+    assert events.count("sealed") == 1
+    assert events.index("selection") < events.index("calibration") < events.index("sealed")
 
 def test_export_failure_preserves_previous_artifact(tmp_path, monkeypatch):
     config = _complete_config(tmp_path)
