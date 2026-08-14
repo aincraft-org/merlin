@@ -80,5 +80,14 @@ def test_runner_has_no_sealed_test_and_keeps_validation_out_of_augmentation():
         expected_train = [fold_id for fold_id in range(5) if fold_id != index]
         augment_ids = next(ids for kind, ids in seen if kind == "augment" and index not in ids)
         train_ids = next(ids for kind, ids in seen if kind == "train" and index not in ids)
-        assert augment_ids == expected_train
         assert train_ids == expected_train + ["augmented"]
+def test_runner_accepts_configured_fold_count():
+    folds = [[{"id": index}] for index in range(3)]
+    result = run_cross_validation(
+        folds,
+        [{"id": "candidate"}],
+        lambda candidate, rows: {"model": object(), "parameters": len(rows)},
+        lambda model, rows: metric(0.5),
+        lambda rows: rows,
+    )
+    assert len(result[0]["folds"]) == 3

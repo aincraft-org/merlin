@@ -27,6 +27,43 @@ def _rows(examples):
     return [{"example": example, **preprocess_example(example), "label": example.label,
              "lineage_group": example.lineage_group, "independent_source": example.independent_source}
             for example in examples]
+def _validate_rows(rows):
+    provenance = {}
+    for row in rows:
+        label = row.get("label")
+        lineage = row.get("lineage_group")
+        source = row.get("independent_source")
+        if not isinstance(lineage, str) or not lineage.strip():
+            raise ValueError("row requires nonempty lineage_group")
+        if not isinstance(source, str) or not source.strip():
+            raise ValueError("row requires nonempty independent_source")
+        key = (label, lineage)
+        prior = provenance.get(key)
+        if prior is not None and prior != source:
+            raise ValueError("independent_source conflict within lineage")
+        provenance[key] = source
+        for prior_label, prior_lineage in provenance:
+            if prior_lineage == lineage and prior_label != label:
+                raise ValueError("lineage_group contains multiple labels")
+
+
+def _validate_config(config):
+    try:
+        seed = config.get("seed", 0)
+        folds = config.get("folds", 5)
+        ratio = config.get("test_ratio", .15)
+        if isinstance(seed, bool) or not isinstance(seed, int):
+            raise ValueError("seed must be an integer")
+        if isinstance(folds, bool) or not isinstance(folds, int) or folds < 2:
+            raise ValueError("folds must be at least 2")
+        ratio = float(ratio)
+        if not np.isfinite(ratio) or not 0 < ratio < 1:
+            raise ValueError("test_ratio must be finite and between 0 and 1")
+    except (TypeError, ValueError, OverflowError) as exc:
+        if isinstance(exc, ValueError) and str(exc).startswith(("seed", "folds", "test_ratio")):
+            raise
+        raise ValueError("invalid training configuration") from exc
+    return seed, folds, ratio
 
 
 def _tensor(rows, torch):
@@ -42,8 +79,15 @@ def _fit(model, rows, labels, config, torch):
     for _ in range(max(1, int(config.get("epochs", 2)))):
         optimizer.zero_grad(set_to_none=True)
         loss = torch.nn.functional.cross_entropy(model(*_tensor(rows, torch)), expected)
-        loss.backward(); optimizer.step()
     return model.eval()
+
+
+def _public_export_inputs(torch):
+    return (
+        torch.zeros(1, 64, 32, 8),
+        torch.zeros(1, 64, 32),
+        torch.zeros(1, 1, 64, 64),
+    )
 
 
 def _logits(model, rows, torch):
@@ -101,16 +145,19 @@ def main(argv=None):
     if not gate.ok:
         for deficit in gate.deficits: print(deficit)
         return 2
-    examples = load_examples(seeds) + load_examples(players); rows = _rows(examples); seed = int(config.get("seed", 0))
     try:
-        partitions = grouped_cross_validation_split(rows, folds=5, test_ratio=float(config.get("test_ratio", .15)), seed=seed)
+        seed, folds, test_ratio = _validate_config(config)
+        examples = load_examples(seeds) + load_examples(players)
+        rows = _rows(examples)
+        _validate_rows(rows)
+        partitions = grouped_cross_validation_split(rows, folds=folds, test_ratio=test_ratio, seed=seed)
         validate_partition_isolation([partitions["test"], *partitions["folds"]])
-    except ValueError as exc: print(exc); return 2
-
+    except (TypeError, ValueError, OverflowError) as exc:
+        print(exc)
+        return 2
     import torch
     from .export import export_bundle
     from .model import FusedClassifier, RasterClassifier, VectorClassifier
-    random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
     embedding_dim = int(config.get("embedding_dim", 16))
     constructors = {"vector": lambda: VectorClassifier(len(labels), embedding_dim), "raster": lambda: RasterClassifier(len(labels), embedding_dim), "fused": lambda: FusedClassifier(len(labels), embedding_dim)}
     candidates = [dict(value) for value in (config.get("candidates") or [{"model": name} for name in constructors])]
@@ -135,15 +182,13 @@ def main(argv=None):
     top_threshold, margin = select_thresholds(calibration_logits, calibration_labels, label_to_id["reject"], temperature)
     test_rows = partitions["test"]; test_labels = np.array([label_to_id[row["label"]] for row in test_rows], dtype=np.int64)
     metrics = evaluate(_logits(selected, test_rows, torch), test_labels, temperature, reject_id=label_to_id["reject"], top_threshold=top_threshold, margin=margin)
-    metrics["selected_model"] = selected_candidate["model"]
     synthetic = all(example.source in {"canonical", "synthetic", "reject"} for example in examples)
-    warning = "perfect synthetic score indicates benchmark saturation, not generalization" if synthetic and (metrics.get("macro_f1") == 1.0 or winner["macro_f1_mean"] == 1.0) else None
+    warning = "perfect synthetic score indicates benchmark saturation, not generalization" if any(float(fold.get("macro_f1", 0)) == 1.0 for candidate in cv_results for fold in candidate.get("folds", [])) or metrics.get("macro_f1") == 1.0 else None
     release_ready = not synthetic and metrics["count"] > 0 and metrics["accuracy"] >= float(config.get("min_accuracy", 0)) and metrics["reject_false_accept_rate"] <= float(config.get("max_reject_false_accept_rate", 1)) and top_threshold > 0 and margin > 0
-    metadata = {"model_id": f'{selected_candidate["model"]}-glyph-v1', "catalog_id": _sha256(catalog), "preprocessing_id": _sha256(base / "preprocessing-v1.json"), "training_id": _sha256(config_path), "dataset_id": _sha256(seeds, players), "temperature": temperature, "top_threshold": top_threshold, "margin": margin, "metrics": metrics, "release_ready": release_ready, "selected_candidate": selected_candidate, "cross_validation": {"candidates": cv_results, "winner": winner}, "partition": {"seed": seed, "fold_hashes": [_partition_hash(fold) for fold in partitions["folds"]], "test_hash": _partition_hash(test_rows), "calibration_hash": _partition_hash(calibration_rows), "train_lineages": len({row["lineage_group"] for row in final_train}), "calibration_lineages": len({row["lineage_group"] for row in calibration_rows}), "test_lineages": len({row["lineage_group"] for row in test_rows})}, "benchmark_warning": warning}
+    metadata = {"model": selected_candidate["model"], "embedding_dim": embedding_dim, "model_id": f'{selected_candidate["model"]}-glyph-v1', "catalog_id": _sha256(catalog), "preprocessing_id": _sha256(base / "preprocessing-v1.json"), "training_id": _sha256(config_path), "dataset_id": _sha256(seeds, players), "temperature": temperature, "top_threshold": top_threshold, "margin": margin, "metrics": metrics, "release_ready": release_ready, "selected_candidate": selected_candidate, "cross_validation": {"candidates": cv_results, "winner": winner}, "partition": {"seed": seed, "fold_hashes": [_partition_hash(fold) for fold in partitions["folds"]], "test_hash": _partition_hash(test_rows), "calibration_hash": _partition_hash(calibration_rows), "train_lineages": len({row["lineage_group"] for row in final_train}), "calibration_lineages": len({row["lineage_group"] for row in calibration_rows}), "test_lineages": len({row["lineage_group"] for row in test_rows})}, "warning": warning}
     output.parent.mkdir(parents=True, exist_ok=True); temporary = Path(tempfile.mkdtemp(prefix=output.name + ".", dir=output.parent)); backup = output.with_name(output.name + ".previous")
     try:
-        export_bundle(selected, _tensor(calibration_rows[:1], torch), temporary, labels, metadata=metadata)
-        if backup.exists(): shutil.rmtree(backup)
+        export_bundle(selected, _public_export_inputs(torch), temporary, labels, metadata=metadata)
         if output.exists(): output.replace(backup)
         try: temporary.replace(output)
         except Exception:

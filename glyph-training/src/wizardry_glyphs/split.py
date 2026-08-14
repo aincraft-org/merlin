@@ -71,6 +71,7 @@ def validate_partition_isolation(partitions):
         raise ValueError("partitions must not be empty")
     corpus_labels = {row["label"] for partition in partitions for row in partition}
     lineage_partition = {}
+    lineage_labels = {}
     for partition_index, partition in enumerate(partitions):
         labels = {row["label"] for row in partition}
         missing = corpus_labels - labels
@@ -80,6 +81,9 @@ def validate_partition_isolation(partitions):
             lineage = row.get("lineage_group")
             if not isinstance(lineage, str) or not lineage.strip():
                 raise ValueError("row requires nonempty lineage_group")
+            prior_label = lineage_labels.setdefault(lineage, row["label"])
+            if prior_label != row["label"]:
+                raise ValueError(f"lineage_group {lineage!r} contains multiple labels")
             prior = lineage_partition.setdefault(lineage, partition_index)
             if prior != partition_index:
                 raise ValueError(f"lineage_group overlap: {lineage!r}")

@@ -23,3 +23,17 @@ def test_rows_carries_lineage_and_provenance(monkeypatch):
     monkeypatch.setattr(train, "preprocess_example", lambda example: {"vectors": 1, "mask": 2, "raster": 3})
     example = SimpleNamespace(label="cast", lineage_group="lineage", independent_source="source")
     assert train._rows([example])[0] == {"example": example, "vectors": 1, "mask": 2, "raster": 3, "label": "cast", "lineage_group": "lineage", "independent_source": "source"}
+def test_provenance_conflicts_rejected_before_model_construction():
+    from wizardry_glyphs.train import _validate_rows
+    rows = [
+        {"label": "a", "lineage_group": "lineage", "independent_source": "source-a"},
+        {"label": "a", "lineage_group": "lineage", "independent_source": "source-b"},
+    ]
+    with pytest.raises(ValueError, match="independent_source"):
+        _validate_rows(rows)
+
+def test_config_validation_is_clean_and_strict():
+    from wizardry_glyphs.train import _validate_config
+    for config in ({"seed": "bad"}, {"folds": 1}, {"test_ratio": 0}, {"test_ratio": float("nan")}):
+        with pytest.raises(ValueError):
+            _validate_config(config)

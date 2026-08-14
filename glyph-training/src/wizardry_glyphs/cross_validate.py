@@ -81,8 +81,8 @@ def run_cross_validation(
     evaluate_fold: Callable,
     augment_fold: Callable,
 ) -> list[dict]:
-    if len(folds) != 5:
-        raise ValueError("cross-validation requires exactly five folds")
+    if len(folds) < 2:
+        raise ValueError("cross-validation requires at least two folds")
     results = []
     for candidate in candidates:
         fold_metrics = []

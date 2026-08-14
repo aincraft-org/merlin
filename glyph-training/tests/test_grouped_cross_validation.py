@@ -70,3 +70,10 @@ def test_isolation_validator_rejects_overlap_and_missing_label():
             [{"label": "a", "lineage_group": "a1"}, {"label": "b", "lineage_group": "b1"}],
             [{"label": "a", "lineage_group": "a2"}],
         ])
+    with pytest.raises(ValueError, match="multiple labels"):
+        validate_partition_isolation([
+            [
+                {"label": "a", "lineage_group": "shared"},
+                {"label": "b", "lineage_group": "shared"},
+            ],
+        ])
