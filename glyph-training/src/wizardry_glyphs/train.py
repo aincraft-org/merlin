@@ -238,7 +238,6 @@ def main(argv=None):
             if backup.exists(): backup.replace(output)
             raise
         if stale.exists(): shutil.rmtree(stale)
-        if backup.exists(): shutil.rmtree(backup)
     except Exception:
         shutil.rmtree(temporary, ignore_errors=True)
         raise
