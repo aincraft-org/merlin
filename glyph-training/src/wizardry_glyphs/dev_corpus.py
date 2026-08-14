@@ -8,19 +8,41 @@ from .schema import load_examples
 PROFILE="synthetic-development"; SCHEMA_VERSION="glyph-dataset-v1"
 POSITIVE_LABELS=("target-ray","damage","heal","push","cooldown","self","target","physical","fire","frost","arcane")
 LABELS=(*POSITIVE_LABELS,"reject"); MIN_TEMPLATES=6
+FINGERPRINT_QUANTIZATION=1e-3
+ 
+def _validate_strokes(strokes):
+    if not isinstance(strokes, list) or not strokes:
+        return "strokes must be a nonempty list"
+    for stroke_index, stroke in enumerate(strokes):
+        if not isinstance(stroke, list) or not stroke:
+            return f"stroke {stroke_index} must be a nonempty list"
+        for point_index, point in enumerate(stroke):
+            if not isinstance(point, (list, tuple)) or len(point) != 2:
+                return f"stroke {stroke_index} point {point_index} must contain exactly two numbers"
+            if any(not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) for value in point):
+                return f"stroke {stroke_index} point {point_index} must contain exactly two finite numbers"
+    return None
 
 def _catalog(path: Path):
     raw=path.read_bytes(); value=json.loads(raw)
     if not isinstance(value,dict) or not isinstance(value.get("glyphs"),dict): raise ValueError("catalog must contain glyphs object")
     return value, hashlib.sha256(raw).hexdigest()
-
 def _fingerprint(strokes):
-    points=[(float(x),float(y)) for stroke in strokes for x,y in stroke]
-    if not points: return "empty"
-    cx=sum(x for x,_ in points)/len(points); cy=sum(y for _,y in points)/len(points)
-    centered=[(x-cx,y-cy) for x,y in points]; scale=max(math.hypot(x,y) for x,y in centered) or 1.0
-    normalized=[(round(x/scale,5),round(y/scale,5)) for x,y in centered]
-    return hashlib.sha256(json.dumps((tuple(len(s) for s in strokes),normalized),separators=(",",":")).encode()).hexdigest()
+    validated = _validate_strokes(strokes)
+    if validated is not None:
+        raise ValueError(validated)
+    points_by_stroke=[[(float(x),float(y)) for x,y in stroke] for stroke in strokes]
+    lengths=[]; turns=[]; offsets=[]
+    all_points=[point for stroke in points_by_stroke for point in stroke]
+    cx=sum(x for x,_ in all_points)/len(all_points); cy=sum(y for _,y in all_points)/len(all_points)
+    for points in points_by_stroke:
+        lengths.extend(math.hypot(b[0]-a[0],b[1]-a[1]) for a,b in zip(points,points[1:]))
+        offsets.extend((round((x-cx)/max(lengths or [1.0]), 3), round((y-cy)/max(lengths or [1.0]), 3)) for x,y in points)
+        turns.extend(abs(math.atan2((b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-a[0]), (b[0]-a[0])*(c[0]-a[0])+(b[1]-a[0])*(c[1]-a[1]))) for a,b,c in zip(points,points[1:],points[2:]))
+    scale=max(lengths) or 1.0
+    quant=lambda value: round(value/scale/FINGERPRINT_QUANTIZATION)*FINGERPRINT_QUANTIZATION
+    descriptor=(tuple(len(s) for s in strokes), tuple(quant(length) for length in lengths), tuple(quant(turn) for turn in turns), tuple(offsets))
+    return hashlib.sha256(json.dumps(descriptor,separators=(",",":")).encode()).hexdigest()
 
 def _templates(catalog):
     deficiencies=[]; result={}
@@ -28,8 +50,17 @@ def _templates(catalog):
         entry=catalog["glyphs"].get(label); templates=entry.get("templates") if isinstance(entry,dict) else None
         if not isinstance(templates,list): templates=[]
         ids=[t.get("id") if isinstance(t,dict) else None for t in templates]
-        valid=[t for t in templates if isinstance(t,dict) and isinstance(t.get("id"),str) and t["id"].strip() and isinstance(t.get("strokes"),list) and t["strokes"]]
+        valid=[]; geometry_issues=[]
+        for template in templates:
+            if not isinstance(template,dict) or not isinstance(template.get("id"),str) or not template["id"].strip():
+                continue
+            error=_validate_strokes(template.get("strokes"))
+            if error is not None:
+                geometry_issues.append(error)
+                continue
+            valid.append(template)
         fps=[_fingerprint(t["strokes"]) for t in valid]; issues=[]
+        if geometry_issues: issues.append("invalid geometry: "+", ".join(geometry_issues))
         if len(valid)<MIN_TEMPLATES: issues.append(f"requires at least {MIN_TEMPLATES} explicit independent templates (found {len(valid)})")
         if any(not isinstance(i,str) or not i.strip() for i in ids): issues.append("template IDs must be non-blank")
         if len(set(i for i in ids if isinstance(i,str)))!=len(ids): issues.append("template IDs must be unique")

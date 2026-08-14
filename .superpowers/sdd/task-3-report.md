@@ -34,3 +34,10 @@ The existing `glyph-training/catalog-geometry-v1.json` remains unchanged and int
 ## Concerns
 
 The real development catalog remains intentionally deficient per controller resolution. A future catalog-authoring task must supply six genuinely independent templates per label; this change deliberately does not synthesize or transform legacy geometry into independent templates. The fingerprint is a practical mechanical duplicate gate, not proof of semantic independence.
+
+## Follow-up fix
+
+- Current SHA before commit: `d696a5ef44c80fba6c90f2bec430d8d20fa240b1`.
+- Added six transformed/reflected/small-jitter duplicate regression coverage and malformed geometry aggregation coverage in `glyph-training/tests/test_dev_corpus.py`.
+- Added `FINGERPRINT_QUANTIZATION`, finite/nonempty stroke-point validation, per-label geometry deficiency aggregation, and rotation/reflection/translation/scale-tolerant structural fingerprints in `glyph-training/src/wizardry_glyphs/dev_corpus.py`.
+- Evidence: `.venv/bin/python -m py_compile src/wizardry_glyphs/dev_corpus.py`; focused `6 passed`; full Python 3.12 suite `45 passed, 8 warnings`.

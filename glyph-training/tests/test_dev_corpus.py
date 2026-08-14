@@ -47,6 +47,39 @@ def test_normalized_duplicate_geometry_is_rejected(tmp_path):
     with pytest.raises(ValueError, match="normalized geometry fingerprints") as excinfo:
         generate_corpus(_catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS}, mutate=mutate), tmp_path / "out")
     assert "damage" in str(excinfo.value)
+ 
+def test_transformed_jittered_geometry_is_rejected(tmp_path):
+    def mutate(label, templates):
+        if label == "damage":
+            base = templates[0]["strokes"]
+            templates[1]["strokes"] = [
+                [[-y + 73.0 + (0.0002 if index % 2 else 0.0), x + 41.0] for index, (x, y) in enumerate(stroke)]
+                for stroke in base
+            ]
+            templates[2]["strokes"] = [
+                [[x * 1.7 - 20.0 + (0.0003 if index % 2 else 0.0), y * 1.7 + 13.0] for index, (x, y) in enumerate(stroke)]
+                for stroke in base
+            ]
+    with pytest.raises(ValueError, match="normalized geometry fingerprints") as excinfo:
+        generate_corpus(_catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS}, mutate=mutate), tmp_path / "out")
+    assert "damage" in str(excinfo.value)
+
+
+def test_malformed_geometry_is_aggregated_by_label(tmp_path):
+    def mutate(label, templates):
+        if label == "damage":
+            templates[0]["strokes"] = [[]]
+        if label == "heal":
+            templates[0]["strokes"] = [[[1, 2, 3]]]
+        if label == "push":
+            templates[0]["strokes"] = [[["bad", 2]]]
+        if label == "fire":
+            templates[0]["strokes"] = [[[float("nan"), 2]]]
+    with pytest.raises(ValueError) as excinfo:
+        generate_corpus(_catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS}, mutate=mutate), tmp_path / "out")
+    message = str(excinfo.value)
+    assert all(label in message for label in ("damage", "heal", "push", "fire"))
+    assert "invalid geometry" in message
 
 
 def test_valid_catalog_emits_stable_lineages_and_manifest(tmp_path):
