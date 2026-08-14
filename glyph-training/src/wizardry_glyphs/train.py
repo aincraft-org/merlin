@@ -53,7 +53,12 @@ def _augment_rows(rows, count, augment_example):
     for index in range(count):
         for row in rows:
             transformed = augment_example(row["example"], index)
-            augmented.append({"example": transformed, **{key: value for key, value in row.items() if key != "example"}})
+            augmented.append({
+                "example": transformed,
+                **{key: value for key, value in row.items()
+                   if key not in {"example", "vectors", "mask", "raster"}},
+                **preprocess_example(transformed),
+            })
     return augmented
 
 
@@ -177,11 +182,23 @@ def main(argv=None):
     embedding_dim = int(config.get("embedding_dim", 16))
     constructors = {"vector": lambda: VectorClassifier(len(labels), embedding_dim), "raster": lambda: RasterClassifier(len(labels), embedding_dim), "fused": lambda: FusedClassifier(len(labels), embedding_dim)}
     candidates = [dict(value) for value in (config.get("candidates") or [{"model": name} for name in constructors])]
+    unknown = sorted({candidate.get("model") for candidate in candidates} - constructors.keys())
+    if unknown:
+        print(f"unknown candidate model(s): {', '.join(map(str, unknown))}")
+        return 2
     label_to_id = {label: index for index, label in enumerate(labels)}
 
     def train_fold(candidate, training_rows):
-        name = candidate["model"]; torch.manual_seed(seed); model = _adapt(name, constructors[name], torch)
-        augmented = _augment_rows(training_rows, int(config.get("training_augmentations", 0)), lambda example, variant: example)
+        name = candidate["model"]
+        torch.manual_seed(seed)
+        model = _adapt(name, constructors[name], torch)
+        augmented = _augment_rows(
+            training_rows,
+            int(config.get("training_augmentations", 0)),
+            lambda example, variant: __import__(
+                "wizardry_glyphs.augment", fromlist=["augment_example"]
+            ).augment_example(example, seed * 1000 + variant),
+        )
         model = _fit(model, augmented, labels, {**config, **candidate}, torch)
         return {"model": model, "parameters": sum(parameter.numel() for parameter in model.parameters())}
     def evaluate_fold(model, validation_rows):
@@ -196,22 +213,35 @@ def main(argv=None):
     calibration_logits = _logits(selected, calibration_rows, torch)
     temperature = calibrate_temperature(calibration_logits, calibration_labels)
     top_threshold, margin = select_thresholds(calibration_logits, calibration_labels, label_to_id["reject"], temperature)
-    test_rows = partitions["test"]; test_labels = np.array([label_to_id[row["label"]] for row in test_rows], dtype=np.int64)
+    test_rows = partitions["test"]
+    test_labels = np.array([label_to_id[row["label"]] for row in test_rows], dtype=np.int64)
     metrics = evaluate_sealed_once(selected, test_rows, label_to_id, torch, temperature=temperature, reject_id=label_to_id["reject"], top_threshold=top_threshold, margin=margin)
     synthetic = all(example.source in {"canonical", "synthetic", "reject"} for example in examples)
-    warning = "perfect synthetic score indicates benchmark saturation, not generalization" if any(float(fold.get("macro_f1", 0)) == 1.0 for candidate in cv_results for fold in candidate.get("folds", [])) or metrics.get("macro_f1") == 1.0 else None
+    warning = None
+    benchmark = {"synthetic": synthetic, "profile": "synthetic-development" if synthetic else "real-player"}
+    if synthetic and (any(float(fold.get("macro_f1", 0)) == 1.0 for candidate in cv_results for fold in candidate.get("folds", [])) or metrics.get("macro_f1") == 1.0):
+        warning = "perfect synthetic score indicates benchmark saturation, not generalization"
     release_ready = not synthetic and metrics["count"] > 0 and metrics["accuracy"] >= float(config.get("min_accuracy", 0)) and metrics["reject_false_accept_rate"] <= float(config.get("max_reject_false_accept_rate", 1)) and top_threshold > 0 and margin > 0
-    metadata = {"model": selected_candidate["model"], "embedding_dim": embedding_dim, "model_id": f'{selected_candidate["model"]}-glyph-v1', "catalog_id": _sha256(catalog), "preprocessing_id": _sha256(base / "preprocessing-v1.json"), "training_id": _sha256(config_path), "dataset_id": _sha256(seeds, players), "temperature": temperature, "top_threshold": top_threshold, "margin": margin, "metrics": metrics, "release_ready": release_ready, "selected_candidate": selected_candidate, "cross_validation": {"candidates": cv_results, "winner": winner}, "partition": {"seed": seed, "fold_hashes": [_partition_hash(fold) for fold in partitions["folds"]], "test_hash": _partition_hash(test_rows), "calibration_hash": _partition_hash(calibration_rows), "train_lineages": len({row["lineage_group"] for row in final_train}), "calibration_lineages": len({row["lineage_group"] for row in calibration_rows}), "test_lineages": len({row["lineage_group"] for row in test_rows})}, "warning": warning}
-    output.parent.mkdir(parents=True, exist_ok=True); temporary = Path(tempfile.mkdtemp(prefix=output.name + ".", dir=output.parent)); backup = output.with_name(output.name + ".previous")
+    metadata = {"model": selected_candidate["model"], "embedding_dim": embedding_dim, "model_id": f'{selected_candidate["model"]}-glyph-v1', "catalog_id": _sha256(catalog), "preprocessing_id": _sha256(base / "preprocessing-v1.json"), "training_id": _sha256(config_path), "dataset_id": _sha256(seeds, players), "temperature": temperature, "top_threshold": top_threshold, "margin": margin, "metrics": metrics, "release_ready": release_ready, "selected_candidate": selected_candidate, "cross_validation": {"candidates": cv_results, "winner": winner}, "partition": {"seed": seed, "fold_hashes": [_partition_hash(fold) for fold in partitions["folds"]], "test_hash": _partition_hash(test_rows), "calibration_hash": _partition_hash(calibration_rows), "train_lineages": len({r["lineage_group"] for r in final_train}), "calibration_lineages": len({r["lineage_group"] for r in calibration_rows}), "test_lineages": len({r["lineage_group"] for r in test_rows})}, "benchmark": benchmark, "warning": warning, "profile": benchmark["profile"], "disclaimer": "Synthetic development benchmark; not evidence of real-player generalization." if synthetic else None}
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix=output.name + ".", dir=output.parent))
+    backup = output.with_name(output.name + ".previous")
+    stale = backup.with_name(backup.name + ".stale")
     try:
         export_bundle(selected, _public_export_inputs(torch), temporary, labels, metadata=metadata)
+        if stale.exists(): shutil.rmtree(stale)
+        if backup.exists(): backup.replace(stale)
         if output.exists(): output.replace(backup)
-        try: temporary.replace(output)
+        try:
+            temporary.replace(output)
         except Exception:
             if backup.exists(): backup.replace(output)
             raise
+        if stale.exists(): shutil.rmtree(stale)
         if backup.exists(): shutil.rmtree(backup)
-    except Exception: shutil.rmtree(temporary, ignore_errors=True); raise
+    except Exception:
+        shutil.rmtree(temporary, ignore_errors=True)
+        raise
     return 0 if release_ready else 3
 
 

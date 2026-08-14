@@ -91,20 +91,20 @@ def _points(strokes,seed,variant):
         result.append(transformed)
     return result
 
-def _record(example_id,label,strokes,lineage_group,seed_id,source,independent_source):
-    return {"schema_version":SCHEMA_VERSION,"example_id":example_id,"label":label,"source":source,"independent_source":independent_source,"lineage_group":lineage_group,"seed_id":seed_id,"author_group":"synthetic-development","session_group":seed_id,"split_group":lineage_group,"consent":None,"strokes":[{"points":[{"x":x,"y":y} for x,y in stroke],"brush_width":6.0,"started_at_millis":0} for stroke in strokes],"generation":{"profile":PROFILE,"kind":"seed-variant" if source=="synthetic" else "balanced-reject"}}
+def _record(example_id,label,strokes,lineage_group,seed_id,source,independent_source,author_group):
+    return {"schema_version":SCHEMA_VERSION,"example_id":example_id,"label":label,"source":source,"independent_source":independent_source,"lineage_group":lineage_group,"seed_id":seed_id,"author_group":author_group,"session_group":seed_id,"split_group":lineage_group,"consent":None,"strokes":[{"points":[{"x":x,"y":y} for x,y in stroke],"brush_width":6.0,"started_at_millis":0} for stroke in strokes],"generation":{"profile":PROFILE,"kind":"seed-variant" if source=="synthetic" else "balanced-reject"}}
 
 def generate_corpus(catalog_path:Path,output_dir:Path,*,seed_variants=3,derivatives_per_label=100,reject_count=None):
     catalog,geometry_hash=_catalog(catalog_path); templates=_templates(catalog); output_dir.mkdir(parents=True,exist_ok=True); reject_count=reject_count if reject_count is not None else len(POSITIVE_LABELS)*derivatives_per_label; records=[]
     for label in LABELS:
         count=reject_count if label=="reject" else derivatives_per_label
         for index,template in enumerate(templates[label]):
-            lineage=f"catalog:{label}:{template['id']}"; seed=f"geometry:{label}:{index}"; source="reject" if label=="reject" else "synthetic"; provenance=template["independent_source"]
-            records.append(_record(f"{label}:seed:{index}",label,_points(template["strokes"],17+index,index),lineage,seed,source,provenance))
-            for derivative in range(count): records.append(_record(f"{label}:derivative:{index}:{derivative}",label,_points(template["strokes"],101+index*max(1,count)+derivative,derivative+seed_variants),lineage,seed,source,provenance))
+            lineage=f"catalog:{label}:{template['id']}"; seed=f"geometry:{label}:{index}"; source="reject" if label=="reject" else "synthetic"; provenance=template["independent_source"]; author_group=f"synthetic-author:{label}:{index}"
+            records.append(_record(f"{label}:seed:{index}",label,_points(template["strokes"],17+index,index),lineage,seed,source,provenance,author_group))
+            for derivative in range(count): records.append(_record(f"{label}:derivative:{index}:{derivative}",label,_points(template["strokes"],101+index*max(1,count)+derivative,derivative+seed_variants),lineage,seed,source,provenance,author_group))
     provenance=_provenance_map(records)
-    jsonl=output_dir/"corpus.jsonl"; jsonl.write_text("".join(json.dumps(r,sort_keys=True,separators=(",",":"))+"\n" for r in records)); corpus_hash=hashlib.sha256(jsonl.read_bytes()).hexdigest(); counts=Counter((r["source"],r["label"]) for r in records); labels={l:sum(c for (s,x),c in counts.items() if x==l) for l in LABELS}; groups={l:sorted({r["split_group"] for r in records if r["label"]==l}) for l in LABELS}; lineages={l:sorted({r["lineage_group"] for r in records if r["label"]==l}) for l in LABELS}
-    manifest={"profile":PROFILE,"source":"synthetic","release_ready":False,"catalog_version":catalog.get("catalog_version"),"geometry_sha256":geometry_hash,"corpus_sha256":corpus_hash,"record_count":len(records),"seed_variants_per_label":seed_variants,"derivatives_per_seed":derivatives_per_label,"reject_count":reject_count,"counts":labels,"source_counts":{f"{s}:{l}":c for (s,l),c in sorted(counts.items())},"groups":groups,"lineages":lineages,"lineage_counts":{l:len(lineages[l]) for l in LABELS},"provenance":provenance}
+    jsonl=output_dir/"corpus.jsonl"; jsonl.write_text("".join(json.dumps(r,sort_keys=True,separators=(",",":"))+"\n" for r in records)); corpus_hash=hashlib.sha256(jsonl.read_bytes()).hexdigest(); counts=Counter((r["source"],r["label"]) for r in records); labels={l:sum(c for (s,x),c in counts.items() if x==l) for l in LABELS}; groups={l:sorted({r["split_group"] for r in records if r["label"]==l}) for l in LABELS}; lineages={l:sorted({r["lineage_group"] for r in records if r["label"]==l}) for l in LABELS}; authors={l:sorted({r["author_group"] for r in records if r["label"]==l}) for l in LABELS}
+    manifest={"profile":PROFILE,"source":"synthetic","release_ready":False,"catalog_version":catalog.get("catalog_version"),"geometry_sha256":geometry_hash,"corpus_sha256":corpus_hash,"record_count":len(records),"seed_variants_per_label":seed_variants,"derivatives_per_seed":derivatives_per_label,"reject_count":reject_count,"counts":labels,"source_counts":{f"{s}:{l}":c for (s,l),c in sorted(counts.items())},"groups":groups,"lineages":lineages,"lineage_counts":{l:len(lineages[l]) for l in LABELS},"author_groups":authors,"provenance":provenance}
     (output_dir/"manifest.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n"); return manifest
 def validate_development_corpus(path:Path,manifest_path:Path|None=None):
     try: examples=load_examples(path)
@@ -117,10 +117,11 @@ def validate_development_corpus(path:Path,manifest_path:Path|None=None):
         if manifest.get("record_count")!=len(examples): errors.append("manifest record_count mismatch")
         if manifest.get("corpus_sha256")!=hashlib.sha256(path.read_bytes()).hexdigest(): errors.append("manifest corpus_sha256 mismatch")
         if manifest.get("counts")!=dict(Counter(e.label for e in examples)): errors.append("manifest counts mismatch")
-        groups={l:sorted({e.split_group for e in examples if e.label==l}) for l in LABELS}; lineages={l:sorted({e.lineage_group for e in examples if e.label==l}) for l in LABELS}
+        groups={l:sorted({e.split_group for e in examples if e.label==l}) for l in LABELS}; lineages={l:sorted({e.lineage_group for e in examples if e.label==l}) for l in LABELS}; authors={l:sorted({e.author_group for e in examples if e.label==l}) for l in LABELS}
         if manifest.get("groups")!=groups: errors.append("manifest groups mismatch")
         if manifest.get("lineages")!=lineages: errors.append("manifest lineages mismatch")
         if manifest.get("lineage_counts")!={l:len(lineages[l]) for l in LABELS}: errors.append("manifest lineage_counts mismatch")
+        if manifest.get("author_groups")!=authors: errors.append("manifest author_groups mismatch")
         try:
             expected_provenance=_provenance_map([{"label":e.label,"lineage_group":e.lineage_group,"independent_source":e.independent_source} for e in examples])
         except ValueError as exc:
