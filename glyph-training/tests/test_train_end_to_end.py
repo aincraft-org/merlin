@@ -17,7 +17,7 @@ def _stroke(label_index, variant):
 def _record(example_id, label, source, group, strokes, consent=None):
     return {
         "schema_version": "glyph-dataset-v1", "example_id": example_id, "label": label,
-        "source": source, "lineage_group": f"{source}:{label}:{group}",
+        "source": source, "independent_source": f"fixture-source:{label}:{group}", "lineage_group": f"{source}:{label}:{group}",
         "seed_id": example_id if source == "canonical" else None,
         "author_group": group, "session_group": group, "split_group": group,
         "consent": consent, "strokes": strokes,

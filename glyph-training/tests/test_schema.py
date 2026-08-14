@@ -16,6 +16,7 @@ def record(**overrides):
         "example_id": "ex-1",
         "label": LABEL,
         "source": "canonical",
+        "independent_source": "fixture-source:cast:0",
         "lineage_group": "template:cast:0",
         "seed_id": "seed-1",
         "author_group": "reviewers",

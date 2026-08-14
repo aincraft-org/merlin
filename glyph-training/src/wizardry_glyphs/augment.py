@@ -44,7 +44,7 @@ def augment_example(example: Any, seed: int, *, translation: float = 8.0, scale:
         )
         return GlyphExample(
             example.schema_version, f"{example.example_id}:aug:{seed}", example.label,
-            example.source, example.lineage_group, str(seed), example.author_group,
+            example.source, example.independent_source, example.lineage_group, str(seed), example.author_group,
             example.session_group, example.split_group, example.consent, out_strokes,
             dict(example.generation) if example.generation is not None else None,
         )

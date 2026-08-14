@@ -73,6 +73,17 @@ def test_independent_source_must_be_unique_and_nonblank(tmp_path):
         generate_corpus(_catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS}, mutate=mutate), tmp_path / "out")
     message = str(excinfo.value)
     assert "damage" in message and "independent_source" in message
+
+def test_generated_record_contains_provenance_and_schema_contract(tmp_path):
+    schema = json.loads((Path(__file__).parents[1] / "dataset" / "schema-v1.json").read_text())
+    catalog = _catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS})
+    generate_corpus(catalog, tmp_path / "out", seed_variants=0, derivatives_per_label=0, reject_count=0)
+    record = json.loads((tmp_path / "out" / "corpus.jsonl").read_text().splitlines()[0])
+    assert record["independent_source"].strip()
+    assert "independent_source" in schema["required"]
+    assert schema["properties"]["independent_source"]["pattern"] == ".*\\S.*"
+    for invalid in ({key: value for key, value in record.items() if key != "independent_source"}, dict(record, independent_source=" \t")):
+        assert "independent_source" not in invalid or not invalid["independent_source"].strip()
     from wizardry_glyphs.dev_corpus import _fingerprint
     base = _shapes()[2]
     transformed = [

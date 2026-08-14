@@ -70,7 +70,7 @@ def test_augmentation_seed_provenance_grouping_bounds_and_determinism():
 
 def test_immutable_glyph_example_augmentation_preserves_parent():
     example = GlyphExample(
-        "glyph-dataset-v1", "e1", "fire", "canonical", "template:cast:0", "seed-1",
+        "glyph-dataset-v1", "e1", "fire", "canonical", "template-source:cast:0", "template:cast:0", "seed-1",
         "author", "session", "split", True,
         (GlyphStrokeData((GlyphPointData(8, 8), GlyphPointData(40, 8)), 2, 0),),
     )

@@ -14,8 +14,10 @@ def _draft():
 def _record(example_id, label, source="player", group=None, seed_id=None, consent=True):
     source = "canonical" if source == "seed" else source
     return {"schema_version": "glyph-dataset-v1", "example_id": example_id, "label": label, "source": source,
+            "independent_source": f"fixture-source:{label}:{group or example_id}",
             "lineage_group": f"{source}:{label}:{group or example_id}", "seed_id": seed_id, "author_group": group or example_id, "session_group": group or example_id,
             "split_group": group or example_id, "consent": consent, "strokes": _draft()}
+ 
 def _write_jsonl(path, records):
     path.write_text("".join(json.dumps(r, sort_keys=True) + "\n" for r in records))
 

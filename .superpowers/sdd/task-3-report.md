@@ -53,4 +53,10 @@ The real development catalog remains intentionally deficient per controller reso
 
 - Templates now require a nonblank, unique `independent_source` declaration per label in addition to unique IDs and geometry fingerprints.
 - Added regression coverage for blank and duplicate provenance values.
+
+## Schema/provenance propagation
+
+- Propagated `independent_source` through schema dataclasses/parser, augmentation, generated JSONL records, and manifest SHA-256 provenance summaries.
+- Added schema contract and generated-record regression coverage.
+- Verification: focused `8 passed`; full Python 3.12 suite `47 passed, 8 warnings`; py_compile passed for schema and dev corpus.
 - Verification: Python 3.12 `py_compile`; focused `7 passed`; full suite `46 passed, 8 warnings`.
