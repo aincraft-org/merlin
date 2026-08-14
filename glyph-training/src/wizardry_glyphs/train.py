@@ -164,6 +164,9 @@ def main(argv=None):
         validate_partition_isolation([partitions["test"], *partitions["folds"]])
     except (TypeError, ValueError, OverflowError) as exc:
         print(exc)
+        return 2
+    import torch
+    from .export import export_bundle
     from .model import FusedClassifier, RasterClassifier, VectorClassifier
     embedding_dim = int(config.get("embedding_dim", 16))
     constructors = {"vector": lambda: VectorClassifier(len(labels), embedding_dim), "raster": lambda: RasterClassifier(len(labels), embedding_dim), "fused": lambda: FusedClassifier(len(labels), embedding_dim)}
@@ -175,6 +178,8 @@ def main(argv=None):
         augmented = _augment_rows(training_rows, int(config.get("training_augmentations", 0)), lambda example, variant: example)
         model = _fit(model, augmented, labels, {**config, **candidate}, torch)
         return {"model": model, "parameters": sum(parameter.numel() for parameter in model.parameters())}
+    def evaluate_fold(model, validation_rows):
+        expected = np.array([label_to_id[row["label"]] for row in validation_rows], dtype=np.int64)
         return evaluate(_logits(model, validation_rows, torch), expected)
 
     cv_results = run_cross_validation(partitions["folds"], candidates, train_fold, evaluate_fold, lambda value: value)

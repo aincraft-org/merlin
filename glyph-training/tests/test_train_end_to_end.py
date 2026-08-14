@@ -78,6 +78,26 @@ def test_complete_corpus_trains_and_exports_java_compatible_bundle(tmp_path):
     assert manifest["calibration"]["temperature"] > 0
     assert manifest["files"]["model.onnx"]
 
+def test_checkpoint_is_reloadable_in_fresh_cpu_process(tmp_path):
+    config = _complete_config(tmp_path)
+    assert main(["--config", str(config)]) in (0, 3)
+    script = """
+import torch, json
+from wizardry_glyphs.model import VectorClassifier, RasterClassifier, FusedClassifier
+checkpoint = torch.load('artifact/model.pt', map_location='cpu', weights_only=True)
+constructors = {'vector': VectorClassifier, 'raster': RasterClassifier, 'fused': FusedClassifier}
+model = constructors[checkpoint['model']](checkpoint['classes'], checkpoint['embedding_dim'])
+if checkpoint['model'] == 'vector':
+    output = model(torch.zeros(1,64,32,8), torch.zeros(1,64,32))
+elif checkpoint['model'] == 'raster':
+    output = model(torch.zeros(1,1,64,64))
+else:
+    output = model(torch.zeros(1,64,32,8), torch.zeros(1,64,32), torch.zeros(1,1,64,64))
+assert output.device.type == 'cpu'
+"""
+    import subprocess, sys
+    result = subprocess.run([sys.executable, "-c", script], cwd=tmp_path, env={"PYTHONPATH": str(Path(__file__).parents[1] / "src")}, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
 
 def test_export_failure_preserves_previous_artifact(tmp_path, monkeypatch):
     config = _complete_config(tmp_path)

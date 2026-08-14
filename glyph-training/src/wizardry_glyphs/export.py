@@ -16,11 +16,14 @@ def export_bundle(model, inputs, output: Path, labels, *, metadata=None):
     with torch.no_grad(): golden = model(*inputs).detach().cpu().tolist()
     files = {"model.onnx": _sha256(onnx_path)}
     metadata = metadata or {}
+    state_dict = model.state_dict()
+    if "inner." in next(iter(state_dict), ""):
+        state_dict = {key.removeprefix("inner."): value for key, value in state_dict.items()}
     checkpoint = {
         "model": metadata.get("model", "fused"),
         "classes": len(labels),
         "embedding_dim": int(metadata.get("embedding_dim", 32)),
-        "state_dict": {key: value.detach().cpu() for key, value in model.state_dict().items()},
+        "state_dict": state_dict,
     }
     torch.save(checkpoint, output / "model.pt")
     files["model.pt"] = _sha256(output / "model.pt")
