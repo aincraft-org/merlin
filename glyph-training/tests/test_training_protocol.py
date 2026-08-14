@@ -50,3 +50,12 @@ def test_sealed_evaluation_spy_runs_once_after_calibration():
     result = evaluate_sealed_once(Model(), rows, labels, torch, on_evaluate=events.append)
     assert events == ["calibration", "sealed"]
     assert result["count"] == 1
+def test_fit_updates_model_parameters():
+    import torch, numpy as np
+    from wizardry_glyphs.model import FusedClassifier
+    from wizardry_glyphs.train import _fit
+    model = FusedClassifier(classes=2, embedding_dim=2)
+    rows = [{"label": "a", "vectors": np.zeros((64,32,8), dtype="float32"), "mask": np.ones((64,32), dtype="float32"), "raster": np.zeros((1,64,64), dtype="float32")}]
+    before = {key: value.detach().clone() for key, value in model.state_dict().items()}
+    _fit(model, rows, ["a", "b"], {"epochs": 1}, torch)
+    assert any(not torch.equal(before[key], value) for key, value in model.state_dict().items())

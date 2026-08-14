@@ -89,6 +89,7 @@ def _fit(model, rows, labels, config, torch):
     for _ in range(max(1, int(config.get("epochs", 2)))):
         optimizer.zero_grad(set_to_none=True)
         loss = torch.nn.functional.cross_entropy(model(*_tensor(rows, torch)), expected)
+        loss.backward(); optimizer.step()
     return model.eval()
 
 
