@@ -125,7 +125,10 @@ def validate_development_corpus(path:Path,manifest_path:Path|None=None):
         if manifest.get("groups")!=groups: errors.append("manifest groups mismatch")
         if manifest.get("lineages")!=lineages: errors.append("manifest lineages mismatch")
         if manifest.get("lineage_counts")!={l:len(lineages[l]) for l in LABELS}: errors.append("manifest lineage_counts mismatch")
-        expected_provenance=_provenance_map([{"label":e.label,"lineage_group":e.lineage_group,"independent_source":e.independent_source} for e in examples])
+        try:
+            expected_provenance=_provenance_map([{"label":e.label,"lineage_group":e.lineage_group,"independent_source":e.independent_source} for e in examples])
+        except ValueError as exc:
+            errors.append(str(exc)); expected_provenance={}
         if manifest.get("provenance")!=expected_provenance: errors.append("manifest provenance mismatch")
     for e in examples:
         if not isinstance(e.independent_source,str) or not e.independent_source.strip(): errors.append(f"{e.example_id}: missing independent_source")

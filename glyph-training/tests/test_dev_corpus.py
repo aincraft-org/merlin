@@ -129,6 +129,17 @@ def test_provenance_conflict_helper_rejects_lineage_collision():
             {"label": "damage", "lineage_group": "lineage", "independent_source": "source-a"},
             {"label": "damage", "lineage_group": "lineage", "independent_source": "source-b"},
         ])
+
+def test_validator_reports_provenance_conflict_without_traceback(tmp_path):
+    catalog = _catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS})
+    generate_corpus(catalog, tmp_path / "out", seed_variants=0, derivatives_per_label=0, reject_count=0)
+    corpus_path = tmp_path / "out" / "corpus.jsonl"
+    rows = [json.loads(line) for line in corpus_path.read_text().splitlines()]
+    rows[1]["independent_source"] = "tampered-source"
+    rows[1]["lineage_group"] = rows[0]["lineage_group"]
+    corpus_path.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    errors = validate_development_corpus(corpus_path, tmp_path / "out" / "manifest.json")
+    assert any("independent_source conflict" in error for error in errors)
 def test_valid_catalog_emits_stable_lineages_and_manifest(tmp_path):
     catalog = _catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS})
     manifest = generate_corpus(catalog, tmp_path / "out", seed_variants=1, derivatives_per_label=1, reject_count=2)

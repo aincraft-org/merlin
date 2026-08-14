@@ -12,6 +12,9 @@ Implemented geometry validation, transform-tolerant structural duplicate screeni
 - `affc96a6a04f21defabdde57d2f8095f3e18e89f` — `fix: make glyph fingerprints transform invariant`
 - `101f2a5ce16aea3dc1cd3e5c14b38fad981eb376` — `fix: require independent glyph provenance`
 - `fad10d36544622490d714d2ea78c1eff88e820f8` — `fix: propagate independent glyph provenance`
+- `aa5739778a691ea5af2b2b4ea0fdf2958695bd3f` — `fix: verify generated corpus manifest structure`
+- `e6e04fa4e45cdfe58f058cf34f9d976a8d6f2ee8` — `fix: verify provenance per glyph lineage`
+- `c1d90a6409396d58b2e341ee439e1ae049bc14d7` — `fix: reject conflicting glyph lineage provenance`
 
 ## Evidence
 
@@ -39,3 +42,9 @@ Implemented geometry validation, transform-tolerant structural duplicate screeni
 - Focused development corpus tests: `10 passed`.
 - Full Python 3.12 suite: `49 passed, 8 warnings`.
 - `py_compile` passed for `dev_corpus.py` and `schema.py`.
+
+## Validation conflict handling
+
+- Validator catches provenance-map conflicts and returns structured errors instead of propagating tracebacks.
+- Added tampered JSONL conflict regression.
+- Final verification: focused `11 passed`; full Python 3.12 `50 passed, 8 warnings`; py_compile passed.
