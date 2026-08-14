@@ -121,6 +121,14 @@ def test_manifest_structure_tampering_is_detected(tmp_path):
         tampered[field] = {}
         manifest_path.write_text(json.dumps(tampered))
         assert any(field in error for error in validate_development_corpus(tmp_path / "out" / "corpus.jsonl", manifest_path))
+
+def test_provenance_conflict_helper_rejects_lineage_collision():
+    from wizardry_glyphs.dev_corpus import _provenance_map
+    with pytest.raises(ValueError, match="conflict"):
+        _provenance_map([
+            {"label": "damage", "lineage_group": "lineage", "independent_source": "source-a"},
+            {"label": "damage", "lineage_group": "lineage", "independent_source": "source-b"},
+        ])
 def test_valid_catalog_emits_stable_lineages_and_manifest(tmp_path):
     catalog = _catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS})
     manifest = generate_corpus(catalog, tmp_path / "out", seed_variants=1, derivatives_per_label=1, reject_count=2)

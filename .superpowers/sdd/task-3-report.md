@@ -32,3 +32,10 @@ Implemented geometry validation, transform-tolerant structural duplicate screeni
 - Manifest provenance now maps each label's `lineage_group` to the SHA-256 of its opaque `independent_source`.
 - Validator compares the exact mapping, detecting row-level provenance swaps even when the source hash set is unchanged.
 - Verification: focused `9 passed`; full Python 3.12 `48 passed, 8 warnings`; py_compile passed.
+
+## Final helper verification
+
+- `_provenance_map` is used by both generation and validation and rejects conflicting sources for one label/lineage.
+- Focused development corpus tests: `10 passed`.
+- Full Python 3.12 suite: `49 passed, 8 warnings`.
+- `py_compile` passed for `dev_corpus.py` and `schema.py`.
