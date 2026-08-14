@@ -26,3 +26,9 @@ Implemented geometry validation, transform-tolerant structural duplicate screeni
 - Templates require six unique nonblank `independent_source` declarations per label.
 - Generated JSONL carries opaque provenance IDs; manifest stores SHA-256 provenance summaries and groups/lineages. Validator detects tampering.
 - `dataset/schema-v1.json` requires nonblank `independent_source`; generated-record/schema regressions cover missing and whitespace values.
+
+## Exact provenance mapping
+
+- Manifest provenance now maps each label's `lineage_group` to the SHA-256 of its opaque `independent_source`.
+- Validator compares the exact mapping, detecting row-level provenance swaps even when the source hash set is unchanged.
+- Verification: focused `9 passed`; full Python 3.12 `48 passed, 8 warnings`; py_compile passed.

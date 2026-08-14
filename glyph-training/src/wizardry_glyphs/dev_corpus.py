@@ -96,9 +96,8 @@ def generate_corpus(catalog_path:Path,output_dir:Path,*,seed_variants=3,derivati
             records.append(_record(f"{label}:seed:{index}",label,_points(template["strokes"],17+index,index),lineage,seed,source,provenance))
             for derivative in range(count): records.append(_record(f"{label}:derivative:{index}:{derivative}",label,_points(template["strokes"],101+index*max(1,count)+derivative,derivative+seed_variants),lineage,seed,source,provenance))
     jsonl=output_dir/"corpus.jsonl"; jsonl.write_text("".join(json.dumps(r,sort_keys=True,separators=(",",":"))+"\n" for r in records)); corpus_hash=hashlib.sha256(jsonl.read_bytes()).hexdigest(); counts=Counter((r["source"],r["label"]) for r in records); labels={l:sum(c for (s,x),c in counts.items() if x==l) for l in LABELS}; groups={l:sorted({r["split_group"] for r in records if r["label"]==l}) for l in LABELS}; lineages={l:sorted({r["lineage_group"] for r in records if r["label"]==l}) for l in LABELS}
-    manifest={"profile":PROFILE,"source":"synthetic","release_ready":False,"catalog_version":catalog.get("catalog_version"),"geometry_sha256":geometry_hash,"corpus_sha256":corpus_hash,"record_count":len(records),"seed_variants_per_label":seed_variants,"derivatives_per_seed":derivatives_per_label,"reject_count":reject_count,"counts":labels,"source_counts":{f"{s}:{l}":c for (s,l),c in sorted(counts.items())},"groups":groups,"lineages":lineages,"lineage_counts":{l:len(lineages[l]) for l in LABELS},"provenance":{l:sorted({hashlib.sha256(r["independent_source"].encode()).hexdigest() for r in records if r["label"]==l}) for l in LABELS}}
+    manifest={"profile":PROFILE,"source":"synthetic","release_ready":False,"catalog_version":catalog.get("catalog_version"),"geometry_sha256":geometry_hash,"corpus_sha256":corpus_hash,"record_count":len(records),"seed_variants_per_label":seed_variants,"derivatives_per_seed":derivatives_per_label,"reject_count":reject_count,"counts":labels,"source_counts":{f"{s}:{l}":c for (s,l),c in sorted(counts.items())},"groups":groups,"lineages":lineages,"lineage_counts":{l:len(lineages[l]) for l in LABELS},"provenance":{l:{r["lineage_group"]:hashlib.sha256(r["independent_source"].encode()).hexdigest() for r in records if r["label"]==l} for l in LABELS}}
     (output_dir/"manifest.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n"); return manifest
-
 def validate_development_corpus(path:Path,manifest_path:Path|None=None):
     try: examples=load_examples(path)
     except ValueError as exc: return [str(exc)]
@@ -114,7 +113,8 @@ def validate_development_corpus(path:Path,manifest_path:Path|None=None):
         if manifest.get("groups")!=groups: errors.append("manifest groups mismatch")
         if manifest.get("lineages")!=lineages: errors.append("manifest lineages mismatch")
         if manifest.get("lineage_counts")!={l:len(lineages[l]) for l in LABELS}: errors.append("manifest lineage_counts mismatch")
-        if manifest.get("provenance")!={l:sorted({hashlib.sha256(e.independent_source.encode()).hexdigest() for e in examples if e.label==l}) for l in LABELS}: errors.append("manifest provenance mismatch")
+        expected_provenance={l:{e.lineage_group:hashlib.sha256(e.independent_source.encode()).hexdigest() for e in examples if e.label==l} for l in LABELS}
+        if manifest.get("provenance")!=expected_provenance: errors.append("manifest provenance mismatch")
     for e in examples:
         if not isinstance(e.independent_source,str) or not e.independent_source.strip(): errors.append(f"{e.example_id}: missing independent_source")
         if e.source not in {"synthetic","reject"}: errors.append(f"{e.example_id}: non-development source")
