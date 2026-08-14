@@ -110,6 +110,17 @@ def test_malformed_geometry_is_aggregated_by_label(tmp_path):
     assert "invalid geometry" in message
 
 
+
+def test_manifest_structure_tampering_is_detected(tmp_path):
+    catalog = _catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS})
+    generate_corpus(catalog, tmp_path / "out", seed_variants=0, derivatives_per_label=0, reject_count=0)
+    manifest_path = tmp_path / "out" / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    for field in ("groups", "lineages", "lineage_counts"):
+        tampered = dict(manifest)
+        tampered[field] = {}
+        manifest_path.write_text(json.dumps(tampered))
+        assert any(field in error for error in validate_development_corpus(tmp_path / "out" / "corpus.jsonl", manifest_path))
 def test_valid_catalog_emits_stable_lineages_and_manifest(tmp_path):
     catalog = _catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS})
     manifest = generate_corpus(catalog, tmp_path / "out", seed_variants=1, derivatives_per_label=1, reject_count=2)

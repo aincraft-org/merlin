@@ -111,6 +111,9 @@ def validate_development_corpus(path:Path,manifest_path:Path|None=None):
         if manifest.get("corpus_sha256")!=hashlib.sha256(path.read_bytes()).hexdigest(): errors.append("manifest corpus_sha256 mismatch")
         if manifest.get("counts")!=dict(Counter(e.label for e in examples)): errors.append("manifest counts mismatch")
         groups={l:sorted({e.split_group for e in examples if e.label==l}) for l in LABELS}; lineages={l:sorted({e.lineage_group for e in examples if e.label==l}) for l in LABELS}
+        if manifest.get("groups")!=groups: errors.append("manifest groups mismatch")
+        if manifest.get("lineages")!=lineages: errors.append("manifest lineages mismatch")
+        if manifest.get("lineage_counts")!={l:len(lineages[l]) for l in LABELS}: errors.append("manifest lineage_counts mismatch")
         if manifest.get("provenance")!={l:sorted({hashlib.sha256(e.independent_source.encode()).hexdigest() for e in examples if e.label==l}) for l in LABELS}: errors.append("manifest provenance mismatch")
     for e in examples:
         if not isinstance(e.independent_source,str) or not e.independent_source.strip(): errors.append(f"{e.example_id}: missing independent_source")
