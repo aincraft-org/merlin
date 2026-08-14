@@ -71,6 +71,10 @@ def test_runner_has_no_sealed_test_and_keeps_validation_out_of_augmentation():
 
     result = run_cross_validation(folds, [{"id": "candidate"}], train, evaluate, augment)
     assert len(result) == 1
+    assert result[0]["folds"] == [
+        metric(0.5 + index / 100) for index in range(5)
+    ]
+    assert result[0]["parameters"] == 42
     for index in range(5):
         assert ("evaluate", {index}) in seen
         expected_train = [fold_id for fold_id in range(5) if fold_id != index]
