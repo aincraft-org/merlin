@@ -125,6 +125,11 @@ def _adapt(name, constructor, torch):
     return model
 
 
+def evaluate_sealed_once(model, rows, labels, torch, *, temperature=1.0, reject_id=None, top_threshold=0.0, margin=0.0, on_evaluate=None):
+    if on_evaluate is not None:
+        on_evaluate("sealed")
+    expected = np.array([labels[row["label"]] for row in rows], dtype=np.int64)
+    return evaluate(_logits(model, rows, torch), expected, temperature, reject_id=reject_id, top_threshold=top_threshold, margin=margin)
 def _calibration_split(folds):
     grouped = {}
     for row in (row for fold in folds for row in fold):

@@ -37,3 +37,16 @@ def test_config_validation_is_clean_and_strict():
     for config in ({"seed": "bad"}, {"folds": 1}, {"test_ratio": 0}, {"test_ratio": float("nan")}):
         with pytest.raises(ValueError):
             _validate_config(config)
+def test_sealed_evaluation_spy_runs_once_after_calibration():
+    import torch
+    from wizardry_glyphs.train import evaluate_sealed_once
+    events = []
+    class Model:
+        def __call__(self, *inputs):
+            return torch.tensor([[3.0, 1.0]])
+    rows = [{"label": "a", "vectors": torch.zeros(1, 64, 32, 8).numpy(), "mask": torch.zeros(1,64,32).numpy(), "raster": torch.zeros(1,1,64,64).numpy()}]
+    labels = {"a": 0}
+    events.append("calibration")
+    result = evaluate_sealed_once(Model(), rows, labels, torch, on_evaluate=events.append)
+    assert events == ["calibration", "sealed"]
+    assert result["count"] == 1
