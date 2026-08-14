@@ -42,9 +42,19 @@ def _validate_rows(rows):
         if prior is not None and prior != source:
             raise ValueError("independent_source conflict within lineage")
         provenance[key] = source
-        for prior_label, prior_lineage in provenance:
-            if prior_lineage == lineage and prior_label != label:
-                raise ValueError("lineage_group contains multiple labels")
+        if any(prior_lineage == lineage and prior_label != label for prior_label, prior_lineage in provenance):
+            raise ValueError("lineage_group contains multiple labels")
+
+
+def _augment_rows(rows, count, augment_example):
+    if count <= 0:
+        return list(rows)
+    augmented = list(rows)
+    for index in range(count):
+        for row in rows:
+            transformed = augment_example(row["example"], index)
+            augmented.append({"example": transformed, **{key: value for key, value in row.items() if key != "example"}})
+    return augmented
 
 
 def _validate_config(config):
@@ -154,9 +164,6 @@ def main(argv=None):
         validate_partition_isolation([partitions["test"], *partitions["folds"]])
     except (TypeError, ValueError, OverflowError) as exc:
         print(exc)
-        return 2
-    import torch
-    from .export import export_bundle
     from .model import FusedClassifier, RasterClassifier, VectorClassifier
     embedding_dim = int(config.get("embedding_dim", 16))
     constructors = {"vector": lambda: VectorClassifier(len(labels), embedding_dim), "raster": lambda: RasterClassifier(len(labels), embedding_dim), "fused": lambda: FusedClassifier(len(labels), embedding_dim)}
@@ -165,11 +172,9 @@ def main(argv=None):
 
     def train_fold(candidate, training_rows):
         name = candidate["model"]; torch.manual_seed(seed); model = _adapt(name, constructors[name], torch)
-        model = _fit(model, training_rows, labels, {**config, **candidate}, torch)
+        augmented = _augment_rows(training_rows, int(config.get("training_augmentations", 0)), lambda example, variant: example)
+        model = _fit(model, augmented, labels, {**config, **candidate}, torch)
         return {"model": model, "parameters": sum(parameter.numel() for parameter in model.parameters())}
-
-    def evaluate_fold(model, validation_rows):
-        expected = np.array([label_to_id[row["label"]] for row in validation_rows], dtype=np.int64)
         return evaluate(_logits(model, validation_rows, torch), expected)
 
     cv_results = run_cross_validation(partitions["folds"], candidates, train_fold, evaluate_fold, lambda value: value)
