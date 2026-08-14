@@ -60,3 +60,8 @@ Implemented geometry validation, transform-tolerant structural duplicate screeni
 - Fingerprints retain ordered stroke/point topology plus scale-normalized pairwise distances, unsigned turns, and tolerant endpoint closure, quantized at 5% to collapse small jitter while distinguishing materially different proportions.
 - Ambiguous differences inside tolerance are conservatively treated as duplicates.
 - Final verification: focused `12 passed`; full Python 3.12 `51 passed, 8 warnings`; py_compile passed.
+
+## Cross-stroke layout descriptor
+
+- Added ordered cross-stroke point-distance descriptors under the same 5% scale quantization, preserving stroke order while distinguishing materially different inter-stroke layouts.
+- Final verification: focused `12 passed`; full Python 3.12 `51 passed, 8 warnings`; py_compile passed.
