@@ -32,8 +32,16 @@ def _fingerprint(strokes):
     validated = _validate_strokes(strokes)
     if validated is not None:
         raise ValueError(validated)
-    descriptor=tuple((len(stroke), len(stroke)>1 and stroke[0]==stroke[-1]) for stroke in strokes)
-    return hashlib.sha256(json.dumps(descriptor,separators=(",",":")).encode()).hexdigest()
+    points_by_stroke=[[(float(x),float(y)) for x,y in stroke] for stroke in strokes]
+    all_points=[point for stroke in points_by_stroke for point in stroke]
+    scale=max(max(x for x,y in all_points)-min(x for x,y in all_points), max(y for x,y in all_points)-min(y for x,y in all_points), 1.0)
+    quant=lambda value: round(value/scale/0.05)*0.05
+    descriptors=[]
+    for points in points_by_stroke:
+        distances=[math.hypot(b[0]-a[0],b[1]-a[1]) for index,a in enumerate(points) for b in points[index+1:]]
+        turns=[abs(math.atan2((b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-a[0]), (b[0]-a[0])*(c[0]-a[0])+(b[1]-a[1])*(c[1]-a[1]))) for a,b,c in zip(points,points[1:],points[2:])]
+        descriptors.append((len(points), tuple(quant(distance) for distance in distances), tuple(quant(turn) for turn in turns), quant(math.hypot(points[-1][0]-points[0][0],points[-1][1]-points[0][1]))))
+    return hashlib.sha256(json.dumps(tuple(descriptors),separators=(",",":")).encode()).hexdigest()
 def _provenance_map(records):
     result={}
     for record in records:

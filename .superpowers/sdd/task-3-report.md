@@ -54,3 +54,9 @@ Implemented geometry validation, transform-tolerant structural duplicate screeni
 - Duplicate screening now ignores coordinates entirely, using ordered stroke point counts and closed/open status; any coordinate jitter or rigid transform of the same topology collapses.
 - Added large-jitter unique-metadata regression.
 - Final verification: focused `12 passed`; full Python 3.12 `51 passed, 8 warnings`; py_compile passed.
+
+## Coarse normalized shape policy
+
+- Fingerprints retain ordered stroke/point topology plus scale-normalized pairwise distances, unsigned turns, and tolerant endpoint closure, quantized at 5% to collapse small jitter while distinguishing materially different proportions.
+- Ambiguous differences inside tolerance are conservatively treated as duplicates.
+- Final verification: focused `12 passed`; full Python 3.12 `51 passed, 8 warnings`; py_compile passed.
