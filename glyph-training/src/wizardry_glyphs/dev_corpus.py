@@ -52,6 +52,7 @@ def _templates(catalog):
         entry=catalog["glyphs"].get(label); templates=entry.get("templates") if isinstance(entry,dict) else None
         if not isinstance(templates,list): templates=[]
         ids=[t.get("id") if isinstance(t,dict) else None for t in templates]
+        sources=[t.get("independent_source") if isinstance(t,dict) else None for t in templates]
         valid=[]; geometry_issues=[]
         for template in templates:
             if not isinstance(template,dict) or not isinstance(template.get("id"),str) or not template["id"].strip():
@@ -66,6 +67,8 @@ def _templates(catalog):
         if len(valid)<MIN_TEMPLATES: issues.append(f"requires at least {MIN_TEMPLATES} explicit independent templates (found {len(valid)})")
         if any(not isinstance(i,str) or not i.strip() for i in ids): issues.append("template IDs must be non-blank")
         if len(set(i for i in ids if isinstance(i,str)))!=len(ids): issues.append("template IDs must be unique")
+        if any(not isinstance(s,str) or not s.strip() for s in sources): issues.append("independent_source must be non-blank")
+        if len(set(s for s in sources if isinstance(s,str)))!=len(sources): issues.append("independent_source values must be unique")
         if len(set(fps))<MIN_TEMPLATES: issues.append(f"requires at least {MIN_TEMPLATES} distinct normalized geometry fingerprints (found {len(set(fps))})")
         result[label]=valid
         if issues: deficiencies.append(f"{label}: "+"; ".join(issues))

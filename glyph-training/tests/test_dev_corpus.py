@@ -15,7 +15,7 @@ def _shapes():
 def _catalog(path: Path, counts: dict[str, int], *, mutate=None) -> Path:
     glyphs = {}
     for label in LABELS:
-        templates = [{"id": f"{label}-template-{index}", "strokes": _shapes()[index]} for index in range(counts.get(label, 0))]
+        templates = [{"id": f"{label}-template-{index}", "independent_source": f"fixture-source-{index}", "strokes": _shapes()[index]} for index in range(counts.get(label, 0))]
         if mutate: mutate(label, templates)
         glyphs[label] = {"templates": templates}
     path.write_text(json.dumps({"catalog_version": "fixture", "glyphs": glyphs}))
@@ -63,6 +63,16 @@ def test_transformed_jittered_geometry_is_rejected(tmp_path):
     with pytest.raises(ValueError, match="normalized geometry fingerprints") as excinfo:
         generate_corpus(_catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS}, mutate=mutate), tmp_path / "out")
     assert "damage" in str(excinfo.value)
+
+def test_independent_source_must_be_unique_and_nonblank(tmp_path):
+    def mutate(label, templates):
+        if label == "damage":
+            templates[0]["independent_source"] = " "
+            templates[1]["independent_source"] = templates[2]["independent_source"]
+    with pytest.raises(ValueError) as excinfo:
+        generate_corpus(_catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS}, mutate=mutate), tmp_path / "out")
+    message = str(excinfo.value)
+    assert "damage" in message and "independent_source" in message
     from wizardry_glyphs.dev_corpus import _fingerprint
     base = _shapes()[2]
     transformed = [

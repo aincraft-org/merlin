@@ -48,3 +48,9 @@ The real development catalog remains intentionally deficient per controller reso
 - Fingerprint now uses quantized stroke counts/point counts, ordered segment and all-pairs distances, cross-stroke distances, centroid radii, and unsigned turn magnitudes.
 - Replaced the test-only fixture's congruent sixth shape with six unmistakably non-congruent topologies.
 - Verification: Python 3.12 `py_compile` passed; focused `6 passed`; full suite `45 passed, 8 warnings`.
+
+## Provenance gate follow-up
+
+- Templates now require a nonblank, unique `independent_source` declaration per label in addition to unique IDs and geometry fingerprints.
+- Added regression coverage for blank and duplicate provenance values.
+- Verification: Python 3.12 `py_compile`; focused `7 passed`; full suite `46 passed, 8 warnings`.
