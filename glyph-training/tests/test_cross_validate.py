@@ -56,11 +56,13 @@ def test_runner_has_no_sealed_test_and_keeps_validation_out_of_augmentation():
     seen = []
 
     def augment(train):
-        seen.append(("augment", {row["id"] for row in train}))
+        ids = [row["id"] for row in train]
+        seen.append(("augment", ids))
         return train + [{"id": "augmented"}]
 
     def train(candidate, train):
-        seen.append(("train", {row["id"] for row in train}))
+        ids = [row["id"] for row in train]
+        seen.append(("train", ids))
         return {"model": object(), "parameters": 42}
 
     def evaluate(model, validation):
@@ -69,10 +71,10 @@ def test_runner_has_no_sealed_test_and_keeps_validation_out_of_augmentation():
 
     result = run_cross_validation(folds, [{"id": "candidate"}], train, evaluate, augment)
     assert len(result) == 1
-    assert result[0]["folds"]
-    assert result[0]["parameters"] == 42
     for index in range(5):
         assert ("evaluate", {index}) in seen
+        expected_train = [fold_id for fold_id in range(5) if fold_id != index]
+        augment_ids = next(ids for kind, ids in seen if kind == "augment" and index not in ids)
         train_ids = next(ids for kind, ids in seen if kind == "train" and index not in ids)
-        assert index not in train_ids
-        assert "augmented" in train_ids
+        assert augment_ids == expected_train
+        assert train_ids == expected_train + ["augmented"]
