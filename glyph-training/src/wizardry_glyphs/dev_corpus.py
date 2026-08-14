@@ -32,20 +32,7 @@ def _fingerprint(strokes):
     validated = _validate_strokes(strokes)
     if validated is not None:
         raise ValueError(validated)
-    points_by_stroke=[[(float(x),float(y)) for x,y in stroke] for stroke in strokes]
-    lengths=[]; turns=[]; pairwise=[]; point_radii=[]; cross_stroke=[]
-    all_points=[point for stroke in points_by_stroke for point in stroke]
-    cx=sum(x for x,_ in all_points)/len(all_points); cy=sum(y for _,y in all_points)/len(all_points)
-    for points in points_by_stroke:
-        lengths.extend(math.hypot(b[0]-a[0],b[1]-a[1]) for a,b in zip(points,points[1:]))
-        pairwise.extend(math.hypot(b[0]-a[0],b[1]-a[1]) for index,a in enumerate(points) for b in points[index+1:])
-        point_radii.extend(math.hypot(x-cx,y-cy) for x,y in points)
-        turns.extend(abs(math.atan2((b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-a[0]), (b[0]-a[0])*(c[0]-a[0])+(b[1]-a[1])*(c[1]-a[1]))) for a,b,c in zip(points,points[1:],points[2:]))
-    for first,second in zip(points_by_stroke,points_by_stroke[1:]):
-        cross_stroke.extend(math.hypot(b[0]-a[0],b[1]-a[1]) for a in first for b in second)
-    scale=max(lengths) or 1.0
-    quant=lambda value: round(value/scale/FINGERPRINT_QUANTIZATION)*FINGERPRINT_QUANTIZATION
-    descriptor=(tuple(len(s) for s in strokes), tuple(quant(length) for length in lengths), tuple(quant(distance) for distance in pairwise), tuple(quant(distance) for distance in cross_stroke), tuple(sorted(quant(radius) for radius in point_radii)), tuple(quant(turn) for turn in turns))
+    descriptor=tuple((len(stroke), len(stroke)>1 and stroke[0]==stroke[-1]) for stroke in strokes)
     return hashlib.sha256(json.dumps(descriptor,separators=(",",":")).encode()).hexdigest()
 def _provenance_map(records):
     result={}

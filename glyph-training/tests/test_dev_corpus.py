@@ -140,6 +140,15 @@ def test_validator_reports_provenance_conflict_without_traceback(tmp_path):
     corpus_path.write_text("".join(json.dumps(row) + "\n" for row in rows))
     errors = validate_development_corpus(corpus_path, tmp_path / "out" / "manifest.json")
     assert any("independent_source conflict" in error for error in errors)
+
+def test_large_coordinate_jitter_with_unique_metadata_is_rejected(tmp_path):
+    def mutate(label, templates):
+        if label == "damage":
+            base = templates[0]["strokes"]
+            templates[1]["strokes"] = [[[x + 37, y - 22] for x, y in stroke] for stroke in base]
+            templates[2]["strokes"] = [[[127 - x, 127 - y] for x, y in stroke] for stroke in base]
+    with pytest.raises(ValueError, match="normalized geometry fingerprints"):
+        generate_corpus(_catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS}, mutate=mutate), tmp_path / "out")
 def test_valid_catalog_emits_stable_lineages_and_manifest(tmp_path):
     catalog = _catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS})
     manifest = generate_corpus(catalog, tmp_path / "out", seed_variants=1, derivatives_per_label=1, reject_count=2)

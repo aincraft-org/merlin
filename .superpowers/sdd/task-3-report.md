@@ -48,3 +48,9 @@ Implemented geometry validation, transform-tolerant structural duplicate screeni
 - Validator catches provenance-map conflicts and returns structured errors instead of propagating tracebacks.
 - Added tampered JSONL conflict regression.
 - Final verification: focused `11 passed`; full Python 3.12 `50 passed, 8 warnings`; py_compile passed.
+
+## Conservative topology fingerprint
+
+- Duplicate screening now ignores coordinates entirely, using ordered stroke point counts and closed/open status; any coordinate jitter or rigid transform of the same topology collapses.
+- Added large-jitter unique-metadata regression.
+- Final verification: focused `12 passed`; full Python 3.12 `51 passed, 8 warnings`; py_compile passed.
