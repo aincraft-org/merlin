@@ -1,188 +1,89 @@
 """Development-only synthetic corpus generation and validation."""
 from __future__ import annotations
-
-import argparse
-import hashlib
-import json
-import math
-import random
+import argparse, hashlib, json, math, random
 from collections import Counter
 from pathlib import Path
 from typing import Any
+from .schema import load_examples
+PROFILE="synthetic-development"; SCHEMA_VERSION="glyph-dataset-v1"
+POSITIVE_LABELS=("target-ray","damage","heal","push","cooldown","self","target","physical","fire","frost","arcane")
+LABELS=(*POSITIVE_LABELS,"reject"); MIN_TEMPLATES=6
 
-from .schema import GlyphExample, GlyphPointData, GlyphStrokeData, load_examples
-
-PROFILE = "synthetic-development"
-SCHEMA_VERSION = "glyph-dataset-v1"
-POSITIVE_LABELS = ("target-ray", "damage", "heal", "push", "cooldown", "self", "target", "physical", "fire", "frost", "arcane")
-LABELS = (*POSITIVE_LABELS, "reject")
-MIN_TEMPLATES = 6
-
-
-def _catalog(path: Path) -> tuple[dict[str, Any], str]:
-    raw = path.read_bytes()
-    value = json.loads(raw)
-    if not isinstance(value, dict) or not isinstance(value.get("glyphs"), dict):
-        raise ValueError("catalog must contain glyphs object")
+def _catalog(path: Path):
+    raw=path.read_bytes(); value=json.loads(raw)
+    if not isinstance(value,dict) or not isinstance(value.get("glyphs"),dict): raise ValueError("catalog must contain glyphs object")
     return value, hashlib.sha256(raw).hexdigest()
 
+def _fingerprint(strokes):
+    points=[(float(x),float(y)) for stroke in strokes for x,y in stroke]
+    if not points: return "empty"
+    cx=sum(x for x,_ in points)/len(points); cy=sum(y for _,y in points)/len(points)
+    centered=[(x-cx,y-cy) for x,y in points]; scale=max(math.hypot(x,y) for x,y in centered) or 1.0
+    normalized=[(round(x/scale,5),round(y/scale,5)) for x,y in centered]
+    return hashlib.sha256(json.dumps((tuple(len(s) for s in strokes),normalized),separators=(",",":")).encode()).hexdigest()
 
-def _templates(catalog: dict[str, Any]) -> tuple[dict[str, list[dict[str, Any]]], list[str]]:
-    deficiencies: list[str] = []
-    result: dict[str, list[dict[str, Any]]] = {}
-    glyphs = catalog["glyphs"]
+def _templates(catalog):
+    deficiencies=[]; result={}
     for label in LABELS:
-        entry = glyphs.get(label)
-        templates = entry.get("templates") if isinstance(entry, dict) else None
-        if not isinstance(templates, list):
-            templates = []
-        valid = [template for template in templates if isinstance(template, dict) and isinstance(template.get("strokes"), list) and template["strokes"]]
-        result[label] = valid
-        if len(valid) < MIN_TEMPLATES:
-            deficiencies.append(f"{label}: requires at least {MIN_TEMPLATES} explicit independent templates (found {len(valid)})")
-    if deficiencies:
-        raise ValueError("invalid catalog prerequisites:\n" + "\n".join(deficiencies))
-    return result, []
+        entry=catalog["glyphs"].get(label); templates=entry.get("templates") if isinstance(entry,dict) else None
+        if not isinstance(templates,list): templates=[]
+        ids=[t.get("id") if isinstance(t,dict) else None for t in templates]
+        valid=[t for t in templates if isinstance(t,dict) and isinstance(t.get("id"),str) and t["id"].strip() and isinstance(t.get("strokes"),list) and t["strokes"]]
+        fps=[_fingerprint(t["strokes"]) for t in valid]; issues=[]
+        if len(valid)<MIN_TEMPLATES: issues.append(f"requires at least {MIN_TEMPLATES} explicit independent templates (found {len(valid)})")
+        if any(not isinstance(i,str) or not i.strip() for i in ids): issues.append("template IDs must be non-blank")
+        if len(set(i for i in ids if isinstance(i,str)))!=len(ids): issues.append("template IDs must be unique")
+        if len(set(fps))<MIN_TEMPLATES: issues.append(f"requires at least {MIN_TEMPLATES} distinct normalized geometry fingerprints (found {len(set(fps))})")
+        result[label]=valid
+        if issues: deficiencies.append(f"{label}: "+"; ".join(issues))
+    if deficiencies: raise ValueError("invalid catalog prerequisites:\n"+"\n".join(deficiencies))
+    return result
 
-
-def _points(strokes: list[list[list[float]]], seed: int, variant: int) -> list[list[list[float]]]:
-    rng = random.Random(seed * 1009 + variant * 9176)
-    tx, ty = rng.uniform(-4, 4), rng.uniform(-4, 4)
-    scale = 1 + rng.uniform(-.035, .035)
-    angle = rng.uniform(-math.radians(8), math.radians(8))
-    ca, sa = math.cos(angle), math.sin(angle)
-    result = []
+def _points(strokes,seed,variant):
+    rng=random.Random(seed*1009+variant*9176); tx,ty=rng.uniform(-4,4),rng.uniform(-4,4); scale=1+rng.uniform(-.035,.035); angle=rng.uniform(-math.radians(8),math.radians(8)); ca,sa=math.cos(angle),math.sin(angle); result=[]
     for stroke in strokes:
-        transformed = []
-        for x, y in stroke:
-            xx, yy = (x - 64) * scale, (y - 64) * scale
-            transformed.append([round(min(127.5, max(.5, xx * ca - yy * sa + 64 + tx)), 4), round(min(127.5, max(.5, xx * sa + yy * ca + 64 + ty)), 4)])
+        transformed=[]
+        for x,y in stroke:
+            xx,yy=(x-64)*scale,(y-64)*scale; transformed.append([round(min(127.5,max(.5,xx*ca-yy*sa+64+tx)),4),round(min(127.5,max(.5,xx*sa+yy*ca+64+ty)),4)])
         result.append(transformed)
     return result
 
+def _record(example_id,label,strokes,lineage_group,seed_id,source):
+    return {"schema_version":SCHEMA_VERSION,"example_id":example_id,"label":label,"source":source,"lineage_group":lineage_group,"seed_id":seed_id,"author_group":"synthetic-development","session_group":seed_id,"split_group":lineage_group,"consent":None,"strokes":[{"points":[{"x":x,"y":y} for x,y in stroke],"brush_width":6.0,"started_at_millis":0} for stroke in strokes],"generation":{"profile":PROFILE,"kind":"seed-variant" if source=="synthetic" else "balanced-reject"}}
 
-def _record(example_id: str, label: str, strokes: list[list[list[float]]], lineage_group: str, seed_id: str, split_group: str, source: str = "synthetic") -> dict[str, Any]:
-    return {"schema_version": SCHEMA_VERSION, "example_id": example_id, "label": label, "source": source,
-            "lineage_group": lineage_group, "seed_id": seed_id, "author_group": "synthetic-development", "session_group": seed_id,
-            "split_group": split_group, "consent": None,
-            "strokes": [{"points": [{"x": x, "y": y} for x, y in stroke], "brush_width": 6.0, "started_at_millis": 0} for stroke in strokes],
-            "generation": {"profile": PROFILE, "kind": "seed-variant" if source == "synthetic" else "balanced-reject"}}
-from collections import Counter
-from pathlib import Path
-from typing import Any
-
-from .schema import GlyphExample, GlyphPointData, GlyphStrokeData, load_examples
-
-PROFILE = "synthetic-development"
-SCHEMA_VERSION = "glyph-dataset-v1"
-POSITIVE_LABELS = ("target-ray", "damage", "heal", "push", "cooldown", "self", "target", "physical", "fire", "frost", "arcane")
-
-
-def _catalog(path: Path) -> tuple[dict[str, Any], str]:
-    raw = path.read_bytes()
-    value = json.loads(raw)
-    if not isinstance(value, dict) or not isinstance(value.get("glyphs"), dict):
-        raise ValueError("catalog must contain glyphs object")
-    return value, hashlib.sha256(raw).hexdigest()
-
-
-def _points(strokes: list[list[list[float]]], seed: int, variant: int) -> list[list[list[float]]]:
-    rng = random.Random(seed * 1009 + variant * 9176)
-    tx, ty = rng.uniform(-4, 4), rng.uniform(-4, 4)
-    scale = 1 + rng.uniform(-.035, .035)
-    angle = rng.uniform(-math.radians(8), math.radians(8))
-    ca, sa = math.cos(angle), math.sin(angle)
-    result = []
-    for stroke in strokes:
-        transformed = []
-        for x, y in stroke:
-            xx, yy = (x - 64) * scale, (y - 64) * scale
-            transformed.append([round(min(127.5, max(.5, xx * ca - yy * sa + 64 + tx)), 4), round(min(127.5, max(.5, xx * sa + yy * ca + 64 + ty)), 4)])
-        result.append(transformed)
-    return result
-
-
-
-
-def generate_corpus(catalog_path: Path, output_dir: Path, *, seed_variants: int = 3, derivatives_per_label: int = 100, reject_count: int | None = None) -> dict[str, Any]:
-    catalog, geometry_hash = _catalog(catalog_path)
-    templates, _ = _templates(catalog)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    reject_count = reject_count if reject_count is not None else len(POSITIVE_LABELS) * derivatives_per_label
-    records: list[dict[str, Any]] = []
+def generate_corpus(catalog_path:Path,output_dir:Path,*,seed_variants=3,derivatives_per_label=100,reject_count=None):
+    catalog,geometry_hash=_catalog(catalog_path); templates=_templates(catalog); output_dir.mkdir(parents=True,exist_ok=True); reject_count=reject_count if reject_count is not None else len(POSITIVE_LABELS)*derivatives_per_label; records=[]
     for label in LABELS:
-        count = reject_count if label == "reject" else derivatives_per_label
-        for template_index, template in enumerate(templates[label]):
-            lineage_group = f"catalog:{label}:{template['id']}"
-            seed_id = f"geometry:{label}:{template_index}"
-            split_group = lineage_group
-            source = "reject" if label == "reject" else "synthetic"
-            records.append(_record(f"{label}:seed:{template_index}", label, _points(template["strokes"], 17 + template_index, template_index), lineage_group, seed_id, split_group, source))
-            for index in range(count):
-                records.append(_record(f"{label}:derivative:{template_index}:{index}", label, _points(template["strokes"], 101 + template_index * max(1, count) + index, index + seed_variants), lineage_group, seed_id, split_group, source))
-    jsonl = output_dir / "corpus.jsonl"
-    jsonl.write_text("".join(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n" for row in records), encoding="utf-8")
-    corpus_hash = hashlib.sha256(jsonl.read_bytes()).hexdigest()
-    counts = Counter((row["source"], row["label"]) for row in records)
-    label_counts = {label: sum(count for (source, counted_label), count in counts.items() if counted_label == label) for label in LABELS}
-    groups = {label: sorted({row["split_group"] for row in records if row["label"] == label}) for label in LABELS}
-    lineages = {label: sorted({row["lineage_group"] for row in records if row["label"] == label}) for label in LABELS}
-    manifest = {"profile": PROFILE, "source": "synthetic", "release_ready": False, "catalog_version": catalog.get("catalog_version"), "geometry_sha256": geometry_hash,
-                "corpus_sha256": corpus_hash, "record_count": len(records), "seed_variants_per_label": seed_variants, "derivatives_per_seed": derivatives_per_label,
-                "reject_count": reject_count, "counts": label_counts, "source_counts": {f"{source}:{label}": count for (source, label), count in sorted(counts.items())},
-                "groups": groups, "lineages": lineages, "lineage_counts": {label: len(lineages[label]) for label in LABELS}}
-    (output_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return manifest
+        count=reject_count if label=="reject" else derivatives_per_label
+        for index,template in enumerate(templates[label]):
+            lineage=f"catalog:{label}:{template['id']}"; seed=f"geometry:{label}:{index}"; source="reject" if label=="reject" else "synthetic"
+            records.append(_record(f"{label}:seed:{index}",label,_points(template["strokes"],17+index,index),lineage,seed,source))
+            for derivative in range(count): records.append(_record(f"{label}:derivative:{index}:{derivative}",label,_points(template["strokes"],101+index*max(1,count)+derivative,derivative+seed_variants),lineage,seed,source))
+    jsonl=output_dir/"corpus.jsonl"; jsonl.write_text("".join(json.dumps(r,sort_keys=True,separators=(",",":"))+"\n" for r in records)); corpus_hash=hashlib.sha256(jsonl.read_bytes()).hexdigest(); counts=Counter((r["source"],r["label"]) for r in records); labels={l:sum(c for (s,x),c in counts.items() if x==l) for l in LABELS}; groups={l:sorted({r["split_group"] for r in records if r["label"]==l}) for l in LABELS}; lineages={l:sorted({r["lineage_group"] for r in records if r["label"]==l}) for l in LABELS}
+    manifest={"profile":PROFILE,"source":"synthetic","release_ready":False,"catalog_version":catalog.get("catalog_version"),"geometry_sha256":geometry_hash,"corpus_sha256":corpus_hash,"record_count":len(records),"seed_variants_per_label":seed_variants,"derivatives_per_seed":derivatives_per_label,"reject_count":reject_count,"counts":labels,"source_counts":{f"{s}:{l}":c for (s,l),c in sorted(counts.items())},"groups":groups,"lineages":lineages,"lineage_counts":{l:len(lineages[l]) for l in LABELS}}
+    (output_dir/"manifest.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n"); return manifest
 
-
-def validate_development_corpus(path: Path, manifest_path: Path | None = None) -> list[str]:
-    errors: list[str] = []
-    try:
-        examples = load_examples(path)
-    except ValueError as exc:
-        return [str(exc)]
-    manifest = None
+def validate_development_corpus(path:Path,manifest_path:Path|None=None):
+    try: examples=load_examples(path)
+    except ValueError as exc: return [str(exc)]
+    errors=[]
     if manifest_path is not None:
-        try:
-            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            return [f"invalid manifest: {exc}"]
-        if manifest.get("profile") != PROFILE or manifest.get("source") != "synthetic" or manifest.get("release_ready") is not False:
-            errors.append("manifest is not development-only")
-        if manifest.get("record_count") != len(examples):
-            errors.append("manifest record_count mismatch")
-        if manifest.get("corpus_sha256") != hashlib.sha256(path.read_bytes()).hexdigest():
-            errors.append("manifest corpus_sha256 mismatch")
-        if manifest.get("counts") != dict(Counter(example.label for example in examples)):
-            errors.append("manifest counts mismatch")
-        actual_groups = {label: sorted({example.split_group for example in examples if example.label == label}) for label in LABELS}
-        if manifest.get("groups") != actual_groups:
-            errors.append("manifest groups mismatch")
-        actual_lineages = {label: sorted({example.lineage_group for example in examples if example.label == label}) for label in LABELS}
-        if manifest.get("lineages") != actual_lineages:
-            errors.append("manifest lineages mismatch")
-        if manifest.get("lineage_counts") != {label: len(actual_lineages[label]) for label in LABELS}:
-            errors.append("manifest lineage_counts mismatch")
-    for example in examples:
-        if example.source not in {"synthetic", "reject"}:
-            errors.append(f"{example.example_id}: non-development source")
-        if example.generation is None or example.generation.get("profile") != PROFILE:
-            errors.append(f"{example.example_id}: missing development profile")
-        if example.source == "synthetic" and example.seed_id is None:
-            errors.append(f"{example.example_id}: missing seed_id")
+        try: manifest=json.loads(manifest_path.read_text())
+        except (OSError,json.JSONDecodeError) as exc: return [f"invalid manifest: {exc}"]
+        if manifest.get("profile")!=PROFILE or manifest.get("source")!="synthetic" or manifest.get("release_ready") is not False: errors.append("manifest is not development-only")
+        if manifest.get("record_count")!=len(examples): errors.append("manifest record_count mismatch")
+        if manifest.get("corpus_sha256")!=hashlib.sha256(path.read_bytes()).hexdigest(): errors.append("manifest corpus_sha256 mismatch")
+        if manifest.get("counts")!=dict(Counter(e.label for e in examples)): errors.append("manifest counts mismatch")
+        groups={l:sorted({e.split_group for e in examples if e.label==l}) for l in LABELS}; lineages={l:sorted({e.lineage_group for e in examples if e.label==l}) for l in LABELS}
+        if manifest.get("groups")!=groups: errors.append("manifest groups mismatch")
+        if manifest.get("lineages")!=lineages: errors.append("manifest lineages mismatch")
+        if manifest.get("lineage_counts")!={l:len(lineages[l]) for l in LABELS}: errors.append("manifest lineage_counts mismatch")
+    for e in examples:
+        if e.source not in {"synthetic","reject"}: errors.append(f"{e.example_id}: non-development source")
+        if e.generation is None or e.generation.get("profile")!=PROFILE: errors.append(f"{e.example_id}: missing development profile")
+        if e.source=="synthetic" and e.seed_id is None: errors.append(f"{e.example_id}: missing seed_id")
     return errors
 
-
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("catalog", type=Path)
-    parser.add_argument("output", type=Path)
-    args = parser.parse_args(argv)
-    manifest = generate_corpus(args.catalog, args.output)
-    errors = validate_development_corpus(args.output / "corpus.jsonl", args.output / "manifest.json")
-    print(json.dumps({"manifest": manifest, "valid": not errors, "errors": errors}, sort_keys=True))
-    return 0 if not errors else 2
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+def main(argv=None):
+    parser=argparse.ArgumentParser(); parser.add_argument("catalog",type=Path); parser.add_argument("output",type=Path); args=parser.parse_args(argv); manifest=generate_corpus(args.catalog,args.output); errors=validate_development_corpus(args.output/"corpus.jsonl",args.output/"manifest.json"); print(json.dumps({"manifest":manifest,"valid":not errors,"errors":errors},sort_keys=True)); return 0 if not errors else 2
+if __name__=="__main__": raise SystemExit(main())
