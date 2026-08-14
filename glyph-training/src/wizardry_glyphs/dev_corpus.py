@@ -32,18 +32,20 @@ def _fingerprint(strokes):
     if validated is not None:
         raise ValueError(validated)
     points_by_stroke=[[(float(x),float(y)) for x,y in stroke] for stroke in strokes]
-    lengths=[]; turns=[]; offsets=[]
+    lengths=[]; turns=[]; pairwise=[]; point_radii=[]; cross_stroke=[]
     all_points=[point for stroke in points_by_stroke for point in stroke]
     cx=sum(x for x,_ in all_points)/len(all_points); cy=sum(y for _,y in all_points)/len(all_points)
     for points in points_by_stroke:
         lengths.extend(math.hypot(b[0]-a[0],b[1]-a[1]) for a,b in zip(points,points[1:]))
-        offsets.extend((round((x-cx)/max(lengths or [1.0]), 3), round((y-cy)/max(lengths or [1.0]), 3)) for x,y in points)
-        turns.extend(abs(math.atan2((b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-a[0]), (b[0]-a[0])*(c[0]-a[0])+(b[1]-a[0])*(c[1]-a[1]))) for a,b,c in zip(points,points[1:],points[2:]))
+        pairwise.extend(math.hypot(b[0]-a[0],b[1]-a[1]) for index,a in enumerate(points) for b in points[index+1:])
+        point_radii.extend(math.hypot(x-cx,y-cy) for x,y in points)
+        turns.extend(abs(math.atan2((b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-a[0]), (b[0]-a[0])*(c[0]-a[0])+(b[1]-a[1])*(c[1]-a[1]))) for a,b,c in zip(points,points[1:],points[2:]))
+    for first,second in zip(points_by_stroke,points_by_stroke[1:]):
+        cross_stroke.extend(math.hypot(b[0]-a[0],b[1]-a[1]) for a in first for b in second)
     scale=max(lengths) or 1.0
     quant=lambda value: round(value/scale/FINGERPRINT_QUANTIZATION)*FINGERPRINT_QUANTIZATION
-    descriptor=(tuple(len(s) for s in strokes), tuple(quant(length) for length in lengths), tuple(quant(turn) for turn in turns), tuple(offsets))
+    descriptor=(tuple(len(s) for s in strokes), tuple(quant(length) for length in lengths), tuple(quant(distance) for distance in pairwise), tuple(quant(distance) for distance in cross_stroke), tuple(sorted(quant(radius) for radius in point_radii)), tuple(quant(turn) for turn in turns))
     return hashlib.sha256(json.dumps(descriptor,separators=(",",":")).encode()).hexdigest()
-
 def _templates(catalog):
     deficiencies=[]; result={}
     for label in LABELS:

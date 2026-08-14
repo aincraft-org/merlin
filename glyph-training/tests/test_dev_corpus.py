@@ -9,7 +9,7 @@ LABELS = (*POSITIVE_LABELS, "reject")
 
 
 def _shapes():
-    return [[[[10,10],[110,110]]],[[[10,110],[110,10]]],[[[10,10],[110,10],[110,110]]],[[[10,10],[60,110],[110,10]]],[[[10,10],[110,10]],[[60,20],[60,110]]],[[[10,10],[110,10],[110,110],[10,110],[10,10]]]]
+    return [[[[10,10],[110,110]]],[[[10,10],[110,10],[110,110]]],[[[10,10],[110,10],[110,110],[10,110],[10,10]]],[[[10,10],[110,110]],[[10,110],[110,10]]],[[[60,10],[60,110]],[[10,60],[110,60]],[[20,20],[100,100]]],[[[10,10],[110,10],[110,110],[10,110],[10,10]],[[45,45],[75,75]]]]
 
 
 def _catalog(path: Path, counts: dict[str, int], *, mutate=None) -> Path:
@@ -63,6 +63,13 @@ def test_transformed_jittered_geometry_is_rejected(tmp_path):
     with pytest.raises(ValueError, match="normalized geometry fingerprints") as excinfo:
         generate_corpus(_catalog(tmp_path / "catalog.json", {label: 6 for label in LABELS}, mutate=mutate), tmp_path / "out")
     assert "damage" in str(excinfo.value)
+    from wizardry_glyphs.dev_corpus import _fingerprint
+    base = _shapes()[2]
+    transformed = [
+        [[-y + 73.0, x + 41.0] for x, y in stroke]
+        for stroke in base
+    ]
+    assert _fingerprint(base) == _fingerprint(transformed)
 
 
 def test_malformed_geometry_is_aggregated_by_label(tmp_path):

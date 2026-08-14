@@ -41,3 +41,10 @@ The real development catalog remains intentionally deficient per controller reso
 - Added six transformed/reflected/small-jitter duplicate regression coverage and malformed geometry aggregation coverage in `glyph-training/tests/test_dev_corpus.py`.
 - Added `FINGERPRINT_QUANTIZATION`, finite/nonempty stroke-point validation, per-label geometry deficiency aggregation, and rotation/reflection/translation/scale-tolerant structural fingerprints in `glyph-training/src/wizardry_glyphs/dev_corpus.py`.
 - Evidence: `.venv/bin/python -m py_compile src/wizardry_glyphs/dev_corpus.py`; focused `6 passed`; full Python 3.12 suite `45 passed, 8 warnings`.
+
+## Follow-up review fix
+
+- Removed all centroid-relative coordinate vectors from the fingerprint; corrected the turn-angle dot-product expression.
+- Fingerprint now uses quantized stroke counts/point counts, ordered segment and all-pairs distances, cross-stroke distances, centroid radii, and unsigned turn magnitudes.
+- Replaced the test-only fixture's congruent sixth shape with six unmistakably non-congruent topologies.
+- Verification: Python 3.12 `py_compile` passed; focused `6 passed`; full suite `45 passed, 8 warnings`.
