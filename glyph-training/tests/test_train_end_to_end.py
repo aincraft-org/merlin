@@ -98,6 +98,22 @@ assert output.device.type == 'cpu'
     import subprocess, sys
     result = subprocess.run([sys.executable, "-c", script], cwd=tmp_path, env={"PYTHONPATH": str(Path(__file__).parents[1] / "src")}, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+def test_main_sealed_evaluation_after_calibration_and_selection(tmp_path, monkeypatch):
+    import wizardry_glyphs.train as train
+    config = _complete_config(tmp_path)
+    events = []
+    original_rank = train.rank_candidates
+    monkeypatch.setattr(train, "rank_candidates", lambda candidates: (events.append("selection") or original_rank(candidates)))
+    original_calibrate = train.calibrate_temperature
+    monkeypatch.setattr(train, "calibrate_temperature", lambda logits, labels: (events.append("calibration") or original_calibrate(logits, labels)))
+    original_sealed = train.evaluate_sealed_once
+    def sealed(*args, **kwargs):
+        events.append("sealed")
+        return original_sealed(*args, **kwargs)
+    monkeypatch.setattr(train, "evaluate_sealed_once", sealed)
+    assert main(["--config", str(config)]) in (0, 3)
+    assert events.count("sealed") == 1
+    assert events.index("selection") < events.index("calibration") < events.index("sealed")
 
 def test_export_failure_preserves_previous_artifact(tmp_path, monkeypatch):
     config = _complete_config(tmp_path)
