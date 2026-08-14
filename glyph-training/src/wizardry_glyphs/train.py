@@ -197,7 +197,7 @@ def main(argv=None):
     temperature = calibrate_temperature(calibration_logits, calibration_labels)
     top_threshold, margin = select_thresholds(calibration_logits, calibration_labels, label_to_id["reject"], temperature)
     test_rows = partitions["test"]; test_labels = np.array([label_to_id[row["label"]] for row in test_rows], dtype=np.int64)
-    metrics = evaluate(_logits(selected, test_rows, torch), test_labels, temperature, reject_id=label_to_id["reject"], top_threshold=top_threshold, margin=margin)
+    metrics = evaluate_sealed_once(selected, test_rows, label_to_id, torch, temperature=temperature, reject_id=label_to_id["reject"], top_threshold=top_threshold, margin=margin)
     synthetic = all(example.source in {"canonical", "synthetic", "reject"} for example in examples)
     warning = "perfect synthetic score indicates benchmark saturation, not generalization" if any(float(fold.get("macro_f1", 0)) == 1.0 for candidate in cv_results for fold in candidate.get("folds", [])) or metrics.get("macro_f1") == 1.0 else None
     release_ready = not synthetic and metrics["count"] > 0 and metrics["accuracy"] >= float(config.get("min_accuracy", 0)) and metrics["reject_false_accept_rate"] <= float(config.get("max_reject_false_accept_rate", 1)) and top_threshold > 0 and margin > 0
