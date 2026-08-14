@@ -142,7 +142,7 @@ def main(argv=None):
     metadata = {"model_id": f'{selected_candidate["model"]}-glyph-v1', "catalog_id": _sha256(catalog), "preprocessing_id": _sha256(base / "preprocessing-v1.json"), "training_id": _sha256(config_path), "dataset_id": _sha256(seeds, players), "temperature": temperature, "top_threshold": top_threshold, "margin": margin, "metrics": metrics, "release_ready": release_ready, "selected_candidate": selected_candidate, "cross_validation": {"candidates": cv_results, "winner": winner}, "partition": {"seed": seed, "fold_hashes": [_partition_hash(fold) for fold in partitions["folds"]], "test_hash": _partition_hash(test_rows), "calibration_hash": _partition_hash(calibration_rows), "train_lineages": len({row["lineage_group"] for row in final_train}), "calibration_lineages": len({row["lineage_group"] for row in calibration_rows}), "test_lineages": len({row["lineage_group"] for row in test_rows})}, "benchmark_warning": warning}
     output.parent.mkdir(parents=True, exist_ok=True); temporary = Path(tempfile.mkdtemp(prefix=output.name + ".", dir=output.parent)); backup = output.with_name(output.name + ".previous")
     try:
-        export_bundle(selected, _tensor(test_rows[:1], torch), temporary, labels, metadata=metadata)
+        export_bundle(selected, _tensor(calibration_rows[:1], torch), temporary, labels, metadata=metadata)
         if backup.exists(): shutil.rmtree(backup)
         if output.exists(): output.replace(backup)
         try: temporary.replace(output)
