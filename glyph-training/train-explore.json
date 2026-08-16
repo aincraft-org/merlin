@@ -1,0 +1,22 @@
+{
+  "profile": "synthetic-development",
+  "catalog": "catalog-v1.json",
+  "generated_corpus": "dataset/generated/dev-basic-v1/corpus.jsonl",
+  "preprocessing": "preprocessing-v1.json",
+  "generated_manifest": "dataset/generated/dev-basic-v1/manifest.json",
+  "output": "artifacts/dev-basic-v1-explore",
+  "seed": 1729,
+  "device": "cuda",
+  "folds": 2,
+  "test_ratio": 0.15,
+  "epochs": 100,
+  "embedding_dim": 32,
+  "optimizer": "rmsprop",
+  "label_smoothing": 0.0,
+  "training_augmentations": 0,
+  "learning_rate": 0.003,
+  "selection_metric": "val_macro_f1",
+  "patience": 0,
+  "min_accuracy": 0.0,
+  "max_reject_false_accept_rate": 1.0
+}
