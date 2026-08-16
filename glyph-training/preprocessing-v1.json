@@ -7,7 +7,8 @@
   "canvas": [128, 128],
   "resampling": "arc-length",
   "rasterization": "round-brush-full-canvas",
-  "raster_downsample": "2x2-max",
-  "raster_matches": "GlyphRasterizer.renderFull",
+  "raster_normalize": "padded-ink-crop",
+  "raster_padding": 4,
+  "raster_matches": "GlyphRasterizer.renderNormalized",
   "seed_examples": []
 }

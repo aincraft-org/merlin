@@ -23,7 +23,8 @@ class Example:
 
 def test_raster_is_connected_brush_bit_image_not_resampled_dots():
     raster = preprocess_example(Example([Stroke([Point(8, 32), Point(120, 32)], 6.0)]))["raster"][0]
-    inked = np.where(raster[16] > 0)[0]
+    row = raster[int(np.argmax(raster.sum(axis=1)))]
+    inked = np.where(row > 0)[0]
     assert inked.size >= 50
     assert inked.min() <= 5 and inked.max() >= 58
     assert inked[-1] - inked[0] + 1 == len(inked)
@@ -40,6 +41,15 @@ def test_one_point_stroke_raster_is_round_dab():
     assert raster[32, 32] == 1.0
     assert raster[32, 31] == 1.0 and raster[31, 32] == 1.0
     assert raster[0, 0] == 0.0
+
+
+def test_translated_glyph_has_the_same_model_features():
+    center = Example([Stroke([Point(20, 32), Point(108, 32)], 6.0)])
+    shifted = Example([Stroke([Point(20, 96), Point(108, 96)], 6.0)])
+    a = preprocess_example(center)
+    b = preprocess_example(shifted)
+    assert np.array_equal(a["raster"], b["raster"])
+    np.testing.assert_allclose(a["vectors"][0, :, :2], b["vectors"][0, :, :2], atol=1e-5)
 
 
 def test_catalog_heal_raster_is_a_solid_plus():

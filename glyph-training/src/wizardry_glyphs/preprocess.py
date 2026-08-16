@@ -9,6 +9,7 @@ import numpy as np
 FEATURES = ("x", "y", "dx", "dy", "progress", "pen_down", "stroke_start", "brush_width")
 CANVAS = 128
 RASTER = 64
+NORMALIZE_PADDING = 4
 
 
 def _value(obj: Any, name: str, default: Any = None) -> Any:
@@ -94,10 +95,39 @@ def rasterize_full(usable: list[tuple[list[tuple[float, float]], float]]) -> np.
     return pixels
 
 
-def rasterize_model(usable: list[tuple[list[tuple[float, float]], float]]) -> np.ndarray:
-    """Downsample the full canvas to the 64×64 model raster with 2×2 max-pool."""
+def padded_ink_bounds(full: np.ndarray, padding: int = NORMALIZE_PADDING) -> tuple[int, int, int, int] | None:
+    ink = np.argwhere(full > 0)
+    if ink.size == 0:
+        return None
+    min_y, min_x = (int(value) for value in ink.min(axis=0))
+    max_y, max_x = (int(value) for value in ink.max(axis=0))
+    return (
+        max(0, min_x - padding),
+        max(0, min_y - padding),
+        min(CANVAS - 1, max_x + padding),
+        min(CANVAS - 1, max_y + padding),
+    )
+
+
+def resample_normalized(full: np.ndarray, bounds: tuple[int, int, int, int], size: int = RASTER) -> np.ndarray:
+    min_x, min_y, max_x, max_y = bounds
+    width, height = max_x - min_x + 1, max_y - min_y + 1
+    out = np.zeros((size, size), dtype=np.float32)
+    for y in range(size):
+        for x in range(size):
+            sx = min_x + int(x * width / size)
+            sy = min_y + int(y * height / size)
+            out[y, x] = full[sy, sx]
+    return out
+
+
+def rasterize_model(usable: list[tuple[list[tuple[float, float]], float]]) -> tuple[np.ndarray, tuple[int, int, int, int] | None]:
+    """64×64 padded crop of the full-canvas brush bitmap. Placement is not a class feature."""
     full = rasterize_full(usable)
-    return np.maximum.reduce((full[0::2, 0::2], full[0::2, 1::2], full[1::2, 0::2], full[1::2, 1::2]))
+    bounds = padded_ink_bounds(full)
+    if bounds is None:
+        return np.zeros((RASTER, RASTER), dtype=np.float32), None
+    return resample_normalized(full, bounds), bounds
 
 
 def preprocess_example(example: Any) -> dict[str, np.ndarray]:
@@ -112,14 +142,18 @@ def preprocess_example(example: Any) -> dict[str, np.ndarray]:
 
     vectors = np.zeros((64, 32, 8), dtype=np.float32)
     mask = np.zeros((64, 32), dtype=np.bool_)
-    raster = rasterize_model(usable)
+    raster, bounds = rasterize_model(usable)
+    min_x, min_y, max_x, max_y = bounds if bounds is not None else (0, 0, CANVAS - 1, CANVAS - 1)
+    span_x = max(max_x - min_x + 1, 1)
+    span_y = max(max_y - min_y + 1, 1)
     slots = min(64, len(usable))
     for si, (raw, brush) in enumerate(usable[:slots]):
         pts = _resample(raw, 32)
         for pi, (x, y) in enumerate(pts):
             x = min(127.999999, max(0.0, x)); y = min(127.999999, max(0.0, y))
             prev = pts[pi - 1] if pi else pts[pi]
-            dx, dy = (x - prev[0]) / 128.0, (y - prev[1]) / 128.0
-            vectors[si, pi] = (x / 128.0, y / 128.0, dx, dy, pi / 31.0, float(pi > 0), float(pi == 0), min(32.0, max(0.0, brush)) / 32.0)
+            nx, ny = (x - min_x) / span_x, (y - min_y) / span_y
+            dx, dy = (x - prev[0]) / span_x, (y - prev[1]) / span_y
+            vectors[si, pi] = (nx, ny, dx, dy, pi / 31.0, float(pi > 0), float(pi == 0), min(32.0, max(0.0, brush)) / 32.0)
             mask[si, pi] = True
     return {"vectors": vectors, "mask": mask, "raster": raster[None, ...]}

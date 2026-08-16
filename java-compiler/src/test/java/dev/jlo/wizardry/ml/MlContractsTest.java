@@ -5,7 +5,14 @@ final class MlContractsTest {
  @Test void preprocessingShapeOrderAndMasks(){var d=new GlyphDraft(List.of(new GlyphStroke(List.of(new GlyphPoint(0,0),new GlyphPoint(127,127)),2,0))); var p=new GlyphPreprocessor().preprocess(d); assertEquals(64,p.vectors().length); assertEquals(32,p.vectors()[0].length); assertEquals(8,p.vectors()[0][0].length); assertTrue(p.mask()[0][0]); assertEquals(1f,p.vectors()[0][0][6]); assertEquals(1f,p.vectors()[0][31][4]); assertEquals(1f,p.raster()[0][63][63]); }
  @Test void rasterIsConnectedBrushBitImageNotResampledDots() {
   var draft = new GlyphDraft(List.of(new GlyphStroke(List.of(new GlyphPoint(8, 32), new GlyphPoint(120, 32)), 6, 0)));
-  var row = new GlyphPreprocessor().preprocess(draft).raster()[0][16];
+  var raster = new GlyphPreprocessor().preprocess(draft).raster()[0];
+  int best = 0, bestInk = -1;
+  for (int y = 0; y < 64; y++) {
+    int inked = 0;
+    for (int x = 0; x < 64; x++) if (raster[y][x] > 0) inked++;
+    if (inked > bestInk) { bestInk = inked; best = y; }
+  }
+  var row = raster[best];
   int first = -1, last = -1, ink = 0;
   for (int x = 0; x < 64; x++) if (row[x] > 0) { if (first < 0) first = x; last = x; ink++; }
   assertTrue(ink >= 50, "expected a solid brush shaft, got " + ink + " pixels");
@@ -23,6 +30,14 @@ final class MlContractsTest {
   assertEquals(1f, raster[32][31]);
   assertEquals(1f, raster[31][32]);
   assertEquals(0f, raster[0][0]);
+ }
+ @Test void translatedGlyphHasTheSameModelFeatures() {
+  var center = new GlyphPreprocessor().preprocess(new GlyphDraft(List.of(new GlyphStroke(List.of(new GlyphPoint(20, 32), new GlyphPoint(108, 32)), 6, 0))));
+  var shifted = new GlyphPreprocessor().preprocess(new GlyphDraft(List.of(new GlyphStroke(List.of(new GlyphPoint(20, 96), new GlyphPoint(108, 96)), 6, 0))));
+  assertArrayEquals(center.raster()[0][32], shifted.raster()[0][32]);
+  for (int y = 0; y < 64; y++) assertArrayEquals(center.raster()[0][y], shifted.raster()[0][y]);
+  assertEquals(center.vectors()[0][0][0], shifted.vectors()[0][0][0], 1e-5);
+  assertEquals(center.vectors()[0][0][1], shifted.vectors()[0][0][1], 1e-5);
  }
  @Test void emptyRejected(){assertThrows(IllegalArgumentException.class,()->new GlyphPreprocessor().preprocess(GlyphDraft.empty()));}
  private static int countInk(float[][] raster) {
