@@ -80,7 +80,7 @@ def test_retrained_bundle_classifies_catalog_heal_and_ignores_placement():
         pytest.skip("corrected training bundle not present")
     import torch
     try:
-        model, labels = load_checkpoint(BUNDLE / "model.pt", torch)
+        model, labels, calibration = load_checkpoint(BUNDLE / "model.pt", torch)
     except RuntimeError:
         pytest.skip("bundle predates the order-sensitive encoder")
     catalog = json.loads((BUNDLE.parents[1] / "catalog-geometry-v1.json").read_text())
@@ -88,7 +88,27 @@ def test_retrained_bundle_classifies_catalog_heal_and_ignores_placement():
                for stroke in catalog["glyphs"]["heal"]["templates"][0]["strokes"]]
     shifted = [{"points": [{"x": min(127.5, p["x"]), "y": min(127.5, p["y"] + 40)} for p in stroke["points"]],
                 "brush_width": 6.0} for stroke in strokes]
-    center = classify_strokes(strokes, model, labels, torch)
-    moved = classify_strokes(shifted, model, labels, torch)
+    center = classify_strokes(strokes, model, labels, torch, calibration=calibration)
+    moved = classify_strokes(shifted, model, labels, torch, calibration=calibration)
+    assert center["accepted"] is True
     assert center["label"] == "heal"
     assert moved["label"] == "heal"
+
+
+def test_bundle_does_not_force_a_class_on_a_lone_dab_or_scribble():
+    if not (BUNDLE / "model.pt").is_file():
+        pytest.skip("corrected training bundle not present")
+    import torch
+    try:
+        model, labels, calibration = load_checkpoint(BUNDLE / "model.pt", torch)
+    except RuntimeError:
+        pytest.skip("bundle predates the order-sensitive encoder")
+    dab = classify_strokes([{"points": [{"x": 64, "y": 64}], "brush_width": 6.0}], model, labels, torch, calibration=calibration)
+    scribble = classify_strokes(
+        [{"points": [{"x": 20, "y": 20}, {"x": 40, "y": 80}, {"x": 70, "y": 30}, {"x": 100, "y": 90}], "brush_width": 6.0}],
+        model, labels, torch, calibration=calibration,
+    )
+    assert dab["accepted"] is False
+    assert dab["label"] == "reject"
+    assert scribble["accepted"] is False
+    assert scribble["label"] == "reject"

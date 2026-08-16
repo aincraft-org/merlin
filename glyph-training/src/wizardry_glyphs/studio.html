@@ -135,9 +135,14 @@
         document.getElementById("status").textContent = data.error || "classify failed";
         return;
       }
-      document.getElementById("label").textContent = data.label;
-      document.getElementById("score").textContent = (data.score * 100).toFixed(1) + "%";
-      document.getElementById("bar").style.width = (data.score * 100).toFixed(1) + "%";
+      if (data.accepted) {
+        document.getElementById("label").textContent = data.label;
+        document.getElementById("score").textContent = (data.score * 100).toFixed(1) + "%";
+      } else {
+        document.getElementById("label").textContent = "not a glyph";
+        document.getElementById("score").textContent = (data.reason || "rejected") + (data.suggestion ? ` · looks a bit like ${data.suggestion}` : "");
+      }
+      document.getElementById("bar").style.width = data.accepted ? (data.score * 100).toFixed(1) + "%" : "0%";
       document.getElementById("order").textContent = `${data.stroke_count} stroke${data.stroke_count===1?"":"s"} in draw order`;
       document.getElementById("cands").innerHTML = data.candidates.slice(0, 8).map(item =>
         `<div class="cand"><span>${item.label}</span><span>${(item.score * 100).toFixed(1)}%</span></div>`

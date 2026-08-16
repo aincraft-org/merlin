@@ -16,13 +16,16 @@ ROOT = Path(__file__).resolve().parents[2]
 PAGE = Path(__file__).with_name("studio.html")
 
 
-def classify_request(payload: dict, model, labels, torch) -> dict:
+def classify_request(payload: dict, model, labels, torch, calibration=None) -> dict:
     strokes = payload.get("strokes")
     if not isinstance(strokes, list) or not strokes:
         raise ValueError("strokes required")
-    result = classify_strokes(strokes, model, labels, torch)
+    result = classify_strokes(strokes, model, labels, torch, calibration=calibration)
     return {
         "label": result["label"],
+        "accepted": result["accepted"],
+        "reason": result["reason"],
+        "suggestion": result["suggestion"],
         "score": result["score"],
         "candidates": result["candidates"],
         "raster": result["raster"].astype(np.float32).tolist(),
@@ -49,10 +52,10 @@ def catalog_previews(catalog_path: Path | None = None) -> list[dict]:
 
 
 def load_studio_model(bundle: Path, torch):
-    model, labels = load_checkpoint(bundle / "model.pt", torch)
-    if labels is None:
+    model, labels, calibration = load_checkpoint(bundle / "model.pt", torch)
+    if not labels:
         labels = json.loads((bundle / "manifest.json").read_text())["labels"]
-    return model, labels
+    return model, labels, calibration
 
 
 class StudioHandler(BaseHTTPRequestHandler):
@@ -60,6 +63,7 @@ class StudioHandler(BaseHTTPRequestHandler):
     labels = None
     torch = None
     previews = None
+    calibration = None
 
     def log_message(self, format, *args):
         return
@@ -94,17 +98,18 @@ class StudioHandler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length)
         try:
             payload = json.loads(raw.decode())
-            self._json(200, classify_request(payload, type(self).model, type(self).labels, type(self).torch))
+            self._json(200, classify_request(payload, type(self).model, type(self).labels, type(self).torch, type(self).calibration))
         except (ValueError, json.JSONDecodeError) as exc:
             self._json(400, {"error": str(exc)})
 
 
 def serve(bundle: Path, host: str = "127.0.0.1", port: int = 8765):
     import torch
-    model, labels = load_studio_model(bundle, torch)
+    model, labels, calibration = load_studio_model(bundle, torch)
     StudioHandler.model = model
     StudioHandler.labels = labels
     StudioHandler.torch = torch
+    StudioHandler.calibration = calibration
     StudioHandler.previews = catalog_previews()
     server = ThreadingHTTPServer((host, port), StudioHandler)
     print(f"glyph studio http://{host}:{port}  labels={len(labels)}  bundle={bundle}")

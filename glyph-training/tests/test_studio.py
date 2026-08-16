@@ -29,6 +29,7 @@ def test_classify_request_uses_shipped_classifier():
     payload = classify_request({"strokes": heal_strokes}, model, labels, torch)
     direct = classify_strokes(heal_strokes, model, labels, torch)
     assert payload["label"] == direct["label"] == "heal"
+    assert payload["accepted"] is True
     assert payload["raster"] == direct["raster"].tolist()
 
 
