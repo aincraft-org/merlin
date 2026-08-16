@@ -73,7 +73,8 @@ def test_fused_head_consumes_embeddings():
     torch = pytest.importorskip("torch")
     from wizardry_glyphs.model import FusedClassifier
     model = FusedClassifier()
-    assert model.head.in_features == model.vector.point[-1].out_features * 2
+    assert model.vector_head.in_features == model.vector.point[-1].out_features
+    assert model.raster_head.in_features == model.raster.projection.out_features
 
 
 def test_raster_encoder_preserves_spatial_layout():
