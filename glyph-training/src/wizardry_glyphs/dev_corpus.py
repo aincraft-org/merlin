@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from .schema import load_examples
 PROFILE="synthetic-development"; SCHEMA_VERSION="glyph-dataset-v1"
-POSITIVE_LABELS=("target-ray","damage","heal","push","cooldown","self","target","physical","fire","frost","arcane")
+POSITIVE_LABELS=("target-ray","damage","heal","push","cooldown","self","target","physical","fire","frost","arcane","on-hit","on-hurt","on-use","periodic","if-health","if-undead","if-outdoors","shield","attacker","area","repeat","charges")
 LABELS=(*POSITIVE_LABELS,"reject"); MIN_TEMPLATES=6
 FINGERPRINT_QUANTIZATION=1e-3
 PROVENANCE_CONFLICT="independent_source conflict within lineage"

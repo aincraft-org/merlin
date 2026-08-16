@@ -10,7 +10,11 @@ from typing import Any
 
 LABELS = (
     "target-ray", "damage", "heal", "push", "cooldown", "self", "target",
-    "physical", "fire", "frost", "arcane", "reject"
+    "physical", "fire", "frost", "arcane",
+    "on-hit", "on-hurt", "on-use", "periodic",
+    "if-health", "if-undead", "if-outdoors",
+    "shield", "attacker", "area", "repeat", "charges",
+    "reject",
 )
 LABEL_SET = frozenset(LABELS)
 SOURCES = frozenset({"canonical", "synthetic", "player", "reject"})

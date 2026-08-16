@@ -46,7 +46,7 @@ def test_catalog_heal_raster_is_a_solid_plus():
     catalog = json.loads((Path(__file__).resolve().parents[1] / "catalog-geometry-v1.json").read_text())
     strokes = [
         Stroke([Point(float(x), float(y)) for x, y in stroke], catalog["brush_width"])
-        for stroke in catalog["glyphs"]["heal"]["strokes"]
+        for stroke in catalog["glyphs"]["heal"]["templates"][0]["strokes"]
     ]
     raster = preprocess_example(Example(strokes))["raster"][0]
     horizontal = np.where(raster[32] > 0)[0]

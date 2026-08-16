@@ -3,6 +3,8 @@ from __future__ import annotations
 import torch
 from torch import nn
 
+from .schema import LABELS
+
 class VectorEncoder(nn.Module):
     """Encode padded stroke vectors while respecting point and stroke masks."""
 
@@ -36,14 +38,17 @@ class VectorEncoder(nn.Module):
 class RasterEncoder(nn.Module):
     def __init__(self, embedding_dim: int = 32) -> None:
         super().__init__()
-        self.net = nn.Sequential(nn.Conv2d(1, 8, 3, padding=1), nn.ReLU(), nn.AdaptiveAvgPool2d(1))
-        self.projection = nn.Linear(8, embedding_dim)
+        self.net = nn.Sequential(
+            nn.Conv2d(1, 8, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+            nn.Conv2d(8, 16, 3, padding=1), nn.ReLU(), nn.AdaptiveAvgPool2d((4, 4)),
+        )
+        self.projection = nn.Linear(16 * 4 * 4, embedding_dim)
 
     def forward(self, raster: torch.Tensor) -> torch.Tensor:
         return self.projection(self.net(raster).flatten(1))
 
 class VectorClassifier(nn.Module):
-    def __init__(self, classes: int = 12, embedding_dim: int = 32) -> None:
+    def __init__(self, classes: int = len(LABELS), embedding_dim: int = 32) -> None:
         super().__init__()
         self.encoder = VectorEncoder(embedding_dim)
         self.head = nn.Linear(embedding_dim, classes)
@@ -56,7 +61,7 @@ class VectorClassifier(nn.Module):
 
 
 class RasterClassifier(nn.Module):
-    def __init__(self, classes: int = 12, embedding_dim: int = 32) -> None:
+    def __init__(self, classes: int = len(LABELS), embedding_dim: int = 32) -> None:
         super().__init__()
         self.encoder = RasterEncoder(embedding_dim)
         self.head = nn.Linear(embedding_dim, classes)
@@ -69,7 +74,7 @@ class RasterClassifier(nn.Module):
 
 
 class FusedClassifier(nn.Module):
-    def __init__(self, classes: int = 12, embedding_dim: int = 32) -> None:
+    def __init__(self, classes: int = len(LABELS), embedding_dim: int = 32) -> None:
         super().__init__()
         self.vector = VectorEncoder(embedding_dim)
         self.raster = RasterEncoder(embedding_dim)

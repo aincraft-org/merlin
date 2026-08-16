@@ -13,7 +13,13 @@ import java.util.List;
 import java.util.Map;
 
 public final class ModelBundle {
-    private static final List<String> LABEL_IDS = List.of("target-ray", "damage", "heal", "push", "cooldown", "self", "target", "physical", "fire", "frost", "arcane", "reject");
+    private static final List<String> LABEL_IDS = List.of(
+            "target-ray", "damage", "heal", "push", "cooldown", "self", "target",
+            "physical", "fire", "frost", "arcane",
+            "on-hit", "on-hurt", "on-use", "periodic",
+            "if-health", "if-undead", "if-outdoors",
+            "shield", "attacker", "area", "repeat", "charges",
+            "reject");
     private final Path model;
     private final List<Label> labels;
     private final double temperature;
@@ -48,7 +54,7 @@ public final class ModelBundle {
         requireTensor(manifest.path("input_schema"), "vectors", List.of(-1, 64, 32, 8));
         requireTensor(manifest.path("input_schema"), "mask", List.of(-1, 64, 32));
         requireTensor(manifest.path("input_schema"), "raster", List.of(-1, 1, 64, 64));
-        requireTensor(manifest.path("output_schema"), "logits", List.of(-1, 12));
+        requireTensor(manifest.path("output_schema"), "logits", List.of(-1, LABEL_IDS.size()));
         JsonNode calibration = manifest.path("calibration");
         double temperature = finite(calibration, "temperature"), threshold = finite(calibration, "top_threshold"), margin = finite(calibration, "margin");
         if (temperature <= 0 || threshold < 0 || threshold > 1 || margin < 0 || margin > 1) throw new BundleException("invalid calibration");

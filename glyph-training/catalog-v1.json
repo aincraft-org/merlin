@@ -12,6 +12,18 @@
     {"id": "fire", "display_name": "Fire"},
     {"id": "frost", "display_name": "Frost"},
     {"id": "arcane", "display_name": "Arcane"},
+    {"id": "on-hit", "display_name": "On Hit"},
+    {"id": "on-hurt", "display_name": "On Hurt"},
+    {"id": "on-use", "display_name": "On Use"},
+    {"id": "periodic", "display_name": "Periodic"},
+    {"id": "if-health", "display_name": "If Health"},
+    {"id": "if-undead", "display_name": "If Undead"},
+    {"id": "if-outdoors", "display_name": "If Outdoors"},
+    {"id": "shield", "display_name": "Shield"},
+    {"id": "attacker", "display_name": "Attacker"},
+    {"id": "area", "display_name": "Area"},
+    {"id": "repeat", "display_name": "Repeat"},
+    {"id": "charges", "display_name": "Charges"},
     {"id": "reject", "display_name": "Reject"}
   ]
 }

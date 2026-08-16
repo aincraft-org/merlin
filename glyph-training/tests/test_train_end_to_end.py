@@ -5,12 +5,12 @@ from pathlib import Path
 import pytest
 
 from wizardry_glyphs.schema import LABELS
-from wizardry_glyphs.train import main
+from wizardry_glyphs.train import _resolve_device, main
 
 
 def _stroke(label_index, variant):
-    x = 4 + label_index * 9
-    y = 5 + variant
+    x = 4 + (label_index * 9) % 110
+    y = 5 + (variant % 110)
     return [{"points": [{"x": x, "y": y}, {"x": min(127, x + 5), "y": min(127, y + 6)}], "brush_width": 1, "started_at_millis": 0}]
 
 
@@ -33,9 +33,9 @@ def _complete_config(tmp_path):
     seeds, players = [], []
     for label_index, label in enumerate(positives):
         for variant in range(3):
-            seeds.append(_record(f"seed-{label}-{variant}", label, "canonical", f"seed-group-{variant}", _stroke(label_index, variant)))
+            seeds.append(_record(f"seed-{label}-{variant}", label, "canonical", f"seed-group-{label}-{variant}", _stroke(label_index, variant)))
         for sample in range(100):
-            group = f"player-group-{sample % 10}"
+            group = f"player-group-{label}-{sample % 10}"
             players.append(_record(f"player-{label}-{sample}", label, "player", group, _stroke(label_index, sample % 3), True))
     for sample in range(100):
         group = f"reject-group-{sample % 10}"
@@ -63,6 +63,18 @@ def _complete_config(tmp_path):
     return config
 
 
+def test_cuda_device_is_required_when_configured(monkeypatch):
+    import torch
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    with pytest.raises(RuntimeError, match="CUDA training requested but CUDA is unavailable"):
+        _resolve_device({"device": "cuda"}, torch)
+
+
+def test_cpu_device_remains_available():
+    import torch
+    assert _resolve_device({"device": "cpu"}, torch) == torch.device("cpu")
+
+
 def test_complete_corpus_trains_and_exports_java_compatible_bundle(tmp_path):
     config = _complete_config(tmp_path)
     assert main(["--config", str(config)]) in (0, 3)
@@ -77,6 +89,42 @@ def test_complete_corpus_trains_and_exports_java_compatible_bundle(tmp_path):
     assert manifest["metrics"]["count"] > 0
     assert manifest["calibration"]["temperature"] > 0
     assert manifest["files"]["model.onnx"]
+    assert manifest["training_device"] == "cpu"
+    assert manifest["gpu_name"] is None
+    assert manifest["hyperparameters"]["epochs"] == 1
+    assert manifest["hyperparameters"]["training_augmentations"] == 0
+    assert manifest["profile"] == "production"
+    assert manifest["source"] == "reviewed-player"
+    assert (artifact / "model.pt").is_file()
+    assert manifest["files"]["model.pt"]
+    import torch
+    checkpoint = torch.load(artifact / "model.pt", map_location="cpu", weights_only=True)
+    assert checkpoint
+    import onnx
+    assert [item.version for item in onnx.load(artifact / "model.onnx").opset_import if item.domain in ("", "ai.onnx")] == [17]
+
+
+def test_synthetic_development_rejects_release_ready_manifest(tmp_path, capsys):
+    config = _complete_config(tmp_path)
+    value = json.loads(config.read_text())
+    value["profile"] = "synthetic-development"
+    value["generated_corpus"] = value.pop("seeds")
+    manifest = tmp_path / "synthetic-manifest.json"
+    corpus = tmp_path / value["generated_corpus"]
+    counts = {label: 0 for label in LABELS}
+    groups = {label: [] for label in LABELS}
+    for record in map(json.loads, corpus.read_text().splitlines()):
+        counts[record["label"]] += 1
+        groups[record["label"]].append(record["split_group"])
+    manifest.write_text(json.dumps({
+        "profile": "synthetic-development", "source": "synthetic", "release_ready": True,
+        "counts": counts, "groups": {label: sorted(set(items)) for label, items in groups.items()},
+        "corpus_sha256": hashlib.sha256(corpus.read_bytes()).hexdigest(),
+    }))
+    value["generated_manifest"] = manifest.name
+    config.write_text(json.dumps(value))
+    assert main(["--config", str(config)]) == 2
+    assert "release_ready must be false" in capsys.readouterr().out
 
 def test_checkpoint_is_reloadable_in_fresh_cpu_process(tmp_path):
     config = _complete_config(tmp_path)

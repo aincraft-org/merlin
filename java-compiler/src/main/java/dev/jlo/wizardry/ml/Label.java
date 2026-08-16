@@ -2,7 +2,11 @@ package dev.jlo.wizardry.ml;
 
 public enum Label {
     TARGET_RAY("target-ray"), DAMAGE("damage"), HEAL("heal"), PUSH("push"), COOLDOWN("cooldown"),
-    SELF("self"), TARGET("target"), PHYSICAL("physical"), FIRE("fire"), FROST("frost"), ARCANE("arcane"), REJECT("reject");
+    SELF("self"), TARGET("target"), PHYSICAL("physical"), FIRE("fire"), FROST("frost"), ARCANE("arcane"),
+    ON_HIT("on-hit"), ON_HURT("on-hurt"), ON_USE("on-use"), PERIODIC("periodic"),
+    IF_HEALTH("if-health"), IF_UNDEAD("if-undead"), IF_OUTDOORS("if-outdoors"),
+    SHIELD("shield"), ATTACKER("attacker"), AREA("area"), REPEAT("repeat"), CHARGES("charges"),
+    REJECT("reject");
     private final String id;
     Label(String id) { this.id = id; }
     public String id() { return id; }
