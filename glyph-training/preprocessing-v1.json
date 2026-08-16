@@ -6,5 +6,8 @@
   "raster_shape": [1, 64, 64],
   "canvas": [128, 128],
   "resampling": "arc-length",
+  "rasterization": "round-brush-full-canvas",
+  "raster_downsample": "2x2-max",
+  "raster_matches": "GlyphRasterizer.renderFull",
   "seed_examples": []
 }
