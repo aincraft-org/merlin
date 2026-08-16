@@ -31,6 +31,12 @@ def test_classify_request_uses_shipped_classifier():
     assert payload["label"] == direct["label"] == "heal"
     assert payload["accepted"] is True
     assert payload["raster"] == direct["raster"].tolist()
+    rejected = classify_request(
+        {"strokes": heal_strokes[:1]}, model, labels, torch,
+        required_strokes={"heal": frozenset({2}), "damage": frozenset({2})},
+    )
+    assert rejected["accepted"] is False
+    assert rejected["reason"] == "wrong_structure"
 
 
 def test_catalog_previews_cover_composition_roles():

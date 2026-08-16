@@ -112,3 +112,48 @@ def test_bundle_does_not_force_a_class_on_a_lone_dab_or_scribble():
     assert dab["label"] == "reject"
     assert scribble["accepted"] is False
     assert scribble["label"] == "reject"
+
+
+def test_catalog_required_strokes_use_template_stroke_counts():
+    from wizardry_glyphs.classify import catalog_required_strokes
+
+    counts = catalog_required_strokes(BUNDLE.parents[1] / "catalog-geometry-v1.json")
+    assert counts["heal"] == frozenset({2})
+    assert counts["target"] == frozenset({3})
+    assert counts["charges"] == frozenset({3})
+    assert "reject" not in counts
+
+
+def test_bundle_rejects_confident_fragments_with_the_wrong_stroke_count():
+    if not (BUNDLE / "model.pt").is_file():
+        pytest.skip("corrected training bundle not present")
+    import torch
+    from wizardry_glyphs.classify import catalog_required_strokes
+
+    try:
+        model, labels, calibration = load_checkpoint(BUNDLE / "model.pt", torch)
+    except RuntimeError:
+        pytest.skip("bundle predates the order-sensitive encoder")
+    required = catalog_required_strokes(BUNDLE.parents[1] / "catalog-geometry-v1.json")
+    catalog = json.loads((BUNDLE.parents[1] / "catalog-geometry-v1.json").read_text())
+    heal = [{"points": [{"x": x, "y": y} for x, y in stroke], "brush_width": 6.0}
+            for stroke in catalog["glyphs"]["heal"]["templates"][0]["strokes"]]
+    dash = classify_strokes(
+        [{"points": [{"x": 40, "y": 64}, {"x": 70, "y": 64}], "brush_width": 6.0}],
+        model, labels, torch, calibration=calibration, required_strokes=required,
+    )
+    cross = classify_strokes(
+        [
+            {"points": [{"x": 20, "y": 20}, {"x": 108, "y": 108}], "brush_width": 6.0},
+            {"points": [{"x": 108, "y": 20}, {"x": 20, "y": 108}], "brush_width": 6.0},
+        ],
+        model, labels, torch, calibration=calibration, required_strokes=required,
+    )
+    accepted = classify_strokes(heal, model, labels, torch, calibration=calibration, required_strokes=required)
+    assert dash["accepted"] is False
+    assert dash["reason"] == "wrong_structure"
+    assert dash["label"] == "reject"
+    assert cross["accepted"] is False
+    assert cross["reason"] == "wrong_structure"
+    assert accepted["accepted"] is True
+    assert accepted["label"] == "heal"

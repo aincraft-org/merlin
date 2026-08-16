@@ -58,12 +58,28 @@ def example_from_strokes(strokes) -> _Example:
     return _Example(parsed)
 
 
+def catalog_required_strokes(path: Path) -> dict[str, frozenset[int]]:
+    catalog = json.loads(Path(path).read_text())
+    required: dict[str, frozenset[int]] = {}
+    for label, spec in catalog.get("glyphs", {}).items():
+        if label == "reject" or not isinstance(spec, dict):
+            continue
+        counts = {
+            len(template["strokes"])
+            for template in spec.get("templates") or ()
+            if isinstance(template, dict) and template.get("strokes")
+        }
+        if counts:
+            required[label] = frozenset(counts)
+    return required
+
+
 def _full_ink(example) -> int:
     usable = [([(point.x, point.y) for point in stroke.points], stroke.brush_width) for stroke in example.strokes]
     return int((rasterize_full(usable) > 0).sum())
 
 
-def classify_strokes(strokes, model, labels, torch, *, device=None, calibration=None) -> dict:
+def classify_strokes(strokes, model, labels, torch, *, device=None, calibration=None, required_strokes=None) -> dict:
     example = example_from_strokes(strokes)
     arrays = preprocess_example(example)
     if device is None:
@@ -82,11 +98,15 @@ def classify_strokes(strokes, model, labels, torch, *, device=None, calibration=
     top = candidates[0]
     runner_up = candidates[1]["score"] if len(candidates) > 1 else 0.0
     ink = _full_ink(example)
+    stroke_count = int(arrays["mask"].sum(axis=1).astype(bool).sum())
+    allowed = (required_strokes or {}).get(top["label"])
     reason = None
     if ink < MIN_FULL_INK:
         reason = "too_little_ink"
     elif top["label"] == "reject":
         reason = "reject_class"
+    elif allowed is not None and stroke_count not in allowed:
+        reason = "wrong_structure"
     elif top["score"] < top_threshold or (top["score"] - runner_up) < margin:
         reason = "low_confidence"
     accepted = reason is None
@@ -98,7 +118,7 @@ def classify_strokes(strokes, model, labels, torch, *, device=None, calibration=
         "score": top["score"],
         "candidates": candidates,
         "raster": arrays["raster"][0],
-        "stroke_count": int(arrays["mask"].sum(axis=1).astype(bool).sum()),
+        "stroke_count": stroke_count,
         "ink": ink,
     }
 

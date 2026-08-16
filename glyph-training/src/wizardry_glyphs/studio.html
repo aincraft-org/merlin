@@ -33,7 +33,7 @@
   <header>
     <div>
       <h1>Glyph studio</h1>
-      <p>Draw on the 128×128 map. Classification uses the same padded crop the trainer uses, so placement should not matter.</p>
+      <p>Draw on the 128×128 map. Placement does not matter. Incomplete marks and the wrong stroke count stay unlabeled.</p>
     </div>
     <p id="status">loading catalog…</p>
   </header>
@@ -51,7 +51,7 @@
       <h2>Model view</h2>
       <div class="guess" id="label">—</div>
       <div class="score" id="score"></div>
-      <p id="order" style="color:#94a3b8;font-size:13px">Stroke order is part of the vector. Draw strokes in the catalog sequence.</p>
+      <p id="order" style="color:#94a3b8;font-size:13px">Stroke count and order are part of the glyph. A dash is not a crosshair.</p>
       <div class="bar"><span id="bar" style="width:0"></span></div>
       <div id="cands"></div>
       <p>What the model sees (64×64 crop)</p>

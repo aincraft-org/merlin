@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .classify import classify_strokes, example_from_strokes, load_checkpoint
+from .classify import catalog_required_strokes, classify_strokes, example_from_strokes, load_checkpoint
 from .preprocess import preprocess_example
 
 
@@ -16,11 +16,13 @@ ROOT = Path(__file__).resolve().parents[2]
 PAGE = Path(__file__).with_name("studio.html")
 
 
-def classify_request(payload: dict, model, labels, torch, calibration=None) -> dict:
+def classify_request(payload: dict, model, labels, torch, calibration=None, required_strokes=None) -> dict:
     strokes = payload.get("strokes")
     if not isinstance(strokes, list) or not strokes:
         raise ValueError("strokes required")
-    result = classify_strokes(strokes, model, labels, torch, calibration=calibration)
+    result = classify_strokes(
+        strokes, model, labels, torch, calibration=calibration, required_strokes=required_strokes,
+    )
     return {
         "label": result["label"],
         "accepted": result["accepted"],
@@ -64,6 +66,7 @@ class StudioHandler(BaseHTTPRequestHandler):
     torch = None
     previews = None
     calibration = None
+    required_strokes = None
 
     def log_message(self, format, *args):
         return
@@ -98,7 +101,10 @@ class StudioHandler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length)
         try:
             payload = json.loads(raw.decode())
-            self._json(200, classify_request(payload, type(self).model, type(self).labels, type(self).torch, type(self).calibration))
+            self._json(200, classify_request(
+                payload, type(self).model, type(self).labels, type(self).torch,
+                type(self).calibration, type(self).required_strokes,
+            ))
         except (ValueError, json.JSONDecodeError) as exc:
             self._json(400, {"error": str(exc)})
 
@@ -110,6 +116,7 @@ def serve(bundle: Path, host: str = "127.0.0.1", port: int = 8765):
     StudioHandler.labels = labels
     StudioHandler.torch = torch
     StudioHandler.calibration = calibration
+    StudioHandler.required_strokes = catalog_required_strokes(ROOT / "catalog-geometry-v1.json")
     StudioHandler.previews = catalog_previews()
     server = ThreadingHTTPServer((host, port), StudioHandler)
     print(f"glyph studio http://{host}:{port}  labels={len(labels)}  bundle={bundle}")
