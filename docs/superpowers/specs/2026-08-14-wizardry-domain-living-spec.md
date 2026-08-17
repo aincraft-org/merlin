@@ -87,7 +87,7 @@ Active surface for the coming implementation wave.
 
 - [ ] EnchantGraph shared model + cost engine (biggest missing capability)
 - [ ] Scribe phrasebook language (line-significant verbs; Paper 26.2 dialog editor; action tape). Spec: `2026-08-17-scribe-phrasebook-language-design.md`
-- [ ] Glyphcraft semantic composition converging on the graph (roles, candidate graph, ambiguity confirmation)
+- [ ] Glyphcraft tome language (glyph maps, typed compound pages, pip clicker, Action-tape compile). Spec: `2026-08-17-glyphcraft-tome-language-design.md`
 - [ ] Canonical persistence/versioning + migration
 - [ ] Scribe↔Glyphcraft equivalence, proven end-to-end
 - [ ] CI coverage for Python and MapGUI in `ci.yml`
@@ -100,6 +100,7 @@ Active surface for the coming implementation wave.
 ### Current notes
 - Concept: `docs/superpowers/specs/2026-08-12-scribe-glyph-enchanting-design.md`.
 - Scribe surface language is the 2026-08-17 phrasebook, not `spell { }` and not the 2026-08-14 English-shaped-code expansion. EnchantGraph remains the long-term runtime input via a later action-tape mapper.
+- Glyphcraft v1 is a book of map pages (one classified glyph per map, pips on the pen overlay). It is not spatial parse of many glyphs on one crop and not a drawn twin of Scribe.
 - Paper 26.2 already exposes `Dialog` + multiline `TextDialogInput`; the chat editor is fallback only.
 
 ## Next
@@ -138,6 +139,9 @@ This living spec is the single north star for the domain. Focused design specs i
 | 2026-08-16 | Classifier vocabulary is the Glyphcraft composition set (24 labels), not the v0 12-op subset | Living spec composition roles (triggers, conditions, shield, attacker, area, repeat, charges) must be classifiable; each label now has 6 independent geometry templates |
 | 2026-08-16 | Model raster/vectors are a padded ink crop, not absolute canvas coordinates | Classification must follow the sigil shape; drawing the same glyph elsewhere on the 128×128 map cannot change the class |
 | 2026-08-17 | Scribe v1 is a closed phrasebook (verb-first lines, indent, implicit at caster), not opcode braces and not free English | Easy to learn; Paper-backed; new power is a new word. Dialog on 26.2 supplies significant lines. |
+| 2026-08-17 | Glyphcraft v1 is typed compounds of map-page glyphs bound into a tome, not many ink marks on one canvas | Classifier is one crop / one label; 128×128 cannot hold a sentence; pips belong to the glyph being authored |
+| 2026-08-17 | Tome page order is display-only; meaning comes from roles + implicits | Avoids concatenative puzzles; fire then damage equals damage then fire |
+| 2026-08-17 | Printed mana lives on the glyph item; spending mana is not in this drop | Cost is visible on the stone; a player mana pool is a later Paper slice |
 
 ## Open questions
 
