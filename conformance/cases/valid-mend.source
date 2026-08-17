@@ -1,4 +1,0 @@
-spell mend {
-  heal self 5;
-  cooldown 8s;
-}

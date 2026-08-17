@@ -1,4 +1,0 @@
-spell empty {
-  target ray 5;
-  cooldown 1s;
-}

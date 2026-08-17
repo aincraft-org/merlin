@@ -1,6 +1,0 @@
-spell unstable {
-  target ray 33;
-  damage target fire 20.01;
-  push target 3.01;
-  cooldown 60.01s;
-}
