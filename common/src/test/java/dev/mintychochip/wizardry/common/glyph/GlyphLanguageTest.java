@@ -132,6 +132,35 @@ final class GlyphLanguageTest {
         assertEquals("G0100", error.diagnostics().getFirst().code());
     }
 
+    @Test void fourPagesIsG0103() {
+        assertEquals("G0103", code(Label.DAMAGE, Label.FIRE, Label.SELF, Label.PHYSICAL));
+    }
+
+    @Test void twoSchoolsIsG0105() {
+        assertEquals("G0105", code(Label.FIRE, Label.FROST, Label.DAMAGE));
+    }
+
+    @Test void twoPatientsIsG0106() {
+        assertEquals("G0106", code(Label.SELF, Label.TARGET, Label.DAMAGE));
+    }
+
+    @Test void damageOneIdentity() {
+        var result = GlyphCompilerImpl.INSTANCE.compile(List.of(new GlyphToken(Label.DAMAGE, 1)));
+        var spell = assertInstanceOf(CompileResult.Ok.class, result).spell();
+        assertEquals("95c2ca180d7ce4539a86fea12a49d323926dd04a085d5bf08ab7c27ee04f55a1",
+                spell.identitySha256());
+    }
+
+    @Test void loneHealTargetsAndLooksAhead() {
+        var result = GlyphCompilerImpl.INSTANCE.compile(List.of(new GlyphToken(Label.HEAL, 1)));
+        var spell = assertInstanceOf(CompileResult.Ok.class, result).spell();
+        assertEquals(2, spell.actions().size());
+        assertInstanceOf(Action.LookAhead.class, spell.actions().get(0));
+        var mend = assertInstanceOf(Action.Mend.class, spell.actions().get(1));
+        assertEquals(Action.Patient.TARGET, mend.patient());
+        assertEquals(1.0, mend.amount());
+    }
+
     private static String code(Label... labels) {
         var tokens = new java.util.ArrayList<GlyphToken>();
         for (var label : labels) tokens.add(new GlyphToken(label, 1));
