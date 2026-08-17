@@ -1,6 +1,7 @@
 package dev.mintychochip.wizardry.paper.mapgui;
 
 import dev.mintychochip.wizardry.api.glyph.GlyphDraft;
+import dev.mintychochip.wizardry.api.glyph.GlyphToken;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -16,6 +17,10 @@ public final class GlyphMapSaveAction {
     }
 
     public boolean save(Player player, UUID expectedId, GlyphDraft draft) {
+        return save(player, expectedId, draft, null);
+    }
+
+    public boolean save(Player player, UUID expectedId, GlyphDraft draft, GlyphToken token) {
         ItemStack held = player.getInventory().getItemInMainHand();
         if (!expectedId.equals(store.itemId(held))) return false;
         Optional<GlyphDraftStoreAdapter.PreparedMapSave> prepared = store.prepareMapSave(held, expectedId, draft);
@@ -24,7 +29,9 @@ public final class GlyphMapSaveAction {
         }
         Optional<ItemStack> replacement = store.commitMapSave(prepared.get(), player.getWorld());
         if (replacement.isEmpty()) return false;
-        player.getInventory().setItemInMainHand(replacement.get());
+        var item = replacement.get();
+        if (token != null) store.saveToken(item, expectedId, token);
+        player.getInventory().setItemInMainHand(item);
         return true;
     }
     static <T> boolean replaceIfStillHeld(

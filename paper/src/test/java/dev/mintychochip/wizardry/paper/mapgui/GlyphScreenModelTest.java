@@ -1,6 +1,7 @@
 package dev.mintychochip.wizardry.paper.mapgui;
 
 import static org.junit.jupiter.api.Assertions.*;
+import dev.mintychochip.wizardry.api.ml.Label;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
@@ -76,5 +77,12 @@ final class GlyphScreenModelTest {
         int strokes = screen.draft().strokes().size();
         screen.stepPips(1);
         assertEquals(strokes, screen.draft().strokes().size());
+    }
+
+    @Test void pendingLabelIsStored() {
+        var screen = new GlyphScreen(new GlyphStrokeTracker(), () -> {}, () -> {});
+        assertNull(screen.pendingLabel());
+        screen.setPendingLabel(Label.DAMAGE);
+        assertEquals(Label.DAMAGE, screen.pendingLabel());
     }
 }

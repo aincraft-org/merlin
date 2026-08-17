@@ -10,6 +10,7 @@ import de.flog99.mapgui.ui.PaintContext;
 import dev.mintychochip.wizardry.api.glyph.GlyphDraft;
 import dev.mintychochip.wizardry.common.glyph.GlyphRasterizer;
 import dev.mintychochip.wizardry.api.ml.Classification;
+import dev.mintychochip.wizardry.api.ml.Label;
 import java.awt.Color;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
@@ -31,6 +32,7 @@ public final class GlyphScreen extends Screen {
     private final BooleanSupplier sneaking;
     private boolean menu;
     private Classification latestClassification;
+    private Label pendingLabel;
     private int pips = 1;
 
     public GlyphScreen(GlyphStrokeTracker tracker, Runnable saveAction, Runnable closeAction) {
@@ -175,4 +177,9 @@ public final class GlyphScreen extends Screen {
     public void classify() { classifyAction.accept(tracker.snapshot()); }
     public void setClassification(Classification classification) { latestClassification = classification; invalidate(); }
     public Classification latestClassification() { return latestClassification; }
+    public void setPendingLabel(Label label) {
+        pendingLabel = label;
+        invalidate();
+    }
+    public Label pendingLabel() { return pendingLabel; }
 }

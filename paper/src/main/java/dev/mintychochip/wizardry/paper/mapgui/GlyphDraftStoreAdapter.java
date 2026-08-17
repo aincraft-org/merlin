@@ -3,10 +3,16 @@ package dev.mintychochip.wizardry.paper.mapgui;
 import dev.mintychochip.wizardry.api.glyph.GlyphDraft;
 import dev.mintychochip.wizardry.api.glyph.GlyphLimits;
 import dev.mintychochip.wizardry.api.glyph.GlyphPoint;
+import dev.mintychochip.wizardry.api.glyph.GlyphRoles;
+import dev.mintychochip.wizardry.api.glyph.GlyphToken;
+import dev.mintychochip.wizardry.api.glyph.ManaTable;
+import dev.mintychochip.wizardry.api.ml.Label;
 import dev.mintychochip.wizardry.common.glyph.GlyphRasterizer;
 import dev.mintychochip.wizardry.api.glyph.GlyphStroke;
+import net.kyori.adventure.text.Component;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.bukkit.Material;
@@ -23,12 +29,18 @@ public final class GlyphDraftStoreAdapter {
     private final NamespacedKey markerKey;
     private final NamespacedKey idKey;
     private final NamespacedKey dataKey;
+    private final NamespacedKey labelKey;
+    private final NamespacedKey pipsKey;
+    private final NamespacedKey manaKey;
 
     public GlyphDraftStoreAdapter(Plugin plugin) {
         server = plugin.getServer();
         markerKey = new NamespacedKey(plugin, "glyph_item");
         idKey = new NamespacedKey(plugin, "glyph_item_id");
         dataKey = new NamespacedKey(plugin, "glyph_draft_v1");
+        labelKey = new NamespacedKey(plugin, "glyph_label");
+        pipsKey = new NamespacedKey(plugin, "glyph_pips");
+        manaKey = new NamespacedKey(plugin, "glyph_mana");
     }
 
     public ItemStack createGlyphItem() {
@@ -95,6 +107,35 @@ public final class GlyphDraftStoreAdapter {
             installRenderer(view, prepared.draft());
             return Optional.of(replacement);
         } catch (RuntimeException failure) {
+            return Optional.empty();
+        }
+    }
+
+    public boolean saveToken(ItemStack item, UUID expectedId, GlyphToken token) {
+        if (!matches(item, expectedId) || token == null) return false;
+        var encoded = encodeToken(token, ManaTable.v1());
+        var meta = item.getItemMeta();
+        var pdc = meta.getPersistentDataContainer();
+        pdc.set(labelKey, PersistentDataType.STRING, encoded.label());
+        pdc.set(pipsKey, PersistentDataType.INTEGER, encoded.pips());
+        pdc.set(manaKey, PersistentDataType.INTEGER, encoded.mana());
+        String title = tokenTitle(token);
+        meta.displayName(Component.text(title));
+        meta.lore(List.of(Component.text(title), Component.text("mana " + encoded.mana())));
+        item.setItemMeta(meta);
+        return true;
+    }
+
+    public Optional<GlyphToken> loadToken(ItemStack item) {
+        if (!isGlyphItem(item)) return Optional.empty();
+        var pdc = item.getItemMeta().getPersistentDataContainer();
+        String label = pdc.get(labelKey, PersistentDataType.STRING);
+        Integer pips = pdc.get(pipsKey, PersistentDataType.INTEGER);
+        Integer mana = pdc.get(manaKey, PersistentDataType.INTEGER);
+        if (label == null || pips == null || mana == null) return Optional.empty();
+        try {
+            return Optional.of(decodeToken(new FrozenToken(label, pips, mana)));
+        } catch (RuntimeException ignored) {
             return Optional.empty();
         }
     }
@@ -180,6 +221,21 @@ public final class GlyphDraftStoreAdapter {
         view.addRenderer(new GlyphMapRenderer(GlyphRasterizer.renderFull(draft)));
     }
 
+
+    record FrozenToken(String label, int pips, int mana) {}
+
+    static FrozenToken encodeToken(GlyphToken token, ManaTable mana) {
+        return new FrozenToken(token.label().id(), token.pips(), mana.mana(token));
+    }
+
+    static GlyphToken decodeToken(FrozenToken encoded) {
+        return new GlyphToken(Label.fromId(encoded.label()), encoded.pips());
+    }
+
+    static String tokenTitle(GlyphToken token) {
+        if (!GlyphRoles.hasPips(token.role())) return token.label().id();
+        return token.label().id() + " " + "●".repeat(token.pips());
+    }
 
     static byte[] encode(GlyphDraft draft) {
         var out = new StringBuilder("2;");
