@@ -1,8 +1,10 @@
 package dev.mintychochip.wizardry.paper.dialog;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -69,5 +71,49 @@ final class ScribeDialogStateTest {
         assertInstanceOf(CompileResult.Error.class, outcome.compilation());
         assertFalse(cast.get());
         verify(books).save(book, bookId, "send skyward");
+    }
+
+    @Test
+    void escapeSubmitClearsSessionWithoutPersisting() {
+        var books = mock(ScribeBookStore.class);
+        var book = mock(ItemStack.class);
+        var bookId = UUID.randomUUID();
+        var playerId = UUID.randomUUID();
+        when(books.bookId(book)).thenReturn(bookId);
+        when(books.source(book)).thenReturn("summon sheep");
+
+        var dialog = new ScribeDialog(books);
+        assertNotNull(dialog.open(playerId, book, 0L));
+        assertTrue(dialog.hasSession(playerId));
+
+        var outcome = dialog.submit(playerId, book, "send skyward", ScribeDialog.Action.ESCAPE, 0L);
+
+        assertFalse(outcome.persisted());
+        assertFalse(outcome.cast());
+        assertFalse(outcome.reopen());
+        assertEquals("summon sheep", outcome.source());
+        assertNull(outcome.compilation());
+        assertFalse(dialog.hasSession(playerId));
+        verify(books, never()).save(any(), any(), any());
+    }
+
+    @Test
+    void escapeClearsSessionEvenIfHeldBookDoesNotMatch() {
+        var books = mock(ScribeBookStore.class);
+        var book = mock(ItemStack.class);
+        var other = mock(ItemStack.class);
+        var playerId = UUID.randomUUID();
+        when(books.bookId(book)).thenReturn(UUID.randomUUID());
+        when(books.bookId(other)).thenReturn(UUID.randomUUID());
+        when(books.source(book)).thenReturn("summon sheep");
+
+        var dialog = new ScribeDialog(books);
+        assertNotNull(dialog.open(playerId, book, 0L));
+
+        var outcome = dialog.submit(playerId, other, "send skyward", ScribeDialog.Action.ESCAPE, 0L);
+
+        assertFalse(outcome.persisted());
+        assertFalse(dialog.hasSession(playerId));
+        verify(books, never()).save(any(), any(), any());
     }
 }

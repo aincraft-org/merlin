@@ -70,7 +70,7 @@ public final class ScribeDialog {
                         button("Save", Action.SAVE, options),
                         button("Save & Cast", Action.SAVE_AND_CAST, options),
                         button("Cancel", Action.CANCEL, options)
-                )).build()));
+                )).exitAction(button("Cancel", Action.ESCAPE, options)).build()));
         player.showDialog(dialog);
     }
 
@@ -116,8 +116,12 @@ public final class ScribeDialog {
     }
     public Outcome submit(UUID playerId, ItemStack exactBook, String source, Action action, long nowMillis) {
         var session = sessions.get(playerId);
-        if (session == null || session.expiresAtMillis() <= nowMillis || !session.bookId().equals(books.bookId(exactBook))) return new Outcome(false, false, false, source, null);
-        if (action == Action.CANCEL || action == Action.ESCAPE) { sessions.remove(playerId); return new Outcome(false, false, false, session.initialSource(), null); }
+        if (session == null) return new Outcome(false, false, false, source, null);
+        if (action == Action.CANCEL || action == Action.ESCAPE) {
+            sessions.remove(playerId);
+            return new Outcome(false, false, false, session.initialSource(), null);
+        }
+        if (session.expiresAtMillis() <= nowMillis || !session.bookId().equals(books.bookId(exactBook))) return new Outcome(false, false, false, source, null);
         if (!validInput(source)) return new Outcome(false, false, true, source, null);
         CompileResult compilation = action == Action.SAVE_AND_CAST ? ScribeCompiler.INSTANCE.compile(source) : null;
         if (!books.save(exactBook, session.bookId(), source)) return new Outcome(false, false, false, source, compilation);
