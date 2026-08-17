@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "id": "valid-kindling",
+  "source": "look ahead 16\nburn target 4\nrest 3 seconds",
+  "result": {
+    "status": "accepted",
+    "compilerVersion": "scribe-compiler/0.2",
+    "canonicalHex": "7363726962652d636f6d70696c65722f302e320a6c6f6f6b5f61686561647c343033303030303030303030303030300a6275726e7c7461726765747c343031303030303030303030303030300a726573747c34303038303030303030303030303030",
+    "identitySha256": "f4997fe3119ebbed9813da7cf263cd44e81983156ca02c148f32cd8e4ff7f969",
+    "actions": [
+      {
+        "opcode": "look_ahead",
+        "noun": null,
+        "place": null,
+        "aheadBits": null,
+        "patient": null,
+        "riding": null,
+        "valueBits": "4030000000000000"
+      },
+      {
+        "opcode": "burn",
+        "noun": null,
+        "place": null,
+        "aheadBits": null,
+        "patient": "target",
+        "riding": null,
+        "valueBits": "4010000000000000"
+      },
+      {
+        "opcode": "rest",
+        "noun": null,
+        "place": null,
+        "aheadBits": null,
+        "patient": null,
+        "riding": null,
+        "valueBits": "4008000000000000"
+      }
+    ]
+  }
+}

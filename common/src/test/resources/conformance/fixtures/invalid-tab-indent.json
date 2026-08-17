@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "id": "invalid-tab-indent",
+  "source": "summon sheep\n\triding rocket",
+  "result": {
+    "status": "rejected",
+    "diagnostics": [
+      {
+        "code": "E0200",
+        "message": "tab in indent",
+        "startByte": 13,
+        "endByte": 14,
+        "line": 2,
+        "column": 1
+      }
+    ]
+  }
+}

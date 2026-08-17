@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "id": "valid-places",
+  "source": "summon fangs at target\nstrike at ahead 8\nmend self",
+  "result": {
+    "status": "accepted",
+    "compilerVersion": "scribe-compiler/0.2",
+    "canonicalHex": "7363726962652d636f6d70696c65722f302e320a73756d6d6f6e7c66616e67737c7461726765747c2d0a737472696b657c61686561647c343032303030303030303030303030300a6d656e647c73656c667c33666630303030303030303030303030",
+    "identitySha256": "5204d321d8476a98b09ecaf26712cacee853577561b899c3334504d93fe6f53c",
+    "actions": [
+      {
+        "opcode": "summon",
+        "noun": "fangs",
+        "place": "target",
+        "aheadBits": null,
+        "patient": null,
+        "riding": null,
+        "valueBits": null
+      },
+      {
+        "opcode": "strike",
+        "noun": null,
+        "place": "ahead",
+        "aheadBits": "4020000000000000",
+        "patient": null,
+        "riding": null,
+        "valueBits": null
+      },
+      {
+        "opcode": "mend",
+        "noun": null,
+        "place": null,
+        "aheadBits": null,
+        "patient": "self",
+        "riding": null,
+        "valueBits": "3ff0000000000000"
+      }
+    ]
+  }
+}

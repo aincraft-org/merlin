@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "id": "invalid-retired-spell",
+  "source": "spell ember { target ray 16; damage target fire 4; }",
+  "result": {
+    "status": "rejected",
+    "diagnostics": [
+      {
+        "code": "E0002",
+        "message": "unexpected character `{`",
+        "startByte": 12,
+        "endByte": 13,
+        "line": 1,
+        "column": 13
+      },
+      {
+        "code": "E0002",
+        "message": "unexpected character `;`",
+        "startByte": 27,
+        "endByte": 28,
+        "line": 1,
+        "column": 28
+      },
+      {
+        "code": "E0002",
+        "message": "unexpected character `;`",
+        "startByte": 49,
+        "endByte": 50,
+        "line": 1,
+        "column": 50
+      },
+      {
+        "code": "E0002",
+        "message": "unexpected character `}`",
+        "startByte": 51,
+        "endByte": 52,
+        "line": 1,
+        "column": 52
+      }
+    ]
+  }
+}

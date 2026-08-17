@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 2,
+  "id": "valid-burn-default",
+  "source": "burn target",
+  "result": {
+    "status": "accepted",
+    "compilerVersion": "scribe-compiler/0.2",
+    "canonicalHex": "7363726962652d636f6d70696c65722f302e320a6275726e7c7461726765747c33666630303030303030303030303030",
+    "identitySha256": "43792a1038718ee17e933de2a64c20eff7075f0e16981d83260f4a0b3568502f",
+    "actions": [
+      {
+        "opcode": "burn",
+        "noun": null,
+        "place": null,
+        "aheadBits": null,
+        "patient": "target",
+        "riding": null,
+        "valueBits": "3ff0000000000000"
+      }
+    ]
+  }
+}

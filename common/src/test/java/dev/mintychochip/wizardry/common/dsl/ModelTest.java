@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import dev.mintychochip.wizardry.api.dsl.Action;
 import dev.mintychochip.wizardry.api.dsl.CompileResult;
 import dev.mintychochip.wizardry.api.dsl.CompiledSpell;
 import dev.mintychochip.wizardry.api.dsl.Diagnostic;
-import dev.mintychochip.wizardry.api.dsl.Operation;
 import dev.mintychochip.wizardry.api.dsl.Span;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,16 +15,16 @@ import org.junit.jupiter.api.Test;
 
 final class ModelTest {
     @Test
-    void compiledSpellDefensivelyCopiesOperationsAndCanonicalBytes() {
-        var operations = new ArrayList<Operation>();
-        operations.add(new Operation.Heal(Operation.Target.SELF, 1.0));
+    void compiledSpellDefensivelyCopiesActionsAndCanonicalBytes() {
+        var actions = new ArrayList<Action>();
+        actions.add(new Action.Mend(Action.Patient.SELF, 1.0));
         byte[] canonical = {1, 2, 3};
-        var spell = new CompiledSpell("scribe-compiler/0.1", "mend", "00", canonical, operations);
+        var spell = new CompiledSpell("scribe-compiler/0.2", "00", canonical, actions);
 
-        operations.clear();
+        actions.clear();
         canonical[0] = 9;
 
-        assertEquals(1, spell.operations().size());
+        assertEquals(1, spell.actions().size());
         assertEquals(1, spell.canonical()[0]);
     }
 
@@ -38,7 +38,7 @@ final class ModelTest {
 
     @Test
     void compileResultOkContainsTheSpell() {
-        var spell = new CompiledSpell("v", "x", "00", new byte[0], List.of());
+        var spell = new CompiledSpell("v", "00", new byte[0], List.of());
         CompileResult result = new CompileResult.Ok(spell);
 
         assertInstanceOf(CompileResult.Ok.class, result);

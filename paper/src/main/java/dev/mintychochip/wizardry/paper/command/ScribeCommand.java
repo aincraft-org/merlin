@@ -3,8 +3,8 @@ package dev.mintychochip.wizardry.paper.command;
 import dev.mintychochip.wizardry.paper.WizardryPlugin;
 import dev.mintychochip.wizardry.paper.dialog.ScribeDialog;
 import dev.mintychochip.wizardry.common.dsl.ScribeCompiler;
+import dev.mintychochip.wizardry.api.dsl.Action;
 import dev.mintychochip.wizardry.api.dsl.CompileResult;
-import dev.mintychochip.wizardry.api.dsl.Operation;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.command.CommandSender;
@@ -86,8 +86,11 @@ public final class ScribeCommand implements BasicCommand {
             return;
         }
         var spell = ok.spell();
-        var range = spell.operations().stream().filter(op -> op instanceof Operation.TargetRay)
-                .mapToDouble(op -> ((Operation.TargetRay) op).range()).findFirst().orElse(32);
+        var range = spell.actions().stream()
+                .filter(action -> action instanceof Action.LookAhead)
+                .mapToDouble(action -> ((Action.LookAhead) action).range())
+                .findFirst()
+                .orElse(32);
         var target = player.getTargetEntity((int) range);
         var living = target instanceof org.bukkit.entity.LivingEntity entity ? entity : null;
         if (!plugin.runtime().cast(player, living, spell, System.currentTimeMillis(), range)) {

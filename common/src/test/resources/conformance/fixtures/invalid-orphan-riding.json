@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "id": "invalid-orphan-riding",
+  "source": "    riding rocket",
+  "result": {
+    "status": "rejected",
+    "diagnostics": [
+      {
+        "code": "E0217",
+        "message": "riding is not indented under a summon",
+        "startByte": 4,
+        "endByte": 10,
+        "line": 1,
+        "column": 5
+      }
+    ]
+  }
+}

@@ -1,7 +1,7 @@
 package dev.mintychochip.wizardry.paper;
 
+import dev.mintychochip.wizardry.api.dsl.Action;
 import dev.mintychochip.wizardry.api.dsl.CompileResult;
-import dev.mintychochip.wizardry.api.dsl.Operation;
 import dev.mintychochip.wizardry.api.ml.Classification;
 import dev.mintychochip.wizardry.api.ml.ModelBundle;
 import dev.mintychochip.wizardry.common.ml.OnnxGlyphClassifier;
@@ -36,9 +36,9 @@ public final class WizardryPlugin extends JavaPlugin {
             if (player == null) return false;
             if (!(compilation instanceof CompileResult.Ok ok)) return false;
             var spell = ok.spell();
-            var range = spell.operations().stream()
-                    .filter(op -> op instanceof Operation.TargetRay)
-                    .mapToDouble(op -> ((Operation.TargetRay) op).range())
+            var range = spell.actions().stream()
+                    .filter(action -> action instanceof Action.LookAhead)
+                    .mapToDouble(action -> ((Action.LookAhead) action).range())
                     .findFirst()
                     .orElse(32);
             var target = player.getTargetEntity((int) range);

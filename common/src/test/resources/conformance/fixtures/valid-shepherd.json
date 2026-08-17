@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "id": "valid-formatting",
-  "source": "\nsummon sheep\n\n    riding rocket\n\nsend skyward\n\nrest 8 seconds\n",
+  "id": "valid-shepherd",
+  "source": "summon sheep\n    riding rocket\nsend skyward\nrest 8 seconds",
   "result": {
     "status": "accepted",
     "compilerVersion": "scribe-compiler/0.2",
