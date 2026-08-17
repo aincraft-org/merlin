@@ -1,6 +1,7 @@
 package dev.mintychochip.wizardry.common.dsl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import dev.mintychochip.wizardry.api.dsl.CompileResult;
@@ -36,11 +37,30 @@ final class ModelTest {
     }
 
     @Test
-    void compileResultCannotMixSuccessAndDiagnostics() {
+    void compileResultOkContainsTheSpell() {
+        var spell = new CompiledSpell("v", "x", "00", new byte[0], List.of());
+        CompileResult result = new CompileResult.Ok(spell);
+
+        assertInstanceOf(CompileResult.Ok.class, result);
+        assertEquals(spell, ((CompileResult.Ok) result).spell());
+    }
+
+    @Test
+    void compileResultErrorContainsDiagnostics() {
         var diagnostic = new Diagnostic("E0001", "bad", new Span(0, 0, 1, 1));
-        assertThrows(IllegalArgumentException.class, () -> new CompileResult(null, List.of()));
-        assertThrows(IllegalArgumentException.class, () -> new CompileResult(
-                new CompiledSpell("v", "x", "00", new byte[0], List.of()),
-                List.of(diagnostic)));
+        var diagnostics = new ArrayList<Diagnostic>();
+        diagnostics.add(diagnostic);
+        CompileResult result = new CompileResult.Error(diagnostics);
+
+        diagnostics.clear();
+        assertInstanceOf(CompileResult.Error.class, result);
+        assertEquals(List.of(diagnostic), ((CompileResult.Error) result).diagnostics());
+    }
+
+    @Test
+    void compileResultVariantsRejectEmptyPayloads() {
+        assertThrows(NullPointerException.class, () -> new CompileResult.Ok(null));
+        assertThrows(IllegalArgumentException.class, () -> new CompileResult.Error(List.of()));
+        assertThrows(NullPointerException.class, () -> new CompileResult.Error(null));
     }
 }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.mintychochip.wizardry.api.dsl.CompileResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HexFormat;
@@ -30,8 +31,8 @@ final class ConformanceTest {
         var result = ScribeCompiler.INSTANCE.compile(fixture.path("source").asText());
         var expected = fixture.path("result");
         if (expected.path("status").asText().equals("accepted")) {
-            assertTrue(result.accepted(), fixture.path("id").asText());
-            var actual = result.acceptedSpell().orElseThrow();
+            assertInstanceOf(CompileResult.Ok.class, result, fixture.path("id").asText());
+            var actual = ((CompileResult.Ok) result).spell();
             assertEquals(expected.path("compilerVersion").asText(), actual.compilerVersion());
             assertEquals(expected.path("name").asText(), actual.name());
             assertEquals(expected.path("canonicalHex").asText(), actual.canonicalHex());
@@ -46,11 +47,12 @@ final class ConformanceTest {
                 assertEquals(e.path("valueBits").isNull() ? null : e.path("valueBits").asText(), valueBits(a));
             }
         } else {
-            assertFalse(result.accepted(), fixture.path("id").asText());
+            assertInstanceOf(CompileResult.Error.class, result, fixture.path("id").asText());
+            var diagnostics = ((CompileResult.Error) result).diagnostics();
             var ds = expected.path("diagnostics");
-            assertEquals(ds.size(), result.diagnostics().size());
+            assertEquals(ds.size(), diagnostics.size());
             for (int i = 0; i < ds.size(); i++) {
-                var e = ds.get(i); var a = result.diagnostics().get(i);
+                var e = ds.get(i); var a = diagnostics.get(i);
                 assertEquals(e.path("code").asText(), a.code());
                 assertEquals(e.path("message").asText(), a.message());
                 assertEquals(e.path("startByte").asInt(), a.span().startByte());

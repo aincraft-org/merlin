@@ -27,16 +27,16 @@ public final class ScribeCompiler implements Compiler {
     @Override
     public CompileResult compile(String source) {
         var limitDiagnostics = sourceLimitDiagnostics(source);
-        if (!limitDiagnostics.isEmpty()) return CompileResult.rejected(limitDiagnostics);
+        if (!limitDiagnostics.isEmpty()) return CompileResult.error(limitDiagnostics);
         var lexed = Lexer.lex(source);
-        if (!lexed.diagnostics().isEmpty()) return CompileResult.rejected(cap(lexed.diagnostics()));
+        if (!lexed.diagnostics().isEmpty()) return CompileResult.error(cap(lexed.diagnostics()));
         var parsed = Parser.parse(lexed.tokens(), source);
-        if (parsed.program().isEmpty()) return CompileResult.rejected(cap(parsed.diagnostics()));
+        if (parsed.program().isEmpty()) return CompileResult.error(cap(parsed.diagnostics()));
         var validation = validate(parsed.program().orElseThrow(), source);
-        if (!validation.isEmpty()) return CompileResult.rejected(cap(validation));
+        if (!validation.isEmpty()) return CompileResult.error(cap(validation));
         var program = parsed.program().orElseThrow();
         byte[] canonical = canonicalize(program);
-        return CompileResult.accepted(new CompiledSpell(
+        return CompileResult.ok(new CompiledSpell(
                 CompilerConstants.COMPILER_VERSION, program.name(), sha256(canonical), canonical, operations(program)));
     }
 

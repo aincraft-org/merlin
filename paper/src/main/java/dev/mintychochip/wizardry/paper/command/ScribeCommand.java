@@ -3,6 +3,7 @@ package dev.mintychochip.wizardry.paper.command;
 import dev.mintychochip.wizardry.paper.WizardryPlugin;
 import dev.mintychochip.wizardry.paper.dialog.ScribeDialog;
 import dev.mintychochip.wizardry.common.dsl.ScribeCompiler;
+import dev.mintychochip.wizardry.api.dsl.CompileResult;
 import dev.mintychochip.wizardry.api.dsl.Operation;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -56,8 +57,8 @@ public final class ScribeCommand implements BasicCommand {
                 var action = args[0].equalsIgnoreCase("save") ? ScribeDialog.Action.SAVE
                         : args[0].equalsIgnoreCase("cast") ? ScribeDialog.Action.SAVE_AND_CAST : ScribeDialog.Action.CANCEL;
                 var outcome = dialog.submit(player.getUniqueId(), held, session.pendingSource(), action, System.currentTimeMillis());
-                if (outcome.compilation() != null && !outcome.compilation().accepted()) {
-                    outcome.compilation().diagnostics().forEach(d -> player.sendMessage(d.code() + ": " + d.message()));
+                if (outcome.compilation() instanceof CompileResult.Error error) {
+                    error.diagnostics().forEach(d -> player.sendMessage(d.code() + ": " + d.message()));
                 }
                 player.sendMessage(outcome.cast() ? "Spell cast."
                         : outcome.persisted() ? "Scribe source saved." : "Scribe action cancelled or rejected.");
@@ -78,11 +79,13 @@ public final class ScribeCommand implements BasicCommand {
             return;
         }
         var result = ScribeCompiler.INSTANCE.compile(plugin.books().source(held));
-        if (!result.accepted()) {
-            result.diagnostics().forEach(d -> player.sendMessage(d.code() + ": " + d.message()));
+        if (!(result instanceof CompileResult.Ok ok)) {
+            if (result instanceof CompileResult.Error error) {
+                error.diagnostics().forEach(d -> player.sendMessage(d.code() + ": " + d.message()));
+            }
             return;
         }
-        var spell = result.acceptedSpell().orElseThrow();
+        var spell = ok.spell();
         var range = spell.operations().stream().filter(op -> op instanceof Operation.TargetRay)
                 .mapToDouble(op -> ((Operation.TargetRay) op).range()).findFirst().orElse(32);
         var target = player.getTargetEntity((int) range);

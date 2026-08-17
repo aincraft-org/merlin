@@ -1,30 +1,29 @@
 package dev.mintychochip.wizardry.api.dsl;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
-public record CompileResult(CompiledSpell spell, List<Diagnostic> diagnostics) {
-    public CompileResult {
-        diagnostics = List.copyOf(diagnostics);
-        boolean accepted = spell != null;
-        if (accepted == !diagnostics.isEmpty()) {
-            throw new IllegalArgumentException("result must contain exactly a spell or diagnostics");
+public sealed interface CompileResult permits CompileResult.Ok, CompileResult.Error {
+    record Ok(CompiledSpell spell) implements CompileResult {
+        public Ok {
+            spell = Objects.requireNonNull(spell, "spell");
         }
     }
 
-    public static CompileResult accepted(CompiledSpell spell) {
-        return new CompileResult(spell, List.of());
+    record Error(List<Diagnostic> diagnostics) implements CompileResult {
+        public Error {
+            diagnostics = List.copyOf(Objects.requireNonNull(diagnostics, "diagnostics"));
+            if (diagnostics.isEmpty()) {
+                throw new IllegalArgumentException("error must contain diagnostics");
+            }
+        }
     }
 
-    public static CompileResult rejected(List<Diagnostic> diagnostics) {
-        return new CompileResult(null, diagnostics);
+    static CompileResult ok(CompiledSpell spell) {
+        return new Ok(spell);
     }
 
-    public Optional<CompiledSpell> acceptedSpell() {
-        return Optional.ofNullable(spell);
-    }
-
-    public boolean accepted() {
-        return spell != null;
+    static CompileResult error(List<Diagnostic> diagnostics) {
+        return new Error(diagnostics);
     }
 }

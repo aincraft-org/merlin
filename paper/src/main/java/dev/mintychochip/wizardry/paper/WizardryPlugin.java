@@ -1,5 +1,6 @@
 package dev.mintychochip.wizardry.paper;
 
+import dev.mintychochip.wizardry.api.dsl.CompileResult;
 import dev.mintychochip.wizardry.api.dsl.Operation;
 import dev.mintychochip.wizardry.api.ml.Classification;
 import dev.mintychochip.wizardry.api.ml.ModelBundle;
@@ -33,7 +34,8 @@ public final class WizardryPlugin extends JavaPlugin {
         dialog = new ScribeDialog(books, (playerId, compilation) -> {
             var player = getServer().getPlayer(playerId);
             if (player == null) return false;
-            var spell = compilation.acceptedSpell().orElseThrow();
+            if (!(compilation instanceof CompileResult.Ok ok)) return false;
+            var spell = ok.spell();
             var range = spell.operations().stream()
                     .filter(op -> op instanceof Operation.TargetRay)
                     .mapToDouble(op -> ((Operation.TargetRay) op).range())

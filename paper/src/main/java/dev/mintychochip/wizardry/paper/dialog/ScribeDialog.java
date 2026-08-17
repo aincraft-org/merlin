@@ -47,7 +47,7 @@ public final class ScribeDialog {
         if (!books.save(exactBook, session.bookId(), source)) return new Outcome(false, false, false, source, compilation);
         sessions.remove(playerId);
         if (action == Action.SAVE) return new Outcome(true, false, false, source, null);
-        if (!compilation.accepted()) return new Outcome(true, false, true, source, compilation);
+        if (!(compilation instanceof CompileResult.Ok)) return new Outcome(true, false, true, source, compilation);
         return new Outcome(true, caster.apply(playerId, compilation), false, source, compilation);
     }
     public boolean validInput(String source) {
