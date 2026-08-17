@@ -13,7 +13,7 @@ dependencies {
     testImplementation("io.github.flog99:mapgui-api:1.0.0")
     testImplementation("io.papermc.paper:paper-api:26.2.build.84-stable")
     testImplementation("com.microsoft.onnxruntime:onnxruntime:1.29.0")
-    testImplementation("org.mockito:mockito-core:5.15.2")
+    testImplementation("org.mockito:mockito-core:5.23.0")
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

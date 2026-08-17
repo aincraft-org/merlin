@@ -5,6 +5,7 @@ import dev.mintychochip.wizardry.api.dsl.CompiledSpell;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -19,7 +20,16 @@ public final class SpellRuntime {
     private static final NamespacedKey SUMMON_KEY = Objects.requireNonNull(
             NamespacedKey.fromString("wizardry:scribe_summon"));
 
+    private final BiConsumer<Long, Runnable> later;
     private final Map<String, Long> cooldowns = new HashMap<>();
+
+    public SpellRuntime() {
+        this((delay, task) -> {});
+    }
+
+    public SpellRuntime(BiConsumer<Long, Runnable> later) {
+        this.later = Objects.requireNonNull(later, "later");
+    }
 
     public boolean cast(Player caster, LivingEntity target, CompiledSpell spell, long nowMillis) {
         return cast(caster, target, spell, nowMillis, lookRange(spell));
@@ -107,8 +117,14 @@ public final class SpellRuntime {
         }
     }
 
-    private static void applyVanish(Action.Vanish action, Player caster, LivingEntity target) {
-        patient(action.patient(), caster, target).setInvisible(true);
+    private void applyVanish(Action.Vanish action, Player caster, LivingEntity target) {
+        LivingEntity entity = patient(action.patient(), caster, target);
+        entity.setInvisible(true);
+        later.accept(Math.round(action.seconds() * 20), () -> {
+            if (entity.isValid()) {
+                entity.setInvisible(false);
+            }
+        });
     }
 
     private static LivingEntity patient(Action.Patient patient, Player caster, LivingEntity target) {

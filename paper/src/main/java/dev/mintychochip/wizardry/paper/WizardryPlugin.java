@@ -30,7 +30,7 @@ public final class WizardryPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         books = new ScribeBookStore(this);
-        runtime = new SpellRuntime();
+        runtime = new SpellRuntime((delay, task) -> getServer().getScheduler().runTaskLater(this, task, delay));
         dialog = new ScribeDialog(books, (playerId, compilation) -> {
             var player = getServer().getPlayer(playerId);
             if (player == null) return false;
