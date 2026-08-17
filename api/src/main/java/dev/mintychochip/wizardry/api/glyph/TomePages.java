@@ -25,8 +25,9 @@ public final class TomePages {
         return tokens;
     }
 
-    public Optional<TomePages> insert(GlyphToken token) {
+    public Optional<TomePages> insert(GlyphToken token, GlyphCompiler compiler) {
         Objects.requireNonNull(token, "token");
+        Objects.requireNonNull(compiler, "compiler");
         if (token.role() == GlyphRole.CHARM || token.label() == Label.SHARPNESS) {
             return Optional.empty();
         }
@@ -35,7 +36,7 @@ public final class TomePages {
         }
         var candidate = new ArrayList<>(tokens);
         candidate.add(token);
-        return switch (compiler().compile(candidate)) {
+        return switch (compiler.compile(candidate)) {
             case CompileResult.Ok unused -> Optional.of(new TomePages(candidate));
             case CompileResult.Error error -> unfinishedOnly(error)
                     ? Optional.of(new TomePages(candidate))
@@ -58,23 +59,5 @@ public final class TomePages {
 
     private static boolean unfinishedOnly(CompileResult.Error error) {
         return error.diagnostics().stream().allMatch(diagnostic -> UNFINISHED.equals(diagnostic.code()));
-    }
-
-    private static GlyphCompiler compiler() {
-        return CompilerHolder.INSTANCE;
-    }
-
-    private static final class CompilerHolder {
-        private static final GlyphCompiler INSTANCE = load();
-
-        private static GlyphCompiler load() {
-            try {
-                return (GlyphCompiler) Class.forName("dev.mintychochip.wizardry.common.glyph.GlyphCompilerImpl")
-                        .getField("INSTANCE")
-                        .get(null);
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalStateException("GlyphCompiler unavailable", e);
-            }
-        }
     }
 }

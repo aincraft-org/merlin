@@ -5,6 +5,7 @@ import dev.mintychochip.wizardry.api.glyph.GlyphToken;
 import dev.mintychochip.wizardry.api.glyph.ManaTable;
 import dev.mintychochip.wizardry.api.glyph.TomePages;
 import dev.mintychochip.wizardry.api.ml.Label;
+import dev.mintychochip.wizardry.common.glyph.GlyphCompilerImpl;
 import dev.mintychochip.wizardry.paper.mapgui.GlyphDraftStoreAdapter;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +80,7 @@ public final class GlyphTomeStore {
         try {
             var pages = TomePages.empty();
             for (var token : decodePages(raw)) {
-                var next = pages.insert(token);
+                var next = pages.insert(token, GlyphCompilerImpl.INSTANCE);
                 if (next.isEmpty()) return TomePages.empty();
                 pages = next.get();
             }
@@ -104,7 +105,7 @@ public final class GlyphTomeStore {
         var token = maps.loadToken(map);
         if (token.isEmpty()) return Optional.empty();
         var current = pages(tome);
-        var next = current.insert(token.get());
+        var next = current.insert(token.get(), GlyphCompilerImpl.INSTANCE);
         if (next.isEmpty()) return Optional.empty();
         var drafts = loadDrafts(tome, current.tokens().size());
         drafts.add(draftBytes(map));
