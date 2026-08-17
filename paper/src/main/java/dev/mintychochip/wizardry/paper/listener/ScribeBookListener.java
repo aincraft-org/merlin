@@ -18,10 +18,6 @@ public final class ScribeBookListener implements Listener {
         var item = event.getPlayer().getInventory().getItemInMainHand();
         if (!plugin.books().isScribeBook(item)) return;
         event.setCancelled(true);
-        var session = dialog.open(event.getPlayer().getUniqueId(), item, System.currentTimeMillis());
-        if (session != null) {
-            event.getPlayer().sendMessage("Scribe editor started. Send source in chat, then use /scribe save, /scribe cast, or /scribe cancel.");
-            event.getPlayer().sendMessage("Current source: " + session.pendingSource());
-        }
+        dialog.show(event.getPlayer(), item, System.currentTimeMillis());
     }
 }
