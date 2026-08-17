@@ -63,6 +63,7 @@ public final class GlyphCommand implements BasicCommand {
                 draft -> classificationService.classify(draft, result -> player.sendMessage(
                         result.accepted() && !result.candidates().isEmpty()
                                 ? "Glyph: " + result.candidates().getFirst().label().id()
-                                : "Glyph rejected."))));
+                                : "Glyph rejected.")),
+                player::isSneaking));
     }
 }

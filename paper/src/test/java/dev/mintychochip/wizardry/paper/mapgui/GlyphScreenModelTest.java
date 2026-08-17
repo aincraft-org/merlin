@@ -50,4 +50,31 @@ final class GlyphScreenModelTest {
         screen.endStroke();
         assertEquals(2, screen.draft().strokes().size());
     }
+
+    @Test void pipClickerStepsAndSneakJumps() {
+        var screen = new GlyphScreen(new GlyphStrokeTracker(), () -> {}, () -> {}, ignored -> {}, () -> false);
+        assertEquals(1, screen.pips());
+        screen.stepPips(1);
+        assertEquals(2, screen.pips());
+        screen.stepPips(1);
+        screen.stepPips(1);
+        screen.stepPips(1);
+        screen.stepPips(1);
+        assertEquals(5, screen.pips());
+        screen.stepPips(-1);
+        assertEquals(4, screen.pips());
+        screen.jumpPips(1);
+        assertEquals(5, screen.pips());
+        screen.jumpPips(-1);
+        assertEquals(1, screen.pips());
+    }
+
+    @Test void pipClickerDoesNotTouchDraft() {
+        var screen = new GlyphScreen(new GlyphStrokeTracker(), () -> {}, () -> {}, ignored -> {}, () -> false);
+        screen.beginStroke(10, 10);
+        screen.endStroke();
+        int strokes = screen.draft().strokes().size();
+        screen.stepPips(1);
+        assertEquals(strokes, screen.draft().strokes().size());
+    }
 }
