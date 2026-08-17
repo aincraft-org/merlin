@@ -1,5 +1,7 @@
 # Scribe Language Expansion — Design Spec
 
+> **Superseded (surface grammar):** `docs/superpowers/specs/2026-08-17-scribe-phrasebook-language-design.md` is the v1 textual language. This document is historical. Do not implement `when wearer.health < 30%:` as the player-facing DSL.
+
 ## Goal
 
 Extend the Scribe textual DSL from the verified flat 5-op subset to the concept's v1 grammar: triggers, conditions, target selectors, effects, bounded arithmetic modifiers, and bounded branching — all compiling through the shared `EnchantGraph` and cost engine. Rust remains the semantic reference; Java remains the production compiler with byte-exact identity.

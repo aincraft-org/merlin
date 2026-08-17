@@ -1,7 +1,7 @@
 # Wizardry Domain — Living Spec
 
 > Status: active
-> Last updated: 2026-08-16
+> Last updated: 2026-08-17
 > Owners: jlo
 
 ## Intent
@@ -86,7 +86,7 @@ These are settled law; they are asserted in focused specs where behavior must up
 Active surface for the coming implementation wave.
 
 - [ ] EnchantGraph shared model + cost engine (biggest missing capability)
-- [ ] Scribe language expansion: conditions, target selectors, modifiers, bounded branching
+- [ ] Scribe phrasebook language (line-significant verbs; Paper 26.2 dialog editor; action tape). Spec: `2026-08-17-scribe-phrasebook-language-design.md`
 - [ ] Glyphcraft semantic composition converging on the graph (roles, candidate graph, ambiguity confirmation)
 - [ ] Canonical persistence/versioning + migration
 - [ ] Scribe↔Glyphcraft equivalence, proven end-to-end
@@ -99,7 +99,8 @@ Active surface for the coming implementation wave.
 
 ### Current notes
 - Concept: `docs/superpowers/specs/2026-08-12-scribe-glyph-enchanting-design.md`.
-- A cohesive applied spec series was authored on 2026-08-14 (this living spec + six focused specs listed in Decisions log) to drive the SDD plan workflow, replacing ad-hoc gap-filling.
+- Scribe surface language is the 2026-08-17 phrasebook, not `spell { }` and not the 2026-08-14 English-shaped-code expansion. EnchantGraph remains the long-term runtime input via a later action-tape mapper.
+- Paper 26.2 already exposes `Dialog` + multiline `TextDialogInput`; the chat editor is fallback only.
 
 ## Next
 
@@ -136,6 +137,7 @@ This living spec is the single north star for the domain. Focused design specs i
 | 2026-08-16 | Persist sweep winner in `train-dev-basic-v1.json`: RMSprop, lr=0.003, 100 epochs, dim 32 | Combined F1-duration and optimizer matrices; Adam/AdamW tied on F1, RMSprop won the documented tie-break |
 | 2026-08-16 | Classifier vocabulary is the Glyphcraft composition set (24 labels), not the v0 12-op subset | Living spec composition roles (triggers, conditions, shield, attacker, area, repeat, charges) must be classifiable; each label now has 6 independent geometry templates |
 | 2026-08-16 | Model raster/vectors are a padded ink crop, not absolute canvas coordinates | Classification must follow the sigil shape; drawing the same glyph elsewhere on the 128×128 map cannot change the class |
+| 2026-08-17 | Scribe v1 is a closed phrasebook (verb-first lines, indent, implicit at caster), not opcode braces and not free English | Easy to learn; Paper-backed; new power is a new word. Dialog on 26.2 supplies significant lines. |
 
 ## Open questions
 
