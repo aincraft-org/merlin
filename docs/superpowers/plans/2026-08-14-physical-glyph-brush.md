@@ -22,7 +22,7 @@
 ### Task 1: Specify Physical Brush Raster Contracts
 
 **Files:**
-- Modify: `java-compiler/src/test/java/dev/jlo/wizardry/glyph/GlyphTest.java`
+- Modify: `java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/GlyphTest.java`
 
 **Interfaces:**
 - Consumes: `GlyphRasterizer.renderFull(GlyphDraft): GlyphBitmap`, `GlyphStroke(List<GlyphPoint>, double, long, List<Double>)`.
@@ -114,7 +114,7 @@ private static boolean hasInkNear(byte[] pixels, int cx, int cy) {
 Run:
 
 ```bash
-./gradlew :java-compiler:test --tests dev.jlo.wizardry.glyph.GlyphTest
+./gradlew :java-compiler:test --tests dev.mintychochip.wizardry.glyph.GlyphTest
 ```
 
 Expected: the new tests expose any mismatch in dab bounds, endpoint-local width, or sparse interpolation. Existing raster tests must remain green. If the current implementation already satisfies an individual observable contract, retain that test as regression coverage rather than weakening it.
@@ -124,8 +124,8 @@ Expected: the new tests expose any mismatch in dab bounds, endpoint-local width,
 ### Task 2: Render Continuous Round-Brush Footprints
 
 **Files:**
-- Modify: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/GlyphRasterizer.java`
-- Modify: `java-compiler/src/test/java/dev/jlo/wizardry/glyph/GlyphTest.java`
+- Modify: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/GlyphRasterizer.java`
+- Modify: `java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/GlyphTest.java`
 
 **Interfaces:**
 - Consumes: immutable `GlyphStroke.points()`, `GlyphStroke.brushWidth()`, and `GlyphStroke.widthAtSegment(int)`.
@@ -192,7 +192,7 @@ Do not add a post-stroke taper. The final stamp already represents final velocit
 Run:
 
 ```bash
-./gradlew :java-compiler:test --tests dev.jlo.wizardry.glyph.GlyphTest
+./gradlew :java-compiler:test --tests dev.mintychochip.wizardry.glyph.GlyphTest
 ```
 
 Expected: PASS. The dab remains round with no tail, sparse changing-width diagonals contain no gaps, and final cross-sections reflect local width.
@@ -210,8 +210,8 @@ Expected: `BUILD SUCCESSFUL`; normalized rendering, ML preprocessing contracts, 
 - [ ] **Step 5: Commit raster behavior and tests atomically**
 
 ```bash
-git add java-compiler/src/main/java/dev/jlo/wizardry/glyph/GlyphRasterizer.java \
-  java-compiler/src/test/java/dev/jlo/wizardry/glyph/GlyphTest.java
+git add java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/GlyphRasterizer.java \
+  java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/GlyphTest.java
 git diff --cached --check
 git commit -m "feat: render glyphs as physical brush strokes"
 ```
@@ -221,8 +221,8 @@ git commit -m "feat: render glyphs as physical brush strokes"
 ### Task 3: Verify Velocity-to-Brush Integration
 
 **Files:**
-- Modify: `mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/GlyphStrokeTrackerTest.java` only if existing coverage does not assert the final stored width.
-- Modify: `mapgui-integration/src/main/java/dev/jlo/wizardry/mapgui/GlyphStrokeTracker.java` only if focused tests show final velocity is not recorded correctly.
+- Modify: `mapgui-integration/src/test/java/dev/mintychochip/wizardry/mapgui/GlyphStrokeTrackerTest.java` only if existing coverage does not assert the final stored width.
+- Modify: `mapgui-integration/src/main/java/dev/mintychochip/wizardry/mapgui/GlyphStrokeTracker.java` only if focused tests show final velocity is not recorded correctly.
 
 **Interfaces:**
 - Consumes: `GlyphStrokeTracker.beginStroke(int, int, long)`, `appendPoint(int, int, long)`, `endStroke(long)`, and `snapshot()`.
@@ -265,7 +265,7 @@ Reuse the suite's existing `lastWidth` helper if present.
 Run:
 
 ```bash
-./gradlew :mapgui-integration:test --tests dev.jlo.wizardry.mapgui.GlyphStrokeTrackerTest
+./gradlew :mapgui-integration:test --tests dev.mintychochip.wizardry.mapgui.GlyphStrokeTrackerTest
 ```
 
 Expected: PASS if current velocity smoothing already records physical endpoint width. If it fails, fix the source calculation rather than adding renderer heuristics; preserve bounded elapsed-time smoothing and lifecycle resets.
@@ -285,8 +285,8 @@ Expected: `BUILD SUCCESSFUL` with glyph model, storage, screen, and raster tests
 If tests required tracker production or test changes:
 
 ```bash
-git add mapgui-integration/src/main/java/dev/jlo/wizardry/mapgui/GlyphStrokeTracker.java \
-  mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/GlyphStrokeTrackerTest.java
+git add mapgui-integration/src/main/java/dev/mintychochip/wizardry/mapgui/GlyphStrokeTracker.java \
+  mapgui-integration/src/test/java/dev/mintychochip/wizardry/mapgui/GlyphStrokeTrackerTest.java
 git diff --cached --check
 git commit -m "fix: preserve glyph brush endpoint velocity"
 ```

@@ -34,11 +34,11 @@ conformance/
   fixtures/*.json                     # generated and committed Rust oracle
 java-compiler/
   build.gradle.kts
-  src/main/java/dev/jlo/wizardry/scribe/
-  src/test/java/dev/jlo/wizardry/scribe/
+  src/main/java/dev/mintychochip/wizardry/scribe/
+  src/test/java/dev/mintychochip/wizardry/scribe/
 paper/
   build.gradle.kts
-  src/main/java/dev/jlo/wizardry/paper/
+  src/main/java/dev/mintychochip/wizardry/paper/
   src/main/resources/paper-plugin.yml
 settings.gradle.kts
 build.gradle.kts
@@ -116,13 +116,13 @@ Accepted results contain `status`, `name`, full `canonicalHex`, lowercase 64-cha
 - Create: `build.gradle.kts`
 - Create: `gradle.properties`
 - Create: `java-compiler/build.gradle.kts`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/CompilerConstants.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/Span.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/Diagnostic.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/ast/*.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/CompiledSpell.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/CompileResult.java`
-- Create: `java-compiler/src/test/java/dev/jlo/wizardry/scribe/ModelTest.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/CompilerConstants.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/Span.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/Diagnostic.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/ast/*.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/CompiledSpell.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/CompileResult.java`
+- Create: `java-compiler/src/test/java/dev/mintychochip/wizardry/scribe/ModelTest.java`
 
 **Produces:** immutable Java records and sealed interfaces matching Rust types exactly.
 
@@ -136,10 +136,10 @@ Accepted results contain `status`, `name`, full `canonicalHex`, lowercase 64-cha
 ### Task 4: Implement the Java Lexer and Parser
 
 **Files:**
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/lexer/*.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/parser/*.java`
-- Create: `java-compiler/src/test/java/dev/jlo/wizardry/scribe/LexerTest.java`
-- Create: `java-compiler/src/test/java/dev/jlo/wizardry/scribe/ParserTest.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/lexer/*.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/parser/*.java`
+- Create: `java-compiler/src/test/java/dev/mintychochip/wizardry/scribe/LexerTest.java`
+- Create: `java-compiler/src/test/java/dev/mintychochip/wizardry/scribe/ParserTest.java`
 
 **Produces:** `Parser.parse(String source)` returning typed syntax or ordered diagnostics.
 
@@ -154,11 +154,11 @@ Accepted results contain `status`, `name`, full `canonicalHex`, lowercase 64-cha
 ### Task 5: Implement Java Validation and Canonicalization
 
 **Files:**
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/validate/*.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/canonical/*.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/scribe/ScribeCompiler.java`
-- Create: `java-compiler/src/test/java/dev/jlo/wizardry/scribe/CompilerTest.java`
-- Create: `java-compiler/src/test/java/dev/jlo/wizardry/scribe/ConformanceTest.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/validate/*.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/canonical/*.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/scribe/ScribeCompiler.java`
+- Create: `java-compiler/src/test/java/dev/mintychochip/wizardry/scribe/CompilerTest.java`
+- Create: `java-compiler/src/test/java/dev/mintychochip/wizardry/scribe/ConformanceTest.java`
 
 **Produces:** `ScribeCompiler.compile(String): CompileResult`.
 
@@ -176,9 +176,9 @@ Accepted results contain `status`, `name`, full `canonicalHex`, lowercase 64-cha
 **Files:**
 - Create: `paper/build.gradle.kts`
 - Create: `paper/src/main/resources/paper-plugin.yml`
-- Create: `paper/src/main/java/dev/jlo/wizardry/paper/WizardryPlugin.java`
-- Create: `paper/src/main/java/dev/jlo/wizardry/paper/book/ScribeBookStore.java`
-- Create: `paper/src/test/java/dev/jlo/wizardry/paper/book/ScribeBookStoreTest.java`
+- Create: `paper/src/main/java/dev/mintychochip/wizardry/paper/WizardryPlugin.java`
+- Create: `paper/src/main/java/dev/mintychochip/wizardry/paper/book/ScribeBookStore.java`
+- Create: `paper/src/test/java/dev/mintychochip/wizardry/paper/book/ScribeBookStoreTest.java`
 
 - [ ] Depend on `:java-compiler` and Paper API `1.21.8-R0.1-SNAPSHOT`; do not depend on Rust artifacts.
 - [ ] Test marked `WRITABLE_BOOK` creation with PDC marker, random book UUID, starter source, and exact-identity save protection.
@@ -191,9 +191,9 @@ Accepted results contain `status`, `name`, full `canonicalHex`, lowercase 64-cha
 ### Task 7: Implement the Paper 1.21.8 Dialog IDE
 
 **Files:**
-- Create: `paper/src/main/java/dev/jlo/wizardry/paper/dialog/ScribeDialog.java`
-- Create: `paper/src/main/java/dev/jlo/wizardry/paper/listener/ScribeBookListener.java`
-- Create: `paper/src/test/java/dev/jlo/wizardry/paper/dialog/ScribeDialogStateTest.java`
+- Create: `paper/src/main/java/dev/mintychochip/wizardry/paper/dialog/ScribeDialog.java`
+- Create: `paper/src/main/java/dev/mintychochip/wizardry/paper/listener/ScribeBookListener.java`
+- Create: `paper/src/test/java/dev/mintychochip/wizardry/paper/dialog/ScribeDialogStateTest.java`
 
 - [ ] Build a dynamic dialog with a 1,024-pixel-wide input, 512-pixel multiline height, 128 lines, persisted initial source, and Save, Save & Cast, and Cancel actions.
 - [ ] Bind each one-use callback to player UUID and exact book UUID with a maximum 15-minute lifetime.
@@ -206,10 +206,10 @@ Accepted results contain `status`, `name`, full `canonicalHex`, lowercase 64-cha
 ### Task 8: Implement Paper Spell Runtime and Commands
 
 **Files:**
-- Create: `paper/src/main/java/dev/jlo/wizardry/paper/runtime/*.java`
-- Create: `paper/src/main/java/dev/jlo/wizardry/paper/command/ScribeCommand.java`
-- Modify: `paper/src/main/java/dev/jlo/wizardry/paper/WizardryPlugin.java`
-- Create: `paper/src/test/java/dev/jlo/wizardry/paper/runtime/*.java`
+- Create: `paper/src/main/java/dev/mintychochip/wizardry/paper/runtime/*.java`
+- Create: `paper/src/main/java/dev/mintychochip/wizardry/paper/command/ScribeCommand.java`
+- Modify: `paper/src/main/java/dev/mintychochip/wizardry/paper/WizardryPlugin.java`
+- Create: `paper/src/test/java/dev/mintychochip/wizardry/paper/runtime/*.java`
 
 - [ ] Preflight target and cooldown before applying any operation.
 - [ ] Execute operations in source order: attributed damage, fire ticks, frost slowness, arcane damage, bounded healing, and push.

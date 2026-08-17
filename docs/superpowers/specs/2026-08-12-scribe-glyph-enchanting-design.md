@@ -266,17 +266,15 @@ Glyphcraft stores vector strokes rather than treating rendered pixels as authori
 ```text
 GlyphDraft
   version
-  canvasWidth
-  canvasHeight
+  canvasWidth: 128
+  canvasHeight: 128
   strokes[]
     points[]
     brushWidth
     startedAt
-  recognizedGlyphs[]
-  connections[]
 ```
 
-Vector data supports undo, normalization, stroke-order analysis, resolution-independent rendering, and recognition that is not coupled to the map palette.
+The complete 128×128 map-sized bitmap is derived for preview, export, and layout-aware features. Recognition additionally derives a padded, normalized crop bitmap so placement and unused canvas margins do not dominate classification. Vector geometry remains available for stroke-order, endpoint, intersection, and enclosure features.
 
 ### Recognition
 

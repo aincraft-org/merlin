@@ -293,13 +293,13 @@ git commit -m "feat: train and export glyph classifier"
 ### Task 5: Add the Java feature and classification contracts
 
 **Files:**
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/GlyphLabel.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/GlyphRejection.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/GlyphCandidate.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/GlyphClassification.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/GlyphModelInputs.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/GlyphPreprocessor.java`
-- Test: `java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml/GlyphPreprocessorTest.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml/GlyphLabel.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml/GlyphRejection.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml/GlyphCandidate.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml/GlyphClassification.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml/GlyphModelInputs.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml/GlyphPreprocessor.java`
+- Test: `java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/ml/GlyphPreprocessorTest.java`
 
 **Interfaces:**
 - `GlyphLabel` enumerates the eleven positive labels plus `REJECT` with stable manifest IDs.
@@ -330,7 +330,7 @@ Expected: PASS against Python fixtures.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml/GlyphPreprocessorTest.java java-compiler/src/test/resources/dev/jlo/wizardry/glyph/ml
+git add java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/ml/GlyphPreprocessorTest.java java-compiler/src/test/resources/dev/mintychochip/wizardry/glyph/ml
 git commit -m "feat: preprocess glyphs for ML inference"
 ```
 
@@ -342,17 +342,17 @@ git commit -m "feat: preprocess glyphs for ML inference"
 - Modify: `java-compiler/build.gradle.kts`
 - Modify: `mapgui-integration/build.gradle.kts`
 - Modify: `mapgui-integration/src/main/resources/paper-plugin.yml`
-- Create: `mapgui-integration/src/main/java/dev/jlo/wizardry/mapgui/GlyphPluginLoader.java`
-- Test: `mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/OnnxRuntimePackagingTest.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/GlyphModelManifest.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/GlyphModelBundle.java`
-- Create: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml/OnnxGlyphClassifier.java`
-- Test: `java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml/GlyphModelBundleTest.java`
-- Test: `java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml/OnnxGlyphClassifierTest.java`
+- Create: `mapgui-integration/src/main/java/dev/mintychochip/wizardry/mapgui/GlyphPluginLoader.java`
+- Test: `mapgui-integration/src/test/java/dev/mintychochip/wizardry/mapgui/OnnxRuntimePackagingTest.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml/GlyphModelManifest.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml/GlyphModelBundle.java`
+- Create: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml/OnnxGlyphClassifier.java`
+- Test: `java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/ml/GlyphModelBundleTest.java`
+- Test: `java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/ml/OnnxGlyphClassifierTest.java`
 
 **Interfaces:**
 - Add `compileOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")` to `java-compiler` for classifier compilation and `testRuntimeOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")` for focused core tests; the library module does not claim to package runtime dependencies.
-- Add `compileOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")` and matching test runtime dependency to `mapgui-integration`. Add `loader: dev.jlo.wizardry.mapgui.GlyphPluginLoader` to `paper-plugin.yml`. `GlyphPluginLoader implements io.papermc.paper.plugin.loader.PluginLoader`; in `classloader(PluginClasspathBuilder)`, construct `MavenLibraryResolver`, add `new DefaultArtifact("com.microsoft.onnxruntime:onnxruntime:1.29.0")`, add a `RemoteRepository` using `MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR`, then pass the resolver to `classpathBuilder.addLibrary`. The deployable plugin remains one JAR, Paper resolves the original dependency before plugin loading, and ONNX Runtime owns extraction of its native library.
+- Add `compileOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")` and matching test runtime dependency to `mapgui-integration`. Add `loader: dev.mintychochip.wizardry.mapgui.GlyphPluginLoader` to `paper-plugin.yml`. `GlyphPluginLoader implements io.papermc.paper.plugin.loader.PluginLoader`; in `classloader(PluginClasspathBuilder)`, construct `MavenLibraryResolver`, add `new DefaultArtifact("com.microsoft.onnxruntime:onnxruntime:1.29.0")`, add a `RemoteRepository` using `MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR`, then pass the resolver to `classpathBuilder.addLibrary`. The deployable plugin remains one JAR, Paper resolves the original dependency before plugin loading, and ONNX Runtime owns extraction of its native library.
 - `GlyphModelBundle.load(Path) -> GlyphModelBundle` verifies the manifest and every checksum before creating an ONNX session.
 - `OnnxGlyphClassifier.classify(GlyphDraft) -> GlyphClassification` never throws for input/model/inference failures; it returns typed rejection.
 - `OnnxGlyphClassifier implements AutoCloseable` and owns one immutable `OrtSession`.
@@ -400,7 +400,7 @@ Expected: PASS using the exported tiny golden ONNX fixture.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add java-compiler/build.gradle.kts java-compiler/src/main/java/dev/jlo/wizardry/glyph/ml java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml java-compiler/src/test/resources/dev/jlo/wizardry/glyph/ml mapgui-integration/build.gradle.kts mapgui-integration/src/main/java/dev/jlo/wizardry/mapgui/GlyphPluginLoader.java mapgui-integration/src/main/resources/paper-plugin.yml mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/OnnxRuntimePackagingTest.java
+git add java-compiler/build.gradle.kts java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/ml java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/ml java-compiler/src/test/resources/dev/mintychochip/wizardry/glyph/ml mapgui-integration/build.gradle.kts mapgui-integration/src/main/java/dev/mintychochip/wizardry/mapgui/GlyphPluginLoader.java mapgui-integration/src/main/resources/paper-plugin.yml mapgui-integration/src/test/java/dev/mintychochip/wizardry/mapgui/OnnxRuntimePackagingTest.java
 git commit -m "feat: classify glyphs with ONNX Runtime"
 ```
 
@@ -409,13 +409,13 @@ git commit -m "feat: classify glyphs with ONNX Runtime"
 ### Task 7: Remove template recognition and expose asynchronous classification
 
 **Files:**
-- Remove: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/GlyphRecognizer.java`
-- Remove: `java-compiler/src/main/java/dev/jlo/wizardry/glyph/GlyphTemplate.java`
-- Modify: `java-compiler/src/test/java/dev/jlo/wizardry/glyph/GlyphTest.java`
-- Create: `mapgui-integration/src/main/java/dev/jlo/wizardry/mapgui/GlyphClassificationService.java`
-- Modify: `mapgui-integration/src/main/java/dev/jlo/wizardry/mapgui/GlyphMapGuiPlugin.java`
-- Modify: `mapgui-integration/src/main/java/dev/jlo/wizardry/mapgui/GlyphScreen.java`
-- Test: `mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/GlyphClassificationServiceTest.java`
+- Remove: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/GlyphRecognizer.java`
+- Remove: `java-compiler/src/main/java/dev/mintychochip/wizardry/glyph/GlyphTemplate.java`
+- Modify: `java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/GlyphTest.java`
+- Create: `mapgui-integration/src/main/java/dev/mintychochip/wizardry/mapgui/GlyphClassificationService.java`
+- Modify: `mapgui-integration/src/main/java/dev/mintychochip/wizardry/mapgui/GlyphMapGuiPlugin.java`
+- Modify: `mapgui-integration/src/main/java/dev/mintychochip/wizardry/mapgui/GlyphScreen.java`
+- Test: `mapgui-integration/src/test/java/dev/mintychochip/wizardry/mapgui/GlyphClassificationServiceTest.java`
 
 **Interfaces:**
 - `GlyphClassificationService.classify(GlyphDraft, Consumer<GlyphClassification>)` schedules inference on a bounded single-worker executor and schedules the callback on the Bukkit main thread.
@@ -469,8 +469,8 @@ git commit -m "feat: classify drawn glyphs asynchronously"
 - Modify: `.github/workflows/ci.yml`
 - Modify: `mapgui-integration/build.gradle.kts`
 - Create: `glyph-training/tests/test_java_parity.py`
-- Create: `java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml/GlyphClassifierSmokeTest.java`
-- Create: `mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/OnnxRuntimePackagingTest.java`
+- Create: `java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/ml/GlyphClassifierSmokeTest.java`
+- Create: `mapgui-integration/src/test/java/dev/mintychochip/wizardry/mapgui/OnnxRuntimePackagingTest.java`
 
 **Interfaces:**
 - CI validates Python tooling without requiring private player data or training a release model.
@@ -517,7 +517,7 @@ Start the test server with the pinned ONNX CPU native artifact available, draw a
 - [ ] **Step 8: Commit**
 
 ```bash
-git add .github/workflows/ci.yml mapgui-integration/build.gradle.kts mapgui-integration/src/test/java/dev/jlo/wizardry/mapgui/OnnxRuntimePackagingTest.java glyph-training/tests/test_java_parity.py java-compiler/src/test/java/dev/jlo/wizardry/glyph/ml/GlyphClassifierSmokeTest.java
+git add .github/workflows/ci.yml mapgui-integration/build.gradle.kts mapgui-integration/src/test/java/dev/mintychochip/wizardry/mapgui/OnnxRuntimePackagingTest.java glyph-training/tests/test_java_parity.py java-compiler/src/test/java/dev/mintychochip/wizardry/glyph/ml/GlyphClassifierSmokeTest.java
 git commit -m "test: verify glyph classifier release contract"
 ```
 
