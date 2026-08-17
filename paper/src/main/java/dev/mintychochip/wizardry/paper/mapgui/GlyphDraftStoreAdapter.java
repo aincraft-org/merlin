@@ -232,12 +232,12 @@ public final class GlyphDraftStoreAdapter {
         return new GlyphToken(Label.fromId(encoded.label()), encoded.pips());
     }
 
-    static String tokenTitle(GlyphToken token) {
+    public static String tokenTitle(GlyphToken token) {
         if (!GlyphRoles.hasPips(token.role())) return token.label().id();
         return token.label().id() + " " + "●".repeat(token.pips());
     }
 
-    static byte[] encode(GlyphDraft draft) {
+    public static byte[] encode(GlyphDraft draft) {
         var out = new StringBuilder("2;");
         for (var stroke : draft.strokes()) {
             out.append(stroke.brushWidth()).append(',').append(stroke.startedAtMillis()).append(':');
@@ -249,7 +249,7 @@ public final class GlyphDraftStoreAdapter {
         return Base64.getEncoder().encode(out.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
-    static GlyphDraft decode(byte[] bytes) {
+    public static GlyphDraft decode(byte[] bytes) {
         var raw = new String(Base64.getDecoder().decode(bytes), java.nio.charset.StandardCharsets.UTF_8);
         boolean hasWidths;
         if (raw.startsWith("2;")) {

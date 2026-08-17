@@ -5,25 +5,31 @@ import dev.mintychochip.wizardry.api.glyph.GlyphDraft;
 import dev.mintychochip.wizardry.api.glyph.GlyphRoles;
 import dev.mintychochip.wizardry.api.glyph.GlyphToken;
 import dev.mintychochip.wizardry.api.ml.Label;
+import dev.mintychochip.wizardry.paper.tome.GlyphTomeStore;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 public final class GlyphCommand implements BasicCommand {
     private final GlyphDraftStoreAdapter store;
     private final GlyphMapSaveAction mapSaveAction;
     private final GlyphClassificationService classificationService;
+    private final GlyphTomeStore tomes;
 
     public GlyphCommand(
             GlyphDraftStoreAdapter store,
             GlyphMapSaveAction mapSaveAction,
-            GlyphClassificationService classificationService) {
+            GlyphClassificationService classificationService,
+            GlyphTomeStore tomes) {
         this.store = store;
         this.mapSaveAction = mapSaveAction;
         this.classificationService = classificationService;
+        this.tomes = tomes;
     }
 
     @Override
@@ -42,14 +48,31 @@ public final class GlyphCommand implements BasicCommand {
             sender.sendMessage("Glyph drawing requires a player.");
             return;
         }
-        if (args.length > 0 && args[0].equalsIgnoreCase("book")) {
-            player.getInventory().addItem(store.createGlyphItem());
-            player.sendMessage("Created a glyph canvas item.");
-            return;
-        }
-        if (args.length > 0 && args[0].equalsIgnoreCase("stamp")) {
-            stamp(player, args);
-            return;
+        if (args.length > 0) {
+            switch (args[0].toLowerCase(Locale.ROOT)) {
+                case "book" -> {
+                    player.getInventory().addItem(store.createGlyphItem());
+                    player.sendMessage("Created a glyph canvas item.");
+                    return;
+                }
+                case "stamp" -> {
+                    stamp(player, args);
+                    return;
+                }
+                case "tome" -> {
+                    giveTome(player);
+                    return;
+                }
+                case "bind" -> {
+                    bind(player);
+                    return;
+                }
+                case "tear" -> {
+                    tear(player);
+                    return;
+                }
+                default -> { }
+            }
         }
         var held = player.getInventory().getItemInMainHand();
         store.restoreRenderer(held);
@@ -77,6 +100,71 @@ public final class GlyphCommand implements BasicCommand {
                 }),
                 player::isSneaking);
         MapGui.get().open(player, opened[0]);
+    }
+
+    private void giveTome(Player player) {
+        if (!hasTomePermission(player)) {
+            player.sendMessage("You do not have permission to use glyph tomes.");
+            return;
+        }
+        player.getInventory().addItem(tomes.createTome());
+        player.sendMessage("Created a glyph tome.");
+    }
+
+    private void bind(Player player) {
+        if (!hasTomePermission(player)) {
+            player.sendMessage("You do not have permission to use glyph tomes.");
+            return;
+        }
+        var map = player.getInventory().getItemInMainHand();
+        var tome = player.getInventory().getItemInOffHand();
+        if (!tomes.isTome(tome)) {
+            player.sendMessage("Hold a glyph tome in your off hand.");
+            return;
+        }
+        var token = store.loadToken(map);
+        if (token.isEmpty()) {
+            player.sendMessage("Hold a frozen glyph map in your main hand.");
+            return;
+        }
+        var inserted = tomes.insert(tome, map, player.isSneaking());
+        if (inserted.isEmpty()) {
+            player.sendMessage("That glyph cannot bind into this tome.");
+            return;
+        }
+        player.sendMessage("Bound " + token.get().label().id() + " into the tome.");
+    }
+
+    private void tear(Player player) {
+        if (!hasTomePermission(player)) {
+            player.sendMessage("You do not have permission to use glyph tomes.");
+            return;
+        }
+        var tome = heldTome(player);
+        if (tome == null) {
+            player.sendMessage("Hold a glyph tome.");
+            return;
+        }
+        var torn = tomes.tear(tome, player.getWorld());
+        if (torn.isEmpty()) {
+            player.sendMessage("The tome has no pages.");
+            return;
+        }
+        var leftover = player.getInventory().addItem(torn.get());
+        leftover.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+        var label = store.loadToken(torn.get()).map(token -> token.label().id()).orElse("glyph");
+        player.sendMessage("Tore " + label + " from the tome.");
+    }
+
+    private ItemStack heldTome(Player player) {
+        var main = player.getInventory().getItemInMainHand();
+        if (tomes.isTome(main)) return main;
+        var off = player.getInventory().getItemInOffHand();
+        return tomes.isTome(off) ? off : null;
+    }
+
+    private static boolean hasTomePermission(Player player) {
+        return player.hasPermission("wizardry.glyph.tome") || player.hasPermission("wizardry.glyph.draw");
     }
 
     private void stamp(Player player, String[] args) {

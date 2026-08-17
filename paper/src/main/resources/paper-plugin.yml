@@ -17,3 +17,6 @@ permissions:
   wizardry.glyph.draw:
     description: Allows drawing and saving glyph maps.
     default: true
+  wizardry.glyph.tome:
+    description: Allows creating and binding glyph tomes.
+    default: true

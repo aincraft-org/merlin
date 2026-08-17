@@ -16,6 +16,8 @@ import dev.mintychochip.wizardry.paper.mapgui.GlyphDraftStoreAdapter;
 import dev.mintychochip.wizardry.paper.mapgui.GlyphMapRehydrationListener;
 import dev.mintychochip.wizardry.paper.mapgui.GlyphMapSaveAction;
 import dev.mintychochip.wizardry.paper.runtime.SpellRuntime;
+import dev.mintychochip.wizardry.paper.tome.GlyphTomeListener;
+import dev.mintychochip.wizardry.paper.tome.GlyphTomeStore;
 import java.util.List;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -53,7 +55,9 @@ public final class WizardryPlugin extends JavaPlugin {
         mapSaveAction = new GlyphMapSaveAction(store);
         getServer().getPluginManager().registerEvents(new GlyphMapRehydrationListener(store), this);
         classificationService = createClassificationService();
-        registerCommand("glyph", new GlyphCommand(store, mapSaveAction, classificationService));
+        var tomes = new GlyphTomeStore(this, store);
+        getServer().getPluginManager().registerEvents(new GlyphTomeListener(tomes, store), this);
+        registerCommand("glyph", new GlyphCommand(store, mapSaveAction, classificationService, tomes));
     }
 
     private GlyphClassificationService createClassificationService() {

@@ -22,6 +22,7 @@ final class OnnxRuntimePackagingTest {
         assertTrue(descriptor.contains("MapGUI:"));
         assertTrue(descriptor.contains("wizardry.scribe.book:"));
         assertTrue(descriptor.contains("wizardry.glyph.draw:"));
+        assertTrue(descriptor.contains("wizardry.glyph.tome:"));
     }
     @Test
     void glyphPermissionRemainsAvailableToOrdinaryPlayers() throws IOException {
