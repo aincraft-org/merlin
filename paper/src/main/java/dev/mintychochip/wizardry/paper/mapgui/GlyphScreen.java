@@ -69,6 +69,8 @@ public final class GlyphScreen extends Screen {
         return Row(
                 Button("Save").background(new Color(38, 110, 78)).textColor(Color.WHITE)
                         .hoverBackground(new Color(60, 150, 105)).onClick(this::saveFromMenu),
+                Button("Classify").background(new Color(48, 50, 62)).textColor(Color.WHITE)
+                        .onClick(this::classify),
                 Button("Undo").background(new Color(48, 50, 62)).textColor(Color.WHITE)
                         .onClick(this::undo),
                 Button("Clear").background(new Color(90, 44, 52)).textColor(Color.WHITE)

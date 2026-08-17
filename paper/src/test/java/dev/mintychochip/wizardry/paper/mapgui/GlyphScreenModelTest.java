@@ -85,4 +85,11 @@ final class GlyphScreenModelTest {
         screen.setPendingLabel(Label.DAMAGE);
         assertEquals(Label.DAMAGE, screen.pendingLabel());
     }
+
+    @Test void classifyInvokesClassifyAction() {
+        var classifications = new AtomicInteger();
+        var screen = new GlyphScreen(new GlyphStrokeTracker(), () -> {}, () -> {}, ignored -> classifications.incrementAndGet(), () -> false);
+        screen.classify();
+        assertEquals(1, classifications.get());
+    }
 }
