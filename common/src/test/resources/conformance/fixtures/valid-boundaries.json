@@ -1,0 +1,44 @@
+{
+  "id": "valid-boundaries",
+  "result": {
+    "canonicalHex": "7363726962652d636f6d70696c65722f302e317c7370656c6c7c626f756e6461726965737c0a7461726765745f7261797c343034303030303030303030303030300a64616d6167657c7461726765747c666972657c343033343030303030303030303030300a6865616c7c73656c667c336665303030303030303030303030300a707573687c7461726765747c343030383030303030303030303030300a636f6f6c646f776e7c34303465303030303030303030303030",
+    "compilerVersion": "scribe-compiler/0.1",
+    "identitySha256": "9aa7d41ec2af3cd1779c83a2bd62f21f373f041ef3e758230e2babf9b26d0d7f",
+    "name": "boundaries",
+    "operations": [
+      {
+        "damageType": null,
+        "opcode": "target_ray",
+        "target": null,
+        "valueBits": "4040000000000000"
+      },
+      {
+        "damageType": "fire",
+        "opcode": "damage",
+        "target": "target",
+        "valueBits": "4034000000000000"
+      },
+      {
+        "damageType": null,
+        "opcode": "heal",
+        "target": "self",
+        "valueBits": "3fe0000000000000"
+      },
+      {
+        "damageType": null,
+        "opcode": "push",
+        "target": "target",
+        "valueBits": "4008000000000000"
+      },
+      {
+        "damageType": null,
+        "opcode": "cooldown",
+        "target": null,
+        "valueBits": "404e000000000000"
+      }
+    ],
+    "status": "accepted"
+  },
+  "schemaVersion": 1,
+  "source": "spell boundaries {\n  target ray 32;\n  damage target fire 20;\n  heal self 0.5;\n  push target 3;\n  cooldown 60s;\n}\n"
+}

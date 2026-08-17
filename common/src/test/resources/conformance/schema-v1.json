@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wizardry.invalid/scribe/conformance/schema-v1.json",
+  "title": "Scribe compiler conformance fixture v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "source", "result"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "minLength": 1 },
+    "source": { "type": "string" },
+    "result": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "compilerVersion", "name", "canonicalHex", "identitySha256", "operations"],
+          "properties": {
+            "status": { "const": "accepted" },
+            "compilerVersion": { "type": "string" },
+            "name": { "type": "string" },
+            "canonicalHex": { "type": "string", "pattern": "^[0-9a-f]*$" },
+            "identitySha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "operations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["opcode", "target", "valueBits", "damageType"],
+                "properties": {
+                  "opcode": { "enum": ["target_ray", "damage", "heal", "push", "cooldown"] },
+                  "target": { "type": ["string", "null"], "enum": ["self", "target", null] },
+                  "valueBits": { "type": ["string", "null"], "pattern": "^[0-9a-f]{16}$" },
+                  "damageType": { "type": ["string", "null"], "enum": ["physical", "fire", "frost", "arcane", null] }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "diagnostics"],
+          "properties": {
+            "status": { "const": "rejected" },
+            "diagnostics": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["code", "message", "startByte", "endByte", "line", "column"],
+                "properties": {
+                  "code": { "type": "string" },
+                  "message": { "type": "string" },
+                  "startByte": { "type": "integer", "minimum": 0 },
+                  "endByte": { "type": "integer", "minimum": 0 },
+                  "line": { "type": "integer", "minimum": 1 },
+                  "column": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -12,5 +12,13 @@ dependencyResolutionManagement {
     }
 }
 
+includeBuild("../MapGUI") {
+    dependencySubstitution {
+        substitute(module("io.github.flog99:mapgui-api")).using(project(":mapgui-api"))
+        substitute(module("io.github.flog99:mapgui-layout")).using(project(":mapgui-layout"))
+    }
+}
 rootProject.name = "wizardry"
-include(":java-compiler")
+include(":api")
+include(":common")
+include(":paper")

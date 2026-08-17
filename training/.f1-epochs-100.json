@@ -1,0 +1,16 @@
+{
+  "catalog": "/home/jlo/dev/wizardry/training/catalog-v1.json",
+  "device": "cuda",
+  "embedding_dim": 32,
+  "epochs": 100,
+  "generated_corpus": "/home/jlo/dev/wizardry/training/dataset/generated/dev-basic-v1/corpus.jsonl",
+  "generated_manifest": "/home/jlo/dev/wizardry/training/dataset/generated/dev-basic-v1/manifest.json",
+  "label_smoothing": 0.0,
+  "learning_rate": 0.003,
+  "max_reject_false_accept_rate": 1.0,
+  "min_accuracy": 0.0,
+  "output": "/home/jlo/dev/wizardry/training/artifacts/f1-experiments/runs/epochs-100",
+  "profile": "synthetic-development",
+  "seed": 1729,
+  "training_augmentations": 0
+}
