@@ -10,7 +10,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 public final class ScribeBookStore {
-    public static final String STARTER_SOURCE = "spell novice { target ray 8; damage target physical 1; }";
+    public static final String STARTER_SOURCE = "look ahead 8\nburn target\nrest 3 seconds";
     private final NamespacedKey markerKey;
     private final NamespacedKey idKey;
     private final NamespacedKey sourceKey;
