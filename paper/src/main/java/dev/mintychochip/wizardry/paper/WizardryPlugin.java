@@ -57,7 +57,7 @@ public final class WizardryPlugin extends JavaPlugin {
         classificationService = createClassificationService();
         var tomes = new GlyphTomeStore(this, store);
         getServer().getPluginManager().registerEvents(new GlyphTomeListener(tomes, store), this);
-        registerCommand("glyph", new GlyphCommand(store, mapSaveAction, classificationService, tomes));
+        registerCommand("glyph", new GlyphCommand(store, mapSaveAction, classificationService, tomes, runtime));
     }
 
     private GlyphClassificationService createClassificationService() {

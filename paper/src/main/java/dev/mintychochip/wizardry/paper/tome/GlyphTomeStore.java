@@ -90,6 +90,10 @@ public final class GlyphTomeStore {
         }
     }
 
+    public List<GlyphToken> tokens(ItemStack item) {
+        return pages(item).tokens();
+    }
+
     public int index(ItemStack item) {
         if (!isTome(item)) return 0;
         Integer stored = item.getItemMeta().getPersistentDataContainer()

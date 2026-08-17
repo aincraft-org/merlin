@@ -1,10 +1,15 @@
 package dev.mintychochip.wizardry.paper.mapgui;
 
 import de.flog99.mapgui.MapGui;
+import dev.mintychochip.wizardry.api.dsl.Action;
+import dev.mintychochip.wizardry.api.dsl.CompileResult;
 import dev.mintychochip.wizardry.api.glyph.GlyphDraft;
 import dev.mintychochip.wizardry.api.glyph.GlyphRoles;
 import dev.mintychochip.wizardry.api.glyph.GlyphToken;
 import dev.mintychochip.wizardry.api.ml.Label;
+import dev.mintychochip.wizardry.common.glyph.GlyphCompilerImpl;
+import dev.mintychochip.wizardry.paper.runtime.CharmBinder;
+import dev.mintychochip.wizardry.paper.runtime.SpellRuntime;
 import dev.mintychochip.wizardry.paper.tome.GlyphTomeStore;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -12,6 +17,8 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import org.bukkit.command.CommandSender;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -20,16 +27,19 @@ public final class GlyphCommand implements BasicCommand {
     private final GlyphMapSaveAction mapSaveAction;
     private final GlyphClassificationService classificationService;
     private final GlyphTomeStore tomes;
+    private final SpellRuntime runtime;
 
     public GlyphCommand(
             GlyphDraftStoreAdapter store,
             GlyphMapSaveAction mapSaveAction,
             GlyphClassificationService classificationService,
-            GlyphTomeStore tomes) {
+            GlyphTomeStore tomes,
+            SpellRuntime runtime) {
         this.store = store;
         this.mapSaveAction = mapSaveAction;
         this.classificationService = classificationService;
         this.tomes = tomes;
+        this.runtime = runtime;
     }
 
     @Override
@@ -69,6 +79,14 @@ public final class GlyphCommand implements BasicCommand {
                 }
                 case "tear" -> {
                     tear(player);
+                    return;
+                }
+                case "cast" -> {
+                    cast(player);
+                    return;
+                }
+                case "enchant" -> {
+                    enchant(player);
                     return;
                 }
                 default -> { }
@@ -154,6 +172,65 @@ public final class GlyphCommand implements BasicCommand {
         leftover.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
         var label = store.loadToken(torn.get()).map(token -> token.label().id()).orElse("glyph");
         player.sendMessage("Tore " + label + " from the tome.");
+    }
+
+    private void cast(Player player) {
+        if (!hasTomePermission(player)) {
+            player.sendMessage("You do not have permission to use glyph tomes.");
+            return;
+        }
+        var tome = player.getInventory().getItemInMainHand();
+        if (!tomes.isTome(tome)) {
+            player.sendMessage("Hold a glyph tome in your main hand.");
+            return;
+        }
+        var result = GlyphCompilerImpl.INSTANCE.compile(tomes.tokens(tome));
+        if (result instanceof CompileResult.Error error) {
+            var first = error.diagnostics().getFirst();
+            player.sendMessage(first.code() + ": " + first.message());
+            return;
+        }
+        if (!(result instanceof CompileResult.Ok ok)) return;
+        var spell = ok.spell();
+        var range = spell.actions().stream()
+                .filter(action -> action instanceof Action.LookAhead)
+                .mapToDouble(action -> ((Action.LookAhead) action).range())
+                .findFirst()
+                .orElse(32);
+        var target = player.getTargetEntity((int) range);
+        var living = target instanceof LivingEntity entity ? entity : null;
+        if (!runtime.cast(player, living, spell, System.currentTimeMillis(), range)) {
+            player.sendMessage("Spell is unavailable: target or cooldown check failed.");
+            return;
+        }
+        player.sendMessage("Spell cast.");
+    }
+
+    private void enchant(Player player) {
+        if (!hasTomePermission(player)) {
+            player.sendMessage("You do not have permission to use glyph tomes.");
+            return;
+        }
+        var map = player.getInventory().getItemInMainHand();
+        var sword = player.getInventory().getItemInOffHand();
+        var token = store.loadToken(map);
+        if (token.isEmpty()) {
+            player.sendMessage("Hold a frozen glyph map in your main hand.");
+            return;
+        }
+        var bind = GlyphCompilerImpl.INSTANCE.charm(token.get());
+        if (bind.isEmpty() || !CharmBinder.canHost(sword.getType())) {
+            player.sendMessage("Hold a sharpness map and a sword in your off hand.");
+            return;
+        }
+        int rank = CharmBinder.level(bind.get());
+        if (sword.getEnchantmentLevel(Enchantment.SHARPNESS) >= rank) {
+            player.sendMessage("The sword already has equal or greater sharpness.");
+            return;
+        }
+        sword.addUnsafeEnchantment(Enchantment.SHARPNESS, rank);
+        map.setAmount(Math.max(0, map.getAmount() - 1));
+        player.sendMessage("Bound sharpness " + rank + " to the sword.");
     }
 
     private ItemStack heldTome(Player player) {
