@@ -32,30 +32,40 @@ class _Point:
 
 
 class _Stroke:
-    def __init__(self, points, brush_width=6.0):
+    def __init__(self, points, brush_width=6.0, element=None):
         self.points = [_Point(point["x"] if isinstance(point, dict) else point.x,
                               point["y"] if isinstance(point, dict) else point.y)
                        for point in points]
         self.brush_width = float(brush_width)
+        self.element = element
 
 
 class _Example:
-    def __init__(self, strokes):
+    def __init__(self, strokes, label=None):
         self.strokes = strokes
+        self.label = label
 
 
-def example_from_strokes(strokes) -> _Example:
+def example_from_strokes(strokes, label=None) -> _Example:
     if not strokes:
         raise ValueError("cannot classify empty glyph")
     parsed = []
     for stroke in strokes:
         if isinstance(stroke, dict):
-            parsed.append(_Stroke(stroke.get("points", ()), stroke.get("brush_width", 6.0)))
+            parsed.append(_Stroke(
+                stroke.get("points", ()),
+                stroke.get("brush_width", 6.0),
+                stroke.get("element"),
+            ))
         else:
-            parsed.append(_Stroke(getattr(stroke, "points"), getattr(stroke, "brush_width", 6.0)))
+            parsed.append(_Stroke(
+                getattr(stroke, "points"),
+                getattr(stroke, "brush_width", 6.0),
+                getattr(stroke, "element", None),
+            ))
         if not parsed[-1].points:
             raise ValueError("cannot classify empty stroke")
-    return _Example(parsed)
+    return _Example(parsed, label)
 
 
 def catalog_required_strokes(path: Path) -> dict[str, frozenset[int]]:
@@ -77,7 +87,7 @@ def catalog_required_strokes(path: Path) -> dict[str, frozenset[int]]:
 def _full_ink(example) -> int:
     from .element import ELEMENTS
     usable = [
-        ([(point.x, point.y) for point in stroke.points], stroke.brush_width, ELEMENTS[getattr(stroke, "element", "physical")])
+        ([(point.x, point.y) for point in stroke.points], stroke.brush_width, ELEMENTS[getattr(stroke, "element", None) or "physical"])
         for stroke in example.strokes
     ]
     return int((rasterize_full(usable).max(axis=-1) > 0).sum())

@@ -46,6 +46,12 @@
         <button id="clear">Clear</button>
         <label>brush <input id="brush" type="range" min="2" max="12" value="6" /></label>
       </div>
+      <div class="row" id="inks">
+        <button type="button" data-ink="physical">bone</button>
+        <button type="button" data-ink="fire">ember</button>
+        <button type="button" data-ink="frost">glacier</button>
+        <button type="button" data-ink="arcane">violet</button>
+      </div>
     </section>
     <section class="panel">
       <h2>Model view</h2>
@@ -64,25 +70,35 @@
   </main>
   <script>
     const SCALE = 4, SIZE = 128;
+    const INKS = { physical: "#E8E4D9", fire: "#FF4D00", frost: "#3DDCFF", arcane: "#B44AFF" };
     const board = document.getElementById("board");
     const seen = document.getElementById("seen");
     const bctx = board.getContext("2d");
-    const sctx = seen.getContext("2d");
-    let strokes = [], current = null, drawing = false;
+    let strokes = [], current = null, drawing = false, ink = "physical";
+
+    function inkColor(name) { return INKS[name] || INKS.physical; }
+
+    function setInk(name) {
+      ink = INKS[name] ? name : "physical";
+      for (const button of document.querySelectorAll("#inks [data-ink]")) {
+        button.style.outline = button.dataset.ink === ink ? "2px solid " + inkColor(ink) : "none";
+      }
+    }
 
     function redraw() {
       bctx.fillStyle = "#030712";
       bctx.fillRect(0, 0, board.width, board.height);
-      bctx.strokeStyle = "#f8fafc";
       bctx.lineCap = "round";
       bctx.lineJoin = "round";
       for (const stroke of strokes) {
+        const color = inkColor(stroke.element);
+        bctx.strokeStyle = color;
+        bctx.fillStyle = color;
         bctx.lineWidth = (stroke.brush_width || 6) * SCALE;
         bctx.beginPath();
         stroke.points.forEach((p, i) => i ? bctx.lineTo(p.x * SCALE, p.y * SCALE) : bctx.moveTo(p.x * SCALE, p.y * SCALE));
         if (stroke.points.length === 1) {
           bctx.arc(stroke.points[0].x * SCALE, stroke.points[0].y * SCALE, (stroke.brush_width || 6) * SCALE / 2, 0, Math.PI * 2);
-          bctx.fillStyle = "#f8fafc";
           bctx.fill();
         } else bctx.stroke();
       }
@@ -98,7 +114,7 @@
     board.addEventListener("pointerdown", event => {
       board.setPointerCapture(event.pointerId);
       drawing = true;
-      current = { points: [pt(event)], brush_width: Number(document.getElementById("brush").value) };
+      current = { points: [pt(event)], brush_width: Number(document.getElementById("brush").value), element: ink };
       strokes.push(current);
       redraw();
     });
@@ -114,9 +130,17 @@
     function drawRaster(canvas, raster) {
       const ctx = canvas.getContext("2d");
       const img = ctx.createImageData(64, 64);
+      const rgb = Array.isArray(raster) && raster.length === 3 && Array.isArray(raster[0]) && Array.isArray(raster[0][0]);
       for (let i = 0; i < 64 * 64; i++) {
-        const v = Math.round((raster[Math.floor(i / 64)][i % 64] || 0) * 255);
-        img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v;
+        const y = Math.floor(i / 64), x = i % 64;
+        if (rgb) {
+          img.data[i * 4] = Math.round((raster[0][y][x] || 0) * 255);
+          img.data[i * 4 + 1] = Math.round((raster[1][y][x] || 0) * 255);
+          img.data[i * 4 + 2] = Math.round((raster[2][y][x] || 0) * 255);
+        } else {
+          const v = Math.round((raster[y][x] || 0) * 255);
+          img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v;
+        }
         img.data[i * 4 + 3] = 255;
       }
       ctx.putImageData(img, 0, 0);
@@ -154,6 +178,11 @@
     document.getElementById("classify").onclick = classify;
     document.getElementById("clear").onclick = () => { strokes = []; redraw(); };
     document.getElementById("undo").onclick = () => { strokes.pop(); redraw(); };
+    document.getElementById("inks").onclick = event => {
+      const name = event.target && event.target.dataset && event.target.dataset.ink;
+      if (name) setInk(name);
+    };
+    setInk("physical");
 
     fetch("/api/catalog").then(r => r.json()).then(data => {
       const root = document.getElementById("catalog");

@@ -46,3 +46,26 @@ def test_catalog_previews_cover_composition_roles():
     assert "reject" not in labels
     assert previews[0]["raster"][0]
     assert json.dumps(previews[0]["raster"])
+
+
+def test_example_from_strokes_keeps_element():
+    from wizardry_glyphs.element import ELEMENTS
+    example = example_from_strokes([
+        {"points": [{"x": 64, "y": 64}], "brush_width": 6.0, "element": "fire"},
+    ])
+    assert example.strokes[0].element == "fire"
+    raster = preprocess_example(example)["raster"]
+    assert raster.shape == (3, 64, 64)
+    import numpy as np
+    np.testing.assert_allclose(raster[:, 32, 32], ELEMENTS["fire"], atol=1e-5)
+
+
+def test_catalog_fire_preview_uses_ember_channel():
+    from wizardry_glyphs.element import ELEMENTS
+    import numpy as np
+    fire = next(item for item in catalog_previews() if item["label"] == "fire")
+    raster = np.array(fire["raster"], dtype=np.float32)
+    assert raster.shape[0] == 3
+    ink = raster.reshape(3, -1)[:, raster.max(axis=0).reshape(-1) > 0.2]
+    mean = ink.mean(axis=1)
+    np.testing.assert_allclose(mean, ELEMENTS["fire"], atol=0.15)
