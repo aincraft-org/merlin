@@ -53,13 +53,13 @@ One-time setup and first publish.
 3. Determine remote (`WEIGHTS_REMOTE`, default `https://github.com/aincraft-org/wizardry-weights.git`).
 4. If the weights repo does not exist:
    - Try `git clone $WEIGHTS_REMOTE $WEIGHTS_DIR`.
-   - If the remote is not reachable, `git init` an empty local repo, add the remote, and print instructions for creating/pushing the GitHub repository.
+   - If the remote is not reachable, `git init` an empty local repo, add the remote, skip the push, and print instructions for creating/pushing the GitHub repository.
 5. Verify the artifact contains `model.onnx` and `model.pt`.
 6. Remove any existing files in the weights repo root and copy the artifact files in.
 7. Compute the next calver tag.
 8. Commit with a message including the source artifact and the new tag.
 9. Create the annotated tag.
-10. Push the tag to `origin` (skipped if no remote or if `DRY_RUN=1`).
+10. Push the current branch and the annotated tag to `origin` (skipped if no remote, if `NO_PUSH=1`, or if `DRY_RUN=1`) so fresh clones have a default tree.
 11. Generate `README.md` in the weights repo describing the latest model.
 
 ### `scripts/update.sh`
@@ -67,10 +67,10 @@ One-time setup and first publish.
 Subsequent publishes.
 
 1. Verify the weights repo exists (fail with a helpful message otherwise).
-2. Pull latest tags from `origin`.
+2. Fetch and fast-forward the current branch from `origin` (assumes linear, single-publisher history).
 3. Copy the current artifact into the weights repo root.
 4. Compute the next calver tag.
-5. Commit, tag, and push.
+5. Commit, tag, and push the branch and tag; fail if the push fails.
 
 ### Shared Helper
 
@@ -87,6 +87,7 @@ Environment variables accepted by both scripts:
 | `WEIGHTS_REMOTE` | `https://github.com/aincraft-org/wizardry-weights.git` | Remote URL. |
 | `DRY_RUN` | unset | If `1`, print commands without committing or pushing. |
 | `FORCE` | unset | If `1`, allow publishing even if the weights repo has uncommitted changes. |
+| `NO_PUSH` | unset | If `1`, commit and tag locally without pushing.
 
 ## Error Handling
 
@@ -94,9 +95,11 @@ Environment variables accepted by both scripts:
 - Refuse to commit if the weights repo has uncommitted changes unless `FORCE=1`.
 - Refuse to run `update.sh` if `WEIGHTS_DIR` does not exist.
 - Provide clear, actionable error messages.
+- `update.sh` fast-forwards the current branch from `origin`; it assumes a single publisher and fails if the remote has non-linear history.
 
 ## Testing
 
 - Run `DRY_RUN=1 ./scripts/install.sh` to verify paths and computed tag.
 - Test against a local bare repository before pushing to `aincraft-org/wizardry-weights`.
 - Verify that `git tag -l` in the weights repo shows the expected calver tags.
+- Clone a fresh copy of the test remote and verify it has a default branch and the expected calver tags.
