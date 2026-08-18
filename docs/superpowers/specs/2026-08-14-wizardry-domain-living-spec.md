@@ -100,6 +100,7 @@ Active surface for the coming implementation wave.
 ### Current notes
 - Concept: `docs/superpowers/specs/2026-08-12-scribe-glyph-enchanting-design.md`.
 - Scribe surface language is the 2026-08-17 phrasebook, not `spell { }` and not the 2026-08-14 English-shaped-code expansion. EnchantGraph remains the long-term runtime input via a later action-tape mapper.
+- Glyph rasters become computed RGB (`preprocessing-v2`, 3×64×64). Spec: `2026-08-17-glyph-element-color-raster-design.md`. Old 1-channel bundles will not load.
 - Glyphcraft v1 is a book of map pages (one classified glyph per map, pips on the pen overlay). It is not spatial parse of many glyphs on one crop and not a drawn twin of Scribe.
 - Paper 26.2 already exposes `Dialog` + multiline `TextDialogInput`; the chat editor is fallback only.
 
@@ -142,6 +143,7 @@ This living spec is the single north star for the domain. Focused design specs i
 | 2026-08-17 | Glyphcraft v1 is typed compounds of map-page glyphs bound into a tome, not many ink marks on one canvas | Classifier is one crop / one label; 128×128 cannot hold a sentence; pips belong to the glyph being authored |
 | 2026-08-17 | Tome page order is display-only; meaning comes from roles + implicits | Avoids concatenative puzzles; fire then damage equals damage then fire |
 | 2026-08-17 | Printed mana lives on the glyph item; spending mana is not in this drop | Cost is visible on the stone; a player mana pool is a later Paper slice |
+| 2026-08-17 | Glyph ink is four element colors; overlap is a computed RGB blend; CNN sees 3×64×64 | Mix is paint, not a second school token; Java/Python share one blend |
 
 ## Open questions
 
