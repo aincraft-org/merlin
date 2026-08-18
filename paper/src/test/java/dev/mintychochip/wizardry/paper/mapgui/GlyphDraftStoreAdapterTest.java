@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.mintychochip.wizardry.api.glyph.GlyphElement;
 import dev.mintychochip.wizardry.api.glyph.GlyphDraft;
 import dev.mintychochip.wizardry.api.glyph.GlyphPoint;
 import dev.mintychochip.wizardry.api.glyph.GlyphStroke;
@@ -42,6 +43,16 @@ final class GlyphDraftStoreAdapterTest {
                 java.util.List.of(5.5, 1.25))));
 
         assertEquals(draft, GlyphDraftStoreAdapter.decode(GlyphDraftStoreAdapter.encode(draft)));
+    }
+
+    @Test void encodingPreservesStrokeElement() {
+        var draft = new GlyphDraft(java.util.List.of(new GlyphStroke(
+                java.util.List.of(new GlyphPoint(1, 1), new GlyphPoint(2, 2)),
+                4, 10, java.util.List.of(4.0), GlyphElement.FIRE)));
+        assertEquals(draft, GlyphDraftStoreAdapter.decode(GlyphDraftStoreAdapter.encode(draft)));
+        assertEquals(GlyphElement.PHYSICAL, GlyphDraftStoreAdapter.decode(
+                GlyphDraftStoreAdapter.encode(new GlyphDraft(java.util.List.of(
+                        new GlyphStroke(java.util.List.of(new GlyphPoint(1, 1)), 2, 0))))).strokes().getFirst().element());
     }
 
     @Test void tokenCodecRoundTrips() {

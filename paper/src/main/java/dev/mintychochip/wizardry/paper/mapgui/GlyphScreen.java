@@ -118,11 +118,13 @@ public final class GlyphScreen extends Screen {
         else stepPips(1);
     }
     private void paintCanvas(PaintContext context) {
-        var bitmap = GlyphRasterizer.renderFull(tracker.snapshot());
-        var pixels = bitmap.pixels();
+        var rgb = GlyphRasterizer.renderFullRgb(tracker.snapshot());
         var bounds = context.bounds();
         for (int y = 0; y < Math.min(128, bounds.height()); y++) for (int x = 0; x < Math.min(128, bounds.width()); x++) {
-            if ((pixels[y * 128 + x] & 255) != 0) context.painter().pixel(bounds.x() + x, bounds.y() + y, Color.WHITE);
+            int o = (y * 128 + x) * 3;
+            if (rgb[o] > 0 || rgb[o + 1] > 0 || rgb[o + 2] > 0) {
+                context.painter().pixel(bounds.x() + x, bounds.y() + y, new Color(rgb[o], rgb[o + 1], rgb[o + 2]));
+            }
         }
     }
     private void stroke(int x, int y) {

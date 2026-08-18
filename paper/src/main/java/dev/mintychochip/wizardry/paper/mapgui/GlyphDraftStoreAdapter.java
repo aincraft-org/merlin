@@ -1,5 +1,6 @@
 package dev.mintychochip.wizardry.paper.mapgui;
 
+import dev.mintychochip.wizardry.api.glyph.GlyphElement;
 import dev.mintychochip.wizardry.api.glyph.GlyphDraft;
 import dev.mintychochip.wizardry.api.glyph.GlyphLimits;
 import dev.mintychochip.wizardry.api.glyph.GlyphPoint;
@@ -238,9 +239,10 @@ public final class GlyphDraftStoreAdapter {
     }
 
     public static byte[] encode(GlyphDraft draft) {
-        var out = new StringBuilder("2;");
+        var out = new StringBuilder("3;");
         for (var stroke : draft.strokes()) {
-            out.append(stroke.brushWidth()).append(',').append(stroke.startedAtMillis()).append(':');
+            out.append(stroke.brushWidth()).append(',').append(stroke.startedAtMillis())
+                    .append(',').append(stroke.element().name()).append(':');
             for (var point : stroke.points()) out.append(point.x()).append(',').append(point.y()).append(';');
             out.append(':');
             for (double width : stroke.segmentWidths()) out.append(width).append(',');
@@ -252,10 +254,16 @@ public final class GlyphDraftStoreAdapter {
     public static GlyphDraft decode(byte[] bytes) {
         var raw = new String(Base64.getDecoder().decode(bytes), java.nio.charset.StandardCharsets.UTF_8);
         boolean hasWidths;
-        if (raw.startsWith("2;")) {
+        boolean hasElement;
+        if (raw.startsWith("3;")) {
             hasWidths = true;
+            hasElement = true;
+        } else if (raw.startsWith("2;")) {
+            hasWidths = true;
+            hasElement = false;
         } else if (raw.startsWith("1;")) {
             hasWidths = false;
+            hasElement = false;
         } else {
             throw new IllegalArgumentException();
         }
@@ -263,7 +271,7 @@ public final class GlyphDraftStoreAdapter {
         for (var encoded : raw.substring(2).split("\\|")) {
             if (encoded.isBlank()) continue;
             var parts = encoded.split(":", hasWidths ? 3 : 2);
-            var meta = parts[0].split(",", 2);
+            var meta = parts[0].split(",", hasElement ? 3 : 2);
             var points = new ArrayList<GlyphPoint>();
             for (var point : parts[1].split(";")) {
                 if (point.isBlank()) continue;
@@ -272,6 +280,7 @@ public final class GlyphDraftStoreAdapter {
             }
             double brushWidth = Double.parseDouble(meta[0]);
             long startedAt = Long.parseLong(meta[1]);
+            var element = hasElement ? GlyphElement.valueOf(meta[2]) : GlyphElement.PHYSICAL;
             if (!hasWidths) {
                 strokes.add(new GlyphStroke(points, brushWidth, startedAt));
                 continue;
@@ -280,7 +289,7 @@ public final class GlyphDraftStoreAdapter {
             for (var width : parts[2].split(",")) {
                 if (!width.isBlank()) widths.add(Double.parseDouble(width));
             }
-            strokes.add(new GlyphStroke(points, brushWidth, startedAt, widths));
+            strokes.add(new GlyphStroke(points, brushWidth, startedAt, widths, element));
         }
         return new GlyphDraft(strokes);
     }

@@ -95,6 +95,8 @@ Active surface for the coming implementation wave.
 - [x] Flat 5-op spell runtime + Scribe chat dialog + MapGUI draw screen (verified 2026-08-14)
 - [x] Grouped lineage CV + sealed test + ONNX export ML pipeline (verified 2026-08-14)
 - [x] Training/inference rasters are 64×64 2×2-max downsamples of the 128×128 round-brush bitmap (verified 2026-08-16; do not retrain on dotted sample rasters)
+- [x] Glyph ink is four element colors with computed RGB mix; CNN raster is 3×64×64 (`preprocessing-v2`)
+- [ ] Retrain 24-class ONNX on RGB rasters (old 1-channel bundles will not load)
 - [x] Glyph catalog expanded to 24 classes (12 composition-role glyphs + 6 lineages each) and RMSprop/0.003/100 selected from the CUDA sweep (verified 2026-08-16; 24-class ONNX not yet retrained)
 
 ### Current notes
