@@ -56,9 +56,10 @@ def _resample(points: list[tuple[float, float]], count: int) -> list[tuple[float
     return result
 
 
-def _element_of(stroke: Any) -> np.ndarray:
-    name = _value(stroke, "element", None) or _value(stroke, "ink", None) or "physical"
-    return ELEMENTS[str(name).lower()]
+def _element_of(stroke: Any, default: str = "physical") -> np.ndarray:
+    name = _value(stroke, "element", None) or _value(stroke, "ink", None) or default
+    key = str(name).lower()
+    return ELEMENTS[key] if key in ELEMENTS else ELEMENTS["physical"]
 
 
 def _stamp(pixels: np.ndarray, x: float, y: float, width: float, color: np.ndarray) -> None:
@@ -141,11 +142,13 @@ def rasterize_model(usable: list[tuple[list[tuple[float, float]], float, np.ndar
 
 def preprocess_example(example: Any) -> dict[str, np.ndarray]:
     strokes = _strokes(example)
+    label = str(_value(example, "label", "") or "")
+    default_ink = label if label in ELEMENTS else "physical"
     usable = []
     for stroke in strokes:
         pts = [_xy(p) for p in _points(stroke)]
         if pts:
-            usable.append((pts, float(_value(stroke, "brush_width", 1.0)), _element_of(stroke)))
+            usable.append((pts, float(_value(stroke, "brush_width", 1.0)), _element_of(stroke, default_ink)))
     if not usable:
         raise ValueError("cannot preprocess empty glyph")
 

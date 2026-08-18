@@ -10,7 +10,7 @@ class Point:
 
 
 class Stroke:
-    def __init__(self, points, width=8.0, element="physical"):
+    def __init__(self, points, width=8.0, element=None):
         self.points, self.brush_width, self.element = points, width, element
 
 
@@ -38,6 +38,15 @@ def test_blend_is_computed_mix():
     np.testing.assert_allclose(pixel, ELEMENTS["fire"], atol=1e-6)
     blend(pixel, ELEMENTS["frost"], 0.5)
     np.testing.assert_allclose(pixel, (ELEMENTS["fire"] + ELEMENTS["frost"]) / 2, atol=1e-5)
+
+
+def test_school_label_paints_native_color():
+    raster = preprocess_example(Example([Stroke([Point(64, 64)], 6.0)]))["raster"]
+    np.testing.assert_allclose(raster[:, 32, 32], ELEMENTS["physical"], atol=1e-5)
+    fire = Example([Stroke([Point(64, 64)], 6.0)])
+    fire.label = "fire"
+    raster = preprocess_example(fire)["raster"]
+    np.testing.assert_allclose(raster[:, 32, 32], ELEMENTS["fire"], atol=1e-5)
 
 
 def test_overlapping_strokes_compute_mixed_rgb():
