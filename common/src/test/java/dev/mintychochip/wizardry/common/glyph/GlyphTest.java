@@ -78,6 +78,30 @@ final class GlyphTest {
             assertTrue(hasInkNear(pixels, coordinate, coordinate));
         }
     }
+    @Test void strokeDefaultsToPhysicalInk() {
+        var stroke = new GlyphStroke(List.of(new GlyphPoint(2, 2)), 1, 0);
+        assertEquals(GlyphElement.PHYSICAL, stroke.element());
+    }
+
+    @Test void overlappingElementStampsComputeMixedRgb() {
+        var fire = new GlyphStroke(List.of(new GlyphPoint(64, 64)), 8, 0, List.of(), GlyphElement.FIRE);
+        var frost = new GlyphStroke(List.of(new GlyphPoint(67, 64)), 8, 0, List.of(), GlyphElement.FROST);
+        var rgb = GlyphRasterizer.renderFullRgb(new GlyphDraft(List.of(fire, frost)));
+        float[] centerFire = pixel(rgb, 61, 64);
+        float[] centerFrost = pixel(rgb, 70, 64);
+        assertArrayEquals(GlyphElement.FIRE.rgb(), centerFire, 1e-5f);
+        assertArrayEquals(GlyphElement.FROST.rgb(), centerFrost, 1e-5f);
+        float[] overlap = pixel(rgb, 63, 64);
+        assertTrue(overlap[0] > 0 && overlap[0] < 1);
+        assertTrue(overlap[2] > 0);
+        assertNotEquals(GlyphElement.FIRE.r(), overlap[0], 1e-3);
+    }
+
+    private static float[] pixel(float[] rgb, int x, int y) {
+        int i = (y * 128 + x) * 3;
+        return new float[] {rgb[i], rgb[i + 1], rgb[i + 2]};
+    }
+
     @Test void captureSupportsUndoAndClear() {
         var capture = new GlyphCaptureSession();
         capture.beginStroke(1); capture.appendPoint(new GlyphPoint(1, 1)); capture.appendPoint(new GlyphPoint(2, 2)); capture.endStroke();
