@@ -3,9 +3,11 @@ package dev.mintychochip.wizardry.paper.mapgui;
 import de.flog99.mapgui.MapGui;
 import dev.mintychochip.wizardry.api.dsl.Action;
 import dev.mintychochip.wizardry.api.dsl.CompileResult;
+import dev.mintychochip.wizardry.api.dsl.Diagnostic;
 import dev.mintychochip.wizardry.api.glyph.GlyphDraft;
 import dev.mintychochip.wizardry.api.glyph.GlyphRoles;
 import dev.mintychochip.wizardry.api.glyph.GlyphToken;
+import dev.mintychochip.wizardry.api.ml.Classification;
 import dev.mintychochip.wizardry.api.ml.Label;
 import dev.mintychochip.wizardry.common.glyph.GlyphCompilerImpl;
 import dev.mintychochip.wizardry.paper.runtime.CharmBinder;
@@ -106,17 +108,15 @@ public final class GlyphCommand implements BasicCommand {
                 () -> saveOpened(player, itemId, tracker, opened[0]),
                 () -> player.sendMessage("Glyph draft closed. Use /glyph save before closing to persist changes."),
                 draft -> classificationService.classify(draft, result -> {
+                    applyClassification(opened[0], result);
                     if (result.accepted() && !result.candidates().isEmpty()) {
-                        var label = result.candidates().getFirst().label();
-                        opened[0].setPendingLabel(label);
-                        opened[0].setClassification(result);
-                        player.sendMessage("Glyph: " + label.id());
+                        player.sendMessage("Glyph: " + result.candidates().getFirst().label().id());
                     } else {
-                        opened[0].setClassification(result);
                         player.sendMessage("Glyph rejected.");
                     }
                 }),
                 player::isSneaking);
+        hydrateFrozen(opened[0], store.loadToken(held));
         MapGui.get().open(player, opened[0]);
     }
 
@@ -147,7 +147,8 @@ public final class GlyphCommand implements BasicCommand {
         }
         var inserted = tomes.insert(tome, map, player.isSneaking());
         if (inserted.isEmpty()) {
-            player.sendMessage("That glyph cannot bind into this tome.");
+            player.sendMessage(bindFailureMessage(
+                    tomes.pages(tome).rejection(token.get(), GlyphCompilerImpl.INSTANCE)));
             return;
         }
         player.sendMessage("Bound " + token.get().label().id() + " into the tome.");
@@ -273,6 +274,27 @@ public final class GlyphCommand implements BasicCommand {
         }
         if (saved) player.sendMessage("Glyph saved to map.");
         else player.sendMessage("The original glyph item is no longer held.");
+    }
+
+    static void applyClassification(GlyphScreen screen, Classification result) {
+        if (result.accepted() && !result.candidates().isEmpty()) {
+            screen.setPendingLabel(result.candidates().getFirst().label());
+        } else {
+            screen.setPendingLabel(null);
+        }
+        screen.setClassification(result);
+    }
+
+    static void hydrateFrozen(GlyphScreen screen, Optional<GlyphToken> token) {
+        token.ifPresent(frozen -> {
+            screen.setPendingLabel(frozen.label());
+            screen.setPips(frozen.pips());
+        });
+    }
+
+    public static String bindFailureMessage(Optional<Diagnostic> rejection) {
+        return rejection.map(diagnostic -> diagnostic.code() + ": " + diagnostic.message())
+                .orElse("That glyph cannot bind into this tome.");
     }
 
     static Optional<GlyphToken> parseStamp(String[] args) {

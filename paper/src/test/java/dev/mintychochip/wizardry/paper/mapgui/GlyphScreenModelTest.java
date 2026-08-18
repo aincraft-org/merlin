@@ -86,6 +86,23 @@ final class GlyphScreenModelTest {
         assertEquals(Label.DAMAGE, screen.pendingLabel());
     }
 
+    @Test void clearPendingLabelDropsStoredLabel() {
+        var screen = new GlyphScreen(new GlyphStrokeTracker(), () -> {}, () -> {});
+        screen.setPendingLabel(Label.DAMAGE);
+        screen.clearPendingLabel();
+        assertNull(screen.pendingLabel());
+    }
+
+    @Test void setPipsClampsToOneThroughFive() {
+        var screen = new GlyphScreen(new GlyphStrokeTracker(), () -> {}, () -> {});
+        screen.setPips(3);
+        assertEquals(3, screen.pips());
+        screen.setPips(0);
+        assertEquals(1, screen.pips());
+        screen.setPips(9);
+        assertEquals(5, screen.pips());
+    }
+
     @Test void classifyInvokesClassifyAction() {
         var classifications = new AtomicInteger();
         var screen = new GlyphScreen(new GlyphStrokeTracker(), () -> {}, () -> {}, ignored -> classifications.incrementAndGet(), () -> false);

@@ -1,6 +1,7 @@
 package dev.mintychochip.wizardry.api.glyph;
 
 import dev.mintychochip.wizardry.api.dsl.CompileResult;
+import dev.mintychochip.wizardry.api.dsl.Diagnostic;
 import dev.mintychochip.wizardry.api.ml.Label;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,20 @@ public final class TomePages {
         };
     }
 
+    public Optional<Diagnostic> rejection(GlyphToken token, GlyphCompiler compiler) {
+        Objects.requireNonNull(token, "token");
+        Objects.requireNonNull(compiler, "compiler");
+        if (insert(token, compiler).isPresent()) {
+            return Optional.empty();
+        }
+        var candidate = new ArrayList<>(tokens);
+        candidate.add(token);
+        return switch (compiler.compile(candidate)) {
+            case CompileResult.Ok unused -> Optional.empty();
+            case CompileResult.Error error -> firstRejection(error);
+        };
+    }
+
     public Torn tear(int index) {
         var remaining = new ArrayList<>(tokens);
         var torn = remaining.remove(index);
@@ -59,5 +74,12 @@ public final class TomePages {
 
     private static boolean unfinishedOnly(CompileResult.Error error) {
         return error.diagnostics().stream().allMatch(diagnostic -> UNFINISHED.equals(diagnostic.code()));
+    }
+
+    private static Optional<Diagnostic> firstRejection(CompileResult.Error error) {
+        return error.diagnostics().stream()
+                .filter(diagnostic -> !UNFINISHED.equals(diagnostic.code()))
+                .findFirst()
+                .or(() -> error.diagnostics().stream().findFirst());
     }
 }

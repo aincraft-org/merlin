@@ -167,9 +167,12 @@ public final class GlyphScreen extends Screen {
     public void clear() { tracker.clear(); invalidate(); }
     public void undo() { tracker.undo(); invalidate(); }
     public int pips() { return pips; }
-    public void stepPips(int delta) {
-        pips = Math.max(1, Math.min(5, pips + delta));
+    public void setPips(int pips) {
+        this.pips = Math.max(1, Math.min(5, pips));
         invalidate();
+    }
+    public void stepPips(int delta) {
+        setPips(pips + delta);
     }
     public void jumpPips(int direction) {
         pips = direction < 0 ? 1 : 5;
@@ -182,6 +185,9 @@ public final class GlyphScreen extends Screen {
     public void setPendingLabel(Label label) {
         pendingLabel = label;
         invalidate();
+    }
+    public void clearPendingLabel() {
+        setPendingLabel(null);
     }
     public Label pendingLabel() { return pendingLabel; }
 }

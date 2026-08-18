@@ -1,5 +1,7 @@
 package dev.mintychochip.wizardry.paper.tome;
 
+import dev.mintychochip.wizardry.common.glyph.GlyphCompilerImpl;
+import dev.mintychochip.wizardry.paper.mapgui.GlyphCommand;
 import dev.mintychochip.wizardry.paper.mapgui.GlyphDraftStoreAdapter;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -29,7 +31,8 @@ public final class GlyphTomeListener implements Listener {
         event.setCancelled(true);
         var inserted = tomes.insert(tome, map, player.isSneaking());
         if (inserted.isEmpty()) {
-            player.sendMessage("That glyph cannot bind into this tome.");
+            player.sendMessage(GlyphCommand.bindFailureMessage(
+                    tomes.pages(tome).rejection(token.get(), GlyphCompilerImpl.INSTANCE)));
             return;
         }
         player.sendMessage("Bound " + token.get().label().id() + " into the tome.");

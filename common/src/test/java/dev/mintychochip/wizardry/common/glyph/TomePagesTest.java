@@ -41,4 +41,26 @@ final class TomePagesTest {
         assertEquals(0, torn.pages().tokens().size());
         assertEquals(Label.DAMAGE, torn.torn().label());
     }
+
+    @Test void rejectionIsEmptyWhenInsertWouldSucceed() {
+        var compiler = GlyphCompilerImpl.INSTANCE;
+        assertTrue(TomePages.empty().rejection(new GlyphToken(Label.DAMAGE, 1), compiler).isEmpty());
+        assertTrue(TomePages.empty().rejection(new GlyphToken(Label.FIRE, 1), compiler).isEmpty());
+    }
+
+    @Test void rejectionReportsFirstNonUnfinishedDiagnostic() {
+        var compiler = GlyphCompilerImpl.INSTANCE;
+        var damage = TomePages.empty().insert(new GlyphToken(Label.DAMAGE, 1), compiler).orElseThrow();
+        var secondEffect = damage.rejection(new GlyphToken(Label.HEAL, 1), compiler).orElseThrow();
+        assertEquals("G0104", secondEffect.code());
+        assertEquals("more than one effect", secondEffect.message());
+
+        var charm = TomePages.empty().rejection(new GlyphToken(Label.SHARPNESS, 5), compiler).orElseThrow();
+        assertEquals("G0108", charm.code());
+        assertEquals("charm is not a combat compile", charm.message());
+
+        var fire = TomePages.empty().insert(new GlyphToken(Label.FIRE, 1), compiler).orElseThrow();
+        var twoSchools = fire.rejection(new GlyphToken(Label.FROST, 1), compiler).orElseThrow();
+        assertEquals("G0105", twoSchools.code());
+    }
 }
