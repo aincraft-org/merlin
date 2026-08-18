@@ -53,7 +53,7 @@ public final class ModelBundle {
         for (int i = 0; i < LABEL_IDS.size(); i++) { if (!LABEL_IDS.get(i).equals(labelArray.get(i).asText())) throw new BundleException("incompatible labels"); labels.add(Label.fromId(labelArray.get(i).asText())); }
         requireTensor(manifest.path("input_schema"), "vectors", List.of(-1, 64, 32, 8));
         requireTensor(manifest.path("input_schema"), "mask", List.of(-1, 64, 32));
-        requireTensor(manifest.path("input_schema"), "raster", List.of(-1, 1, 64, 64));
+        requireTensor(manifest.path("input_schema"), "raster", List.of(-1, 3, 64, 64));
         requireTensor(manifest.path("output_schema"), "logits", List.of(-1, LABEL_IDS.size()));
         JsonNode calibration = manifest.path("calibration");
         double temperature = finite(calibration, "temperature"), threshold = finite(calibration, "top_threshold"), margin = finite(calibration, "margin");

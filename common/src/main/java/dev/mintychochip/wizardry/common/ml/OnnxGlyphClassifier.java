@@ -36,7 +36,7 @@ public final class OnnxGlyphClassifier implements GlyphClassifier, AutoCloseable
             PreprocessedGlyph glyph = preprocessor.preprocess(draft);
             float[] vectors = new float[64 * 32 * 8];
             float[] mask = new float[64 * 32];
-            float[] raster = new float[64 * 64];
+            float[] raster = new float[3 * 64 * 64];
             int offset = 0;
             for (float[][] stroke : glyph.vectors()) for (float[] point : stroke) for (float value : point) vectors[offset++] = value;
             offset = 0;
@@ -45,7 +45,7 @@ public final class OnnxGlyphClassifier implements GlyphClassifier, AutoCloseable
             for (float[][] channel : glyph.raster()) for (float[] row : channel) for (float value : row) raster[offset++] = value;
             try (OnnxTensor vectorTensor = OnnxTensor.createTensor(environment, FloatBuffer.wrap(vectors), new long[]{1, 64, 32, 8});
                  OnnxTensor maskTensor = OnnxTensor.createTensor(environment, FloatBuffer.wrap(mask), new long[]{1, 64, 32});
-                 OnnxTensor rasterTensor = OnnxTensor.createTensor(environment, FloatBuffer.wrap(raster), new long[]{1, 1, 64, 64})) {
+                 OnnxTensor rasterTensor = OnnxTensor.createTensor(environment, FloatBuffer.wrap(raster), new long[]{1, 3, 64, 64})) {
                 var inputs = new LinkedHashMap<String, OnnxTensor>();
                 inputs.put("vectors", vectorTensor);
                 inputs.put("mask", maskTensor);
