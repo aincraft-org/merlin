@@ -44,7 +44,7 @@ def catalog_previews(catalog_path: Path | None = None) -> list[dict]:
             continue
         strokes = [{"points": [{"x": x, "y": y} for x, y in stroke], "brush_width": catalog.get("brush_width", 6)}
                    for stroke in spec["templates"][0]["strokes"]]
-        raster = preprocess_example(example_from_strokes(strokes))["raster"][0]
+        raster = preprocess_example(example_from_strokes(strokes))["raster"]
         previews.append({
             "label": label,
             "intent": spec.get("intent", ""),

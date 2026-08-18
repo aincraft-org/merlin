@@ -9,7 +9,7 @@ def _row(label, lineage):
         "independent_source": lineage,
         "vectors": np.zeros((64, 32, 8), dtype="float32"),
         "mask": np.ones((64, 32), dtype="float32"),
-        "raster": np.zeros((1, 64, 64), dtype="float32"),
+        "raster": np.zeros((3, 64, 64), dtype="float32"),
     }
 
 

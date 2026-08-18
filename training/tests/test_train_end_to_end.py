@@ -85,7 +85,7 @@ def test_complete_corpus_trains_and_exports_java_compatible_bundle(tmp_path):
     assert manifest["labels"] == list(LABELS)
     assert manifest["input_schema"]["vectors"]["shape"] == [None, 64, 32, 8]
     assert manifest["input_schema"]["mask"]["shape"] == [None, 64, 32]
-    assert manifest["input_schema"]["raster"]["shape"] == [None, 1, 64, 64]
+    assert manifest["input_schema"]["raster"]["shape"] == [None, 3, 64, 64]
     assert manifest["metrics"]["count"] > 0
     assert manifest["calibration"]["temperature"] > 0
     assert manifest["files"]["model.onnx"]
@@ -138,9 +138,9 @@ model = constructors[checkpoint['model']](checkpoint['classes'], checkpoint['emb
 if checkpoint['model'] == 'vector':
     output = model(torch.zeros(1,64,32,8), torch.zeros(1,64,32))
 elif checkpoint['model'] == 'raster':
-    output = model(torch.zeros(1,1,64,64))
+    output = model(torch.zeros(1,3,64,64))
 else:
-    output = model(torch.zeros(1,64,32,8), torch.zeros(1,64,32), torch.zeros(1,1,64,64))
+    output = model(torch.zeros(1,64,32,8), torch.zeros(1,64,32), torch.zeros(1,3,64,64))
 assert output.device.type == 'cpu'
 """
     import subprocess, sys

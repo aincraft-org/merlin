@@ -195,7 +195,7 @@ def _fit(model, rows, labels, config, torch, device=None, validation_rows=None):
 
 
 def _public_export_inputs(torch):
-    return (torch.zeros(1, 64, 32, 8), torch.zeros(1, 64, 32), torch.zeros(1, 1, 64, 64))
+    return (torch.zeros(1, 64, 32, 8), torch.zeros(1, 64, 32), torch.zeros(1, 3, 64, 64))
 
 
 def _logits(model, rows, torch, device=None, batch_size=None):

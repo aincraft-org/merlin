@@ -75,8 +75,12 @@ def catalog_required_strokes(path: Path) -> dict[str, frozenset[int]]:
 
 
 def _full_ink(example) -> int:
-    usable = [([(point.x, point.y) for point in stroke.points], stroke.brush_width) for stroke in example.strokes]
-    return int((rasterize_full(usable) > 0).sum())
+    from .element import ELEMENTS
+    usable = [
+        ([(point.x, point.y) for point in stroke.points], stroke.brush_width, ELEMENTS[getattr(stroke, "element", "physical")])
+        for stroke in example.strokes
+    ]
+    return int((rasterize_full(usable).max(axis=-1) > 0).sum())
 
 
 def classify_strokes(strokes, model, labels, torch, *, device=None, calibration=None, required_strokes=None) -> dict:
@@ -117,7 +121,7 @@ def classify_strokes(strokes, model, labels, torch, *, device=None, calibration=
         "suggestion": top["label"],
         "score": top["score"],
         "candidates": candidates,
-        "raster": arrays["raster"][0],
+        "raster": arrays["raster"],
         "stroke_count": stroke_count,
         "ink": ink,
     }

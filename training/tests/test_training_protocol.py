@@ -44,7 +44,7 @@ def test_sealed_evaluation_spy_runs_once_after_calibration():
     class Model:
         def __call__(self, *inputs):
             return torch.tensor([[3.0, 1.0]])
-    rows = [{"label": "a", "vectors": torch.zeros(1, 64, 32, 8).numpy(), "mask": torch.zeros(1,64,32).numpy(), "raster": torch.zeros(1,1,64,64).numpy()}]
+    rows = [{"label": "a", "vectors": torch.zeros(1, 64, 32, 8).numpy(), "mask": torch.zeros(1,64,32).numpy(), "raster": torch.zeros(1,3,64,64).numpy()}]
     labels = {"a": 0}
     events.append("calibration")
     result = evaluate_sealed_once(Model(), rows, labels, torch, on_evaluate=events.append)
@@ -55,7 +55,7 @@ def test_fit_updates_model_parameters():
     from wizardry_glyphs.model import FusedClassifier
     from wizardry_glyphs.train import _fit
     model = FusedClassifier(classes=2, embedding_dim=2)
-    rows = [{"label": "a", "vectors": np.zeros((64,32,8), dtype="float32"), "mask": np.ones((64,32), dtype="float32"), "raster": np.zeros((1,64,64), dtype="float32")}]
+    rows = [{"label": "a", "vectors": np.zeros((64,32,8), dtype="float32"), "mask": np.ones((64,32), dtype="float32"), "raster": np.zeros((3,64,64), dtype="float32")}]
     before = {key: value.detach().clone() for key, value in model.state_dict().items()}
     _fit(model, rows, ["a", "b"], {"epochs": 1}, torch)
     assert any(not torch.equal(before[key], value) for key, value in model.state_dict().items())
@@ -66,11 +66,11 @@ def test_fit_with_validation_returns_history_and_best_checkpoint():
     from wizardry_glyphs.train import _fit
     model = FusedClassifier(classes=2, embedding_dim=2)
     rows = [
-        {"label": "a", "vectors": np.zeros((64, 32, 8), dtype="float32"), "mask": np.ones((64, 32), dtype="float32"), "raster": np.zeros((1, 64, 64), dtype="float32")},
-        {"label": "a", "vectors": np.zeros((64, 32, 8), dtype="float32"), "mask": np.ones((64, 32), dtype="float32"), "raster": np.zeros((1, 64, 64), dtype="float32")},
+        {"label": "a", "vectors": np.zeros((64, 32, 8), dtype="float32"), "mask": np.ones((64, 32), dtype="float32"), "raster": np.zeros((3, 64, 64), dtype="float32")},
+        {"label": "a", "vectors": np.zeros((64, 32, 8), dtype="float32"), "mask": np.ones((64, 32), dtype="float32"), "raster": np.zeros((3, 64, 64), dtype="float32")},
     ]
     val_rows = [
-        {"label": "b", "vectors": np.zeros((64, 32, 8), dtype="float32"), "mask": np.ones((64, 32), dtype="float32"), "raster": np.zeros((1, 64, 64), dtype="float32")},
+        {"label": "b", "vectors": np.zeros((64, 32, 8), dtype="float32"), "mask": np.ones((64, 32), dtype="float32"), "raster": np.zeros((3, 64, 64), dtype="float32")},
     ]
     result = _fit(model, rows, ["a", "b"], {"epochs": 3, "learning_rate": 0.1}, torch, validation_rows=val_rows)
     assert isinstance(result, dict)

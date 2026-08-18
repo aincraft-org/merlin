@@ -6,6 +6,8 @@ from typing import Any
 
 import numpy as np
 
+from .element import ELEMENTS, blend, coverage
+
 FEATURES = ("x", "y", "dx", "dy", "progress", "pen_down", "stroke_start", "brush_width")
 CANVAS = 128
 RASTER = 64
@@ -54,7 +56,12 @@ def _resample(points: list[tuple[float, float]], count: int) -> list[tuple[float
     return result
 
 
-def _stamp(pixels: np.ndarray, x: float, y: float, width: float) -> None:
+def _element_of(stroke: Any) -> np.ndarray:
+    name = _value(stroke, "element", None) or _value(stroke, "ink", None) or "physical"
+    return ELEMENTS[str(name).lower()]
+
+
+def _stamp(pixels: np.ndarray, x: float, y: float, width: float, color: np.ndarray) -> None:
     radius = width / 2.0
     bounds = max(0, int(math.ceil(radius + 0.5)))
     cx, cy = int(round(x)), int(round(y))
@@ -62,8 +69,9 @@ def _stamp(pixels: np.ndarray, x: float, y: float, width: float) -> None:
     x0, x1 = max(0, cx - bounds), min(CANVAS - 1, cx + bounds)
     for py in range(y0, y1 + 1):
         for px in range(x0, x1 + 1):
-            if math.hypot(px - x, py - y) <= radius + 0.5:
-                pixels[py, px] = 1.0
+            alpha = coverage(math.hypot(px - x, py - y), radius)
+            if alpha > 0:
+                blend(pixels[py, px], color, alpha)
 
 
 def _interpolation_steps(x0: float, y0: float, x1: float, y1: float, start_width: float, end_width: float) -> int:
@@ -74,29 +82,29 @@ def _interpolation_steps(x0: float, y0: float, x1: float, y1: float, start_width
     return max(1, max(movement_steps, radius_steps))
 
 
-def _draw_line(pixels: np.ndarray, x0: float, y0: float, x1: float, y1: float, start_width: float, end_width: float) -> None:
+def _draw_line(pixels: np.ndarray, x0: float, y0: float, x1: float, y1: float, start_width: float, end_width: float, color: np.ndarray) -> None:
     steps = _interpolation_steps(x0, y0, x1, y1, start_width, end_width)
     for index in range(steps + 1):
         t = index / steps
         width = start_width + (end_width - start_width) * t
-        _stamp(pixels, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, width)
+        _stamp(pixels, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, width, color)
 
 
-def rasterize_full(usable: list[tuple[list[tuple[float, float]], float]]) -> np.ndarray:
-    """128×128 round-brush bitmap matching Java GlyphRasterizer.renderFull."""
-    pixels = np.zeros((CANVAS, CANVAS), dtype=np.float32)
-    for raw, brush in usable:
+def rasterize_full(usable: list[tuple[list[tuple[float, float]], float, np.ndarray]]) -> np.ndarray:
+    """128×128 computed RGB canvas matching Java GlyphRasterizer.renderFullRgb."""
+    pixels = np.zeros((CANVAS, CANVAS, 3), dtype=np.float32)
+    for raw, brush, color in usable:
         width = min(32.0, max(1e-6, float(brush)))
         if len(raw) == 1:
-            _stamp(pixels, raw[0][0], raw[0][1], width)
+            _stamp(pixels, raw[0][0], raw[0][1], width, color)
             continue
         for (x0, y0), (x1, y1) in zip(raw, raw[1:]):
-            _draw_line(pixels, x0, y0, x1, y1, width, width)
+            _draw_line(pixels, x0, y0, x1, y1, width, width, color)
     return pixels
 
 
 def padded_ink_bounds(full: np.ndarray, padding: int = NORMALIZE_PADDING) -> tuple[int, int, int, int] | None:
-    ink = np.argwhere(full > 0)
+    ink = np.argwhere(full.max(axis=-1) > 0) if full.ndim == 3 else np.argwhere(full > 0)
     if ink.size == 0:
         return None
     min_y, min_x = (int(value) for value in ink.min(axis=0))
@@ -112,7 +120,8 @@ def padded_ink_bounds(full: np.ndarray, padding: int = NORMALIZE_PADDING) -> tup
 def resample_normalized(full: np.ndarray, bounds: tuple[int, int, int, int], size: int = RASTER) -> np.ndarray:
     min_x, min_y, max_x, max_y = bounds
     width, height = max_x - min_x + 1, max_y - min_y + 1
-    out = np.zeros((size, size), dtype=np.float32)
+    channels = full.shape[-1] if full.ndim == 3 else 1
+    out = np.zeros((size, size, channels), dtype=np.float32) if full.ndim == 3 else np.zeros((size, size), dtype=np.float32)
     for y in range(size):
         for x in range(size):
             sx = min_x + int(x * width / size)
@@ -121,12 +130,12 @@ def resample_normalized(full: np.ndarray, bounds: tuple[int, int, int, int], siz
     return out
 
 
-def rasterize_model(usable: list[tuple[list[tuple[float, float]], float]]) -> tuple[np.ndarray, tuple[int, int, int, int] | None]:
+def rasterize_model(usable: list[tuple[list[tuple[float, float]], float, np.ndarray]]) -> tuple[np.ndarray, tuple[int, int, int, int] | None]:
     """64×64 padded crop of the full-canvas brush bitmap. Placement is not a class feature."""
     full = rasterize_full(usable)
     bounds = padded_ink_bounds(full)
     if bounds is None:
-        return np.zeros((RASTER, RASTER), dtype=np.float32), None
+        return np.zeros((RASTER, RASTER, 3), dtype=np.float32), None
     return resample_normalized(full, bounds), bounds
 
 
@@ -136,7 +145,7 @@ def preprocess_example(example: Any) -> dict[str, np.ndarray]:
     for stroke in strokes:
         pts = [_xy(p) for p in _points(stroke)]
         if pts:
-            usable.append((pts, float(_value(stroke, "brush_width", 1.0))))
+            usable.append((pts, float(_value(stroke, "brush_width", 1.0)), _element_of(stroke)))
     if not usable:
         raise ValueError("cannot preprocess empty glyph")
 
@@ -147,7 +156,7 @@ def preprocess_example(example: Any) -> dict[str, np.ndarray]:
     span_x = max(max_x - min_x + 1, 1)
     span_y = max(max_y - min_y + 1, 1)
     slots = min(64, len(usable))
-    for si, (raw, brush) in enumerate(usable[:slots]):
+    for si, (raw, brush, _color) in enumerate(usable[:slots]):
         pts = _resample(raw, 32)
         for pi, (x, y) in enumerate(pts):
             x = min(127.999999, max(0.0, x)); y = min(127.999999, max(0.0, y))
@@ -156,4 +165,4 @@ def preprocess_example(example: Any) -> dict[str, np.ndarray]:
             dx, dy = (x - prev[0]) / span_x, (y - prev[1]) / span_y
             vectors[si, pi] = (nx, ny, dx, dy, pi / 31.0, float(pi > 0), float(pi == 0), min(32.0, max(0.0, brush)) / 32.0)
             mask[si, pi] = True
-    return {"vectors": vectors, "mask": mask, "raster": raster[None, ...]}
+    return {"vectors": vectors, "mask": mask, "raster": np.moveaxis(raster, -1, 0)}

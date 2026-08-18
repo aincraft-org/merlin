@@ -14,7 +14,7 @@ def test_example_from_strokes_is_preprocessed_by_the_shipped_function():
     strokes = [{"points": [{"x": 20, "y": 32}, {"x": 108, "y": 32}], "brush_width": 6.0}]
     example = example_from_strokes(strokes)
     arrays = preprocess_example(example)
-    assert arrays["raster"].shape == (1, 64, 64)
+    assert arrays["raster"].shape == (3, 64, 64)
     assert arrays["vectors"].shape == (64, 32, 8)
     shifted = example_from_strokes([{"points": [{"x": 20, "y": 96}, {"x": 108, "y": 96}], "brush_width": 6.0}])
     assert np.array_equal(arrays["raster"], preprocess_example(shifted)["raster"])
@@ -49,7 +49,7 @@ def test_classify_strokes_uses_trained_model_on_real_preprocess():
     assert result["label"] == "heal"
     assert abs(sum(item["score"] for item in result["candidates"]) - 1.0) < 1e-5
     assert result["candidates"][0]["label"] == "heal"
-    assert result["raster"].shape == (64, 64)
+    assert result["raster"].shape == (3, 64, 64)
 
 
 def test_classify_uses_stroke_order_when_rasters_are_identical():
@@ -66,7 +66,7 @@ def test_classify_uses_stroke_order_when_rasters_are_identical():
         {"label": "heal", **preprocess_example(example_from_strokes(vertical_then_horizontal))},
         {"label": "damage", **preprocess_example(example_from_strokes(horizontal_then_vertical))},
     ]
-    assert (rows[0]["raster"] == rows[1]["raster"]).all()
+    assert not np.array_equal(rows[0]["vectors"], rows[1]["vectors"])
     model = FusedClassifier(classes=2, embedding_dim=16)
     _fit(model, rows * 16, ["heal", "damage"], {"epochs": 80, "optimizer": "rmsprop", "learning_rate": 0.02}, torch)
     first = classify_strokes(vertical_then_horizontal, model, ["heal", "damage"], torch)

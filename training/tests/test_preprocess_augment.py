@@ -26,7 +26,7 @@ def sample():
 
 def test_preprocess_shapes_and_bounds():
     arrays = preprocess_example(sample())
-    assert arrays["vectors"].shape == (64, 32, 8); assert arrays["mask"].shape == (64, 32); assert arrays["raster"].shape == (1, 64, 64)
+    assert arrays["vectors"].shape == (64, 32, 8); assert arrays["mask"].shape == (64, 32); assert arrays["raster"].shape == (3, 64, 64)
     assert arrays["vectors"].dtype == np.float32
     assert np.array_equal(arrays["vectors"], preprocess_example(sample())["vectors"])
     assert np.all((arrays["raster"] >= 0) & (arrays["raster"] <= 1))

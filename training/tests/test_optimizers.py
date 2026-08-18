@@ -30,7 +30,7 @@ def test_batched_fit_takes_one_step_per_batch():
         "label": "a" if index % 2 == 0 else "b",
         "vectors": np.zeros((64, 32, 8), dtype="float32"),
         "mask": np.ones((64, 32), dtype="float32"),
-        "raster": np.zeros((1, 64, 64), dtype="float32"),
+        "raster": np.zeros((3, 64, 64), dtype="float32"),
     } for index in range(4)]
     steps = {"count": 0}
     original = _make_optimizer
@@ -64,7 +64,7 @@ def test_fit_honors_configured_optimizer():
         "label": "a",
         "vectors": np.zeros((64, 32, 8), dtype="float32"),
         "mask": np.ones((64, 32), dtype="float32"),
-        "raster": np.zeros((1, 64, 64), dtype="float32"),
+        "raster": np.zeros((3, 64, 64), dtype="float32"),
     }]
     model = FusedClassifier(classes=2, embedding_dim=2)
     before = {key: value.detach().clone() for key, value in model.state_dict().items()}

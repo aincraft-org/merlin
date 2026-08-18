@@ -44,7 +44,7 @@ def test_models_emit_finite_logits():
     from wizardry_glyphs.model import VectorClassifier, RasterClassifier, FusedClassifier
     vectors = torch.zeros(4, 64, 32, 8)
     masks = torch.ones(4, 64, 32)
-    rasters = torch.zeros(4, 1, 64, 64)
+    rasters = torch.zeros(4, 3, 64, 64)
     for model, args in ((VectorClassifier(), (vectors, masks)), (RasterClassifier(), (rasters,)), (FusedClassifier(), (vectors, masks, rasters))):
         out = model(*args)
         from wizardry_glyphs.schema import LABELS
@@ -83,8 +83,8 @@ def test_raster_encoder_preserves_spatial_layout():
 
     torch.manual_seed(4)
     encoder = RasterEncoder(8).eval()
-    left = torch.zeros(1, 1, 64, 64)
-    right = torch.zeros(1, 1, 64, 64)
+    left = torch.zeros(1, 3, 64, 64)
+    right = torch.zeros(1, 3, 64, 64)
     left[:, :, 16:48, 8:16] = 1
     right[:, :, 16:48, 48:56] = 1
     assert not torch.allclose(encoder(left), encoder(right))
@@ -101,7 +101,7 @@ def test_fit_learns_balanced_classes_from_imbalanced_rows():
                 "label": label,
                 "vectors": np.full((64, 32, 8), x, dtype=np.float32),
                 "mask": np.ones((64, 32), dtype=np.float32),
-                "raster": np.full((1, 64, 64), x, dtype=np.float32),
+                "raster": np.full((3, 64, 64), x, dtype=np.float32),
             })
 
     class Tiny(torch.nn.Module):
@@ -117,7 +117,7 @@ def test_fit_learns_balanced_classes_from_imbalanced_rows():
     predictions = model(
         torch.tensor([[[[0.0] * 8] * 32] * 64, [[[1.0] * 8] * 32] * 64]),
         torch.ones(2, 64, 32),
-        torch.zeros(2, 1, 64, 64),
+        torch.zeros(2, 3, 64, 64),
     ).argmax(dim=1)
     assert predictions.tolist() == [0, 1]
 

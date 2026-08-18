@@ -1,9 +1,9 @@
 {
-  "version": "preprocessing-v1",
+  "version": "preprocessing-v2",
   "vector_shape": [64, 32, 8],
   "vector_features": ["x", "y", "dx", "dy", "progress", "pen_down", "stroke_start", "brush_width"],
   "mask_shape": [64, 32],
-  "raster_shape": [1, 64, 64],
+  "raster_shape": [3, 64, 64],
   "canvas": [128, 128],
   "resampling": "arc-length",
   "rasterization": "round-brush-full-canvas",

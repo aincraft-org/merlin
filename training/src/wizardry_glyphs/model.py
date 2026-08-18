@@ -48,7 +48,7 @@ class RasterEncoder(nn.Module):
     def __init__(self, embedding_dim: int = 32) -> None:
         super().__init__()
         self.net = nn.Sequential(
-            nn.Conv2d(1, 8, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+            nn.Conv2d(3, 8, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
             nn.Conv2d(8, 16, 3, padding=1), nn.ReLU(), nn.AdaptiveAvgPool2d((4, 4)),
         )
         self.projection = nn.Linear(16 * 4 * 4, embedding_dim)
