@@ -20,7 +20,7 @@ script_repo_root() {
 main_repo_root() {
     _script_dir=$(cd "$(dirname "$0")" && pwd)
     _git_dir=$(git -C "$_script_dir" rev-parse --git-common-dir)
-    cd "$_git_dir/.." && pwd -P
+    cd "$_script_dir/$_git_dir/.." && pwd -P
 }
 
 default_artifact_dir() {
