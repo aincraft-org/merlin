@@ -1,6 +1,6 @@
 # Wizardry
 
-Wizardry is a Paper plugin with a platform-agnostic spell compiler and glyph recognition support.
+Wizardry is a Paper plugin with a platform-agnostic spell compiler and glyph recognition support. Player-facing language guides live in [docs/glyphcraft-language.md](docs/glyphcraft-language.md) and [docs/scribe-language.md](docs/scribe-language.md).
 
 ## Modules
 
