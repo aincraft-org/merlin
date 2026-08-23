@@ -16,4 +16,4 @@ jobs:
     uses: aincraft-org/ci-template/.github/workflows/paper.yml@main
     with:
       release-files: |
-        paper/build/libs/*.jar
+        wizardry-paper/build/libs/*.jar

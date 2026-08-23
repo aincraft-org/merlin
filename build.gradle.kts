@@ -8,16 +8,16 @@ plugins {
 tasks {
     runServer {
         minecraftVersion("26.2")
-        dependsOn(":paper:jar", gradle.includedBuild("MapGUI").task(":mapgui-plugin:shadowJar"))
+        dependsOn(":wizardry-paper:jar", gradle.includedBuild("MapGUI").task(":mapgui-plugin:shadowJar"))
+        pluginJars.from(
+            project(":wizardry-paper").tasks.named("jar"),
+            layout.projectDirectory.file("../MapGUI/mapgui-plugin/build/libs/MapGUI-1.0.0-SNAPSHOT.jar")
+        )
         doFirst {
             delete(fileTree("run/plugins") {
                 include("MapGUI-*.jar")
             })
         }
-        pluginJars.from(
-            project(":paper").tasks.named("jar"),
-            layout.projectDirectory.file("../MapGUI/mapgui-plugin/build/libs/MapGUI-1.0.0-SNAPSHOT.jar")
-        )
     }
 }
 
@@ -34,7 +34,7 @@ subprojects {
             publications {
                 create<MavenPublication>("maven") {
                     from(components["java"])
-                    artifactId = "wizardry-${project.name}"
+                    artifactId = project.name
                 }
             }
             repositories {

@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":api"))
-    implementation(project(":common"))
+    implementation(project(":wizardry-api"))
+    implementation(project(":wizardry-common"))
     compileOnly("io.github.flog99:mapgui-api:1.0.0")
     compileOnly("io.github.flog99:mapgui-layout:1.0.0")
     compileOnly("io.papermc.paper:paper-api:26.2.build.84-stable")
@@ -26,6 +26,6 @@ tasks.test {
 }
 
 tasks.jar {
-    from(project(":api").sourceSets.main.get().output)
-    from(project(":common").sourceSets.main.get().output)
+    from(project(":wizardry-api").sourceSets.main.get().output)
+    from(project(":wizardry-common").sourceSets.main.get().output)
 }

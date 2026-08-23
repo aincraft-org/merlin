@@ -19,6 +19,6 @@ includeBuild("../MapGUI") {
     }
 }
 rootProject.name = "wizardry"
-include(":api")
-include(":common")
-include(":paper")
+include(":wizardry-api")
+include(":wizardry-common")
+include(":wizardry-paper")

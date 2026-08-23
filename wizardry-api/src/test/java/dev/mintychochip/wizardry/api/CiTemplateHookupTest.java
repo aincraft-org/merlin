@@ -46,7 +46,7 @@ final class CiTemplateHookupTest {
                         root.resolve("gradlew").toAbsolutePath().toString(),
                         "--no-daemon",
                         "-q",
-                        ":api:generatePomFileForMavenPublication",
+                        ":wizardry-api:generatePomFileForMavenPublication",
                         "-PreleaseVersion=" + RELEASE_VERSION);
         builder.directory(root.toFile());
         builder.redirectErrorStream(true);

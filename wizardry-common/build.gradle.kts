@@ -12,7 +12,7 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 dependencies {
-    implementation(project(":api"))
+    implementation(project(":wizardry-api"))
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
     compileOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")
     testImplementation(platform("org.junit:junit-bom:5.11.4"))

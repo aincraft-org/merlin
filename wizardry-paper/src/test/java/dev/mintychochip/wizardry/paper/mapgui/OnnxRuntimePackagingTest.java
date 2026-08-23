@@ -66,7 +66,7 @@ final class OnnxRuntimePackagingTest {
     }
     @Test
     void pluginJarDoesNotEmbedOnnxRuntime() throws IOException {
-        var jar = Path.of("build/libs/paper-1.0.0-SNAPSHOT.jar");
+        var jar = Path.of("build/libs/wizardry-paper-1.0.0-SNAPSHOT.jar");
         assertTrue(Files.exists(jar), "build the plugin jar before running this packaging check");
         try (var fs = java.nio.file.FileSystems.newFileSystem(jar)) {
             try (Stream<Path> paths = Files.walk(fs.getPath("/"))) {
