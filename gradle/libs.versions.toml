@@ -1,0 +1,22 @@
+[versions]
+jackson = "2.18.3"
+junit = "5.11.4"
+onnxruntime = "1.29.0"
+mapgui = "1.0.0"
+paper = "26.2.build.84-stable"
+mockito = "5.23.0"
+runPaper = "2.3.1"
+
+[libraries]
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+onnxruntime = { module = "com.microsoft.onnxruntime:onnxruntime", version.ref = "onnxruntime" }
+mapgui-api = { module = "io.github.flog99:mapgui-api", version.ref = "mapgui" }
+mapgui-layout = { module = "io.github.flog99:mapgui-layout", version.ref = "mapgui" }
+paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+[plugins]
+run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "runPaper" }

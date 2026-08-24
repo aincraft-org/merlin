@@ -13,12 +13,12 @@ tasks.withType<JavaCompile>().configureEach {
 
 dependencies {
     implementation(project(":merlin-api"))
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.3")
-    compileOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")
-    testImplementation(platform("org.junit:junit-bom:5.11.4"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation(libs.jackson.databind)
+    compileOnly(libs.onnxruntime)
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.onnxruntime)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.test {

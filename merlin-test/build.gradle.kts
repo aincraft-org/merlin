@@ -1,16 +1,16 @@
 plugins {
     java
-    id("xyz.jpenilla.run-paper") version "2.3.1"
+    alias(libs.plugins.run.paper)
 }
 
 dependencies {
     implementation(project(":merlin-api"))
     implementation(project(":merlin-common"))
     implementation(project(":merlin-paper"))
-    compileOnly("io.github.flog99:mapgui-api:1.0.0")
-    compileOnly("io.github.flog99:mapgui-layout:1.0.0")
-    compileOnly("io.papermc.paper:paper-api:26.2.build.84-stable")
-    compileOnly("com.microsoft.onnxruntime:onnxruntime:1.29.0")
+    compileOnly(libs.mapgui.api)
+    compileOnly(libs.mapgui.layout)
+    compileOnly(libs.paper.api)
+    compileOnly(libs.onnxruntime)
 }
 
 java { toolchain.languageVersion.set(JavaLanguageVersion.of(25)) }
