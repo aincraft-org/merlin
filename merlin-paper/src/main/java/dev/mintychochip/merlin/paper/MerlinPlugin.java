@@ -73,7 +73,7 @@ public final class MerlinPlugin extends JavaPlugin {
     saveDefaultConfig();
     String repository =
         getConfig()
-            .getString("model.repository", "https://github.com/aincraft-org/wizardry-weights");
+            .getString("model.repository", "https://github.com/aincraft-org/merlin-weights");
     String version = getConfig().getString("model.version", "2026.08.18.0");
     try {
       return new ModelBundleFetcher(repository, version, getDataFolder().toPath().resolve("models"))

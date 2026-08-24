@@ -28,11 +28,11 @@ default_artifact_dir() {
 }
 
 default_weights_dir() {
-    printf '%s/wizardry-weights\n' "$(dirname "$(main_repo_root)")"
+    printf '%s/merlin-weights\n' "$(dirname "$(main_repo_root)")"
 }
 
 default_remote() {
-    printf 'https://github.com/aincraft-org/wizardry-weights.git\n'
+    printf 'https://github.com/aincraft-org/merlin-weights.git\n'
 }
 
 state_file() {
