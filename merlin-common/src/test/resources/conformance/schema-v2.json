@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://merlin.invalid/scribe/conformance/schema-v2.json",
+  "title": "Scribe compiler conformance fixture v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "source", "result"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "id": { "type": "string", "minLength": 1 },
+    "source": { "type": "string" },
+    "result": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "compilerVersion", "canonicalHex", "identitySha256", "actions"],
+          "properties": {
+            "status": { "const": "accepted" },
+            "compilerVersion": { "type": "string" },
+            "canonicalHex": { "type": "string", "pattern": "^[0-9a-f]*$" },
+            "identitySha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "actions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["opcode", "noun", "place", "aheadBits", "patient", "riding", "valueBits"],
+                "properties": {
+                  "opcode": {
+                    "enum": ["look_ahead", "summon", "burn", "mend", "shove", "strike", "send_skyward", "vanish", "rest"]
+                  },
+                  "noun": { "type": ["string", "null"], "enum": ["sheep", "rocket", "fangs", null] },
+                  "place": { "type": ["string", "null"], "enum": ["caster", "self", "target", "ahead", null] },
+                  "aheadBits": { "type": ["string", "null"], "pattern": "^[0-9a-f]{16}$" },
+                  "patient": { "type": ["string", "null"], "enum": ["self", "target", null] },
+                  "riding": { "type": ["string", "null"], "enum": ["sheep", "rocket", "fangs", null] },
+                  "valueBits": { "type": ["string", "null"], "pattern": "^[0-9a-f]{16}$" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "diagnostics"],
+          "properties": {
+            "status": { "const": "rejected" },
+            "diagnostics": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["code", "message", "startByte", "endByte", "line", "column"],
+                "properties": {
+                  "code": { "type": "string" },
+                  "message": { "type": "string" },
+                  "startByte": { "type": "integer", "minimum": 0 },
+                  "endByte": { "type": "integer", "minimum": 0 },
+                  "line": { "type": "integer", "minimum": 1 },
+                  "column": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

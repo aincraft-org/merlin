@@ -3,24 +3,7 @@ import org.gradle.api.publish.maven.MavenPublication
 
 plugins {
     base
-    id("xyz.jpenilla.run-paper") version "2.3.1"
 }
-tasks {
-    runServer {
-        minecraftVersion("26.2")
-        dependsOn(":wizardry-paper:jar", gradle.includedBuild("MapGUI").task(":mapgui-plugin:shadowJar"))
-        pluginJars.from(
-            project(":wizardry-paper").tasks.named("jar"),
-            layout.projectDirectory.file("../MapGUI/mapgui-plugin/build/libs/MapGUI-1.0.0-SNAPSHOT.jar")
-        )
-        doFirst {
-            delete(fileTree("run/plugins") {
-                include("MapGUI-*.jar")
-            })
-        }
-    }
-}
-
 
 allprojects {
     group = "dev.mintychochip"

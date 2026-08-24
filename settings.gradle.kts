@@ -18,7 +18,8 @@ includeBuild("../MapGUI") {
         substitute(module("io.github.flog99:mapgui-layout")).using(project(":mapgui-layout"))
     }
 }
-rootProject.name = "wizardry"
-include(":wizardry-api")
-include(":wizardry-common")
-include(":wizardry-paper")
+rootProject.name = "merlin"
+include(":merlin-api")
+include(":merlin-common")
+include(":merlin-paper")
+include(":merlin-test")

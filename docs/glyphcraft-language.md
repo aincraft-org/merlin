@@ -78,7 +78,7 @@ These classify. They will not stamp, will not bind, and will not compile:
 
 ## Commands
 
-Permission `wizardry.glyph.draw` opens the pen. Tome commands also accept `wizardry.glyph.tome`.
+Permission `merlin.glyph.draw` opens the pen. Tome commands also accept `merlin.glyph.tome`.
 
 | Command | Holds | Does |
 |---|---|---|

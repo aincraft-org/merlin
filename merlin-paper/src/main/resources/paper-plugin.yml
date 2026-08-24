@@ -1,0 +1,22 @@
+name: Merlin
+version: 1.0.0-SNAPSHOT
+main: dev.mintychochip.merlin.paper.MerlinPlugin
+loader: dev.mintychochip.merlin.paper.mapgui.GlyphPluginLoader
+api-version: '1.21'
+author: jlo
+dependencies:
+  server:
+    MapGUI:
+      load: BEFORE
+      required: true
+      join-classpath: true
+permissions:
+  merlin.scribe.book:
+    description: Allows creating and using Scribe books.
+    default: true
+  merlin.glyph.draw:
+    description: Allows drawing and saving glyph maps.
+    default: true
+  merlin.glyph.tome:
+    description: Allows creating and binding glyph tomes.
+    default: true

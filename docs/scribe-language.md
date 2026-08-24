@@ -181,4 +181,4 @@ Right-click the marked main-hand book to open the Paper 26.2 multiline dialog. E
 
 The editor uses the documented 4,096-scalar, 16,384-byte, and 128-line limits.
 
-`/scribe cast` compiles the held marked book's saved source. Permission: `wizardry.scribe.book`.
+`/scribe cast` compiles the held marked book's saved source. Permission: `merlin.scribe.book`.
