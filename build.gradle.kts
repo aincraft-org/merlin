@@ -23,7 +23,7 @@ subprojects {
             repositories {
                 maven {
                     name = "GitHubPackages"
-                    url = uri("https://maven.pkg.github.com/aincraft-org/wizardry")
+                    url = uri("https://maven.pkg.github.com/aincraft-org/merlin")
                     credentials {
                         username = System.getenv("GITHUB_ACTOR") ?: ""
                         password = System.getenv("GITHUB_TOKEN") ?: ""

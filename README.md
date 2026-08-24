@@ -1,7 +1,7 @@
 # Merlin
 
-[![CI](https://img.shields.io/github/actions/workflow/status/aincraft-org/wizardry/ci.yml)](https://github.com/aincraft-org/wizardry/actions/workflows/ci.yml)
-[![Last commit](https://img.shields.io/github/last-commit/aincraft-org/wizardry)](https://github.com/aincraft-org/wizardry/commits/master)
+[![CI](https://img.shields.io/github/actions/workflow/status/aincraft-org/merlin/ci.yml)](https://github.com/aincraft-org/merlin/actions/workflows/ci.yml)
+[![Last commit](https://img.shields.io/github/last-commit/aincraft-org/merlin)](https://github.com/aincraft-org/merlin/commits/master)
 
 Merlin is a Paper plugin with a platform-agnostic spell compiler and glyph recognition support. Player-facing language guides live in [docs/glyphcraft-language.md](docs/glyphcraft-language.md) and [docs/scribe-language.md](docs/scribe-language.md).
 

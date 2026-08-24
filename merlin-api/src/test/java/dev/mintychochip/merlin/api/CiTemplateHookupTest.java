@@ -57,7 +57,7 @@ final class CiTemplateHookupTest {
         String pom = Files.readString(Path.of(requiredProperty("ci.pom")));
         assertTrue(pom.contains("<version>" + RELEASE_VERSION + "</version>"), pom);
         String build = Files.readString(root.resolve("build.gradle.kts"));
-        assertTrue(build.contains("https://maven.pkg.github.com/aincraft-org/wizardry"), build);
+        assertTrue(build.contains("https://maven.pkg.github.com/aincraft-org/merlin"), build);
         assertTrue(build.contains("GITHUB_ACTOR"), build);
         assertTrue(build.contains("GITHUB_TOKEN"), build);
     }
