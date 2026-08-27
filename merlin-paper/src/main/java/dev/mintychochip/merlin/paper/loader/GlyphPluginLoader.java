@@ -1,4 +1,4 @@
-package dev.mintychochip.merlin.paper.mapgui;
+package dev.mintychochip.merlin.paper.loader;
 
 import io.papermc.paper.plugin.loader.PluginClasspathBuilder;
 import io.papermc.paper.plugin.loader.PluginLoader;
@@ -7,9 +7,11 @@ import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.artifact.JavaScopes;
-/** Resolves ONNX Runtime outside the deployable plugin jar. */
+
+/** Resolves ONNX Runtime and Jackson outside the deployable plugin jar. */
 public final class GlyphPluginLoader implements PluginLoader {
     static final String ONNX_COORDINATE = "com.microsoft.onnxruntime:onnxruntime:1.29.0";
+    static final String JACKSON_COORDINATE = "com.fasterxml.jackson.core:jackson-databind:2.18.3";
 
     @Override
     public void classloader(PluginClasspathBuilder classpathBuilder) {
@@ -17,6 +19,7 @@ public final class GlyphPluginLoader implements PluginLoader {
         resolver.addRepository(new RemoteRepository.Builder(
                 "central", "default", MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR).build());
         resolver.addDependency(new Dependency(new DefaultArtifact(ONNX_COORDINATE), JavaScopes.RUNTIME));
+        resolver.addDependency(new Dependency(new DefaultArtifact(JACKSON_COORDINATE), JavaScopes.RUNTIME));
         classpathBuilder.addLibrary(resolver);
     }
 }

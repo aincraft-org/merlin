@@ -1,20 +1,25 @@
 package dev.mintychochip.merlin.paper.mapgui;
 
+import de.flog99.mapgui.HandOptions;
 import de.flog99.mapgui.MapGui;
 import dev.mintychochip.merlin.api.dsl.Action;
 import dev.mintychochip.merlin.api.dsl.CompileResult;
 import dev.mintychochip.merlin.api.dsl.Diagnostic;
 import dev.mintychochip.merlin.api.glyph.GlyphDraft;
+import dev.mintychochip.merlin.api.glyph.GlyphElement;
 import dev.mintychochip.merlin.api.glyph.GlyphRoles;
 import dev.mintychochip.merlin.api.glyph.GlyphToken;
+import dev.mintychochip.merlin.api.glyph.MagicalInk;
 import dev.mintychochip.merlin.api.ml.Classification;
 import dev.mintychochip.merlin.api.ml.Label;
 import dev.mintychochip.merlin.common.glyph.GlyphCompilerImpl;
+import dev.mintychochip.merlin.paper.ink.InkStore;
 import dev.mintychochip.merlin.paper.runtime.CharmBinder;
 import dev.mintychochip.merlin.paper.runtime.SpellRuntime;
 import dev.mintychochip.merlin.paper.tome.GlyphTomeStore;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,18 +35,21 @@ public final class GlyphCommand implements BasicCommand {
     private final GlyphClassificationService classificationService;
     private final GlyphTomeStore tomes;
     private final SpellRuntime runtime;
+    private final InkStore inks;
 
     public GlyphCommand(
             GlyphDraftStoreAdapter store,
             GlyphMapSaveAction mapSaveAction,
             GlyphClassificationService classificationService,
             GlyphTomeStore tomes,
-            SpellRuntime runtime) {
+            SpellRuntime runtime,
+            InkStore inks) {
         this.store = store;
         this.mapSaveAction = mapSaveAction;
         this.classificationService = classificationService;
         this.tomes = tomes;
         this.runtime = runtime;
+        this.inks = inks;
     }
 
     @Override
@@ -65,6 +73,10 @@ public final class GlyphCommand implements BasicCommand {
                 case "book" -> {
                     player.getInventory().addItem(store.createGlyphItem());
                     player.sendMessage("Created a glyph canvas item.");
+                    return;
+                }
+                case "ink" -> {
+                    giveInk(player, args);
                     return;
                 }
                 case "stamp" -> {
@@ -101,12 +113,26 @@ public final class GlyphCommand implements BasicCommand {
             player.sendMessage("Hold a glyph canvas item.");
             return;
         }
-        var tracker = new GlyphStrokeTracker(store.load(held, itemId).orElse(GlyphDraft.empty()));
         var opened = new GlyphScreen[1];
+        var tracker = new GlyphStrokeTracker(
+                store.load(held, itemId).orElse(GlyphDraft.empty()),
+                new GlyphStrokeTracker.InkSupply() {
+                    @Override public Optional<MagicalInk> read() {
+                        var screen = opened[0];
+                        if (screen == null || screen.selectedInk() == null) return Optional.empty();
+                        return inks.find(player.getInventory(), screen.selectedInk()).flatMap(inks::read);
+                    }
+                    @Override public boolean write(MagicalInk spent) {
+                        var found = inks.find(player.getInventory(), spent.element());
+                        if (found.isEmpty() || !inks.write(found.get(), spent)) return false;
+                        if (opened[0] != null) opened[0].setInks(inks.fills(player.getInventory()));
+                        return true;
+                    }
+                });
         opened[0] = new GlyphScreen(
                 tracker,
                 () -> saveOpened(player, itemId, tracker, opened[0]),
-                () -> player.sendMessage("Glyph draft closed. Use /glyph save before closing to persist changes."),
+                () -> {},
                 draft -> classificationService.classify(draft, result -> {
                     applyClassification(opened[0], result);
                     if (result.accepted() && !result.candidates().isEmpty()) {
@@ -116,8 +142,57 @@ public final class GlyphCommand implements BasicCommand {
                     }
                 }),
                 player::isSneaking);
+        var available = inks.available(player.getInventory());
+        opened[0].setInks(inks.fills(player.getInventory()));
+        var offhand = inks.read(player.getInventory().getItemInOffHand())
+                .filter(ink -> !ink.empty())
+                .map(MagicalInk::element)
+                .orElse(null);
+        MagicalInk.pick(offhand, available).ifPresent(opened[0]::selectInk);
         hydrateFrozen(opened[0], store.loadToken(held));
-        MapGui.get().open(player, opened[0]);
+        MapGui.get().open(player, opened[0], HandOptions.pinned(player.getInventory().getHeldItemSlot()));
+    }
+
+    private void giveInk(Player player, String[] args) {
+        var elements = inkElements(args);
+        if (elements.isEmpty()) {
+            String unknown = args != null && args.length > 1 ? args[1] : "";
+            player.sendMessage("Unknown ink '" + unknown + "'. Use physical, flame, frost, or arcane.");
+            return;
+        }
+        int count = inkCount(args);
+        for (int n = 0; n < count; n++) {
+            for (var element : elements) {
+                player.getInventory().addItem(inks.create(element));
+            }
+        }
+        if (elements.size() == 1) {
+            player.sendMessage("Created " + InkStore.displayName(elements.getFirst()) + (count > 1 ? " x" + count : "") + ".");
+        } else {
+            player.sendMessage("Created Physical, Flame, Frost, and Arcane ink.");
+        }
+    }
+
+    static Optional<GlyphElement> parseInk(String[] args) {
+        if (args == null || args.length < 2 || !args[0].equalsIgnoreCase("ink")) return Optional.empty();
+        return InkStore.parseElement(args[1]);
+    }
+
+    static List<GlyphElement> inkElements(String[] args) {
+        if (args == null || args.length < 1 || !args[0].equalsIgnoreCase("ink")) return List.of();
+        if (args.length == 1) {
+            return List.of(GlyphElement.PHYSICAL, GlyphElement.FLAME, GlyphElement.FROST, GlyphElement.ARCANE);
+        }
+        return parseInk(args).map(List::of).orElse(List.of());
+    }
+
+    static int inkCount(String[] args) {
+        if (args == null || args.length < 3) return 1;
+        try {
+            return Math.max(1, Math.min(64, Integer.parseInt(args[2])));
+        } catch (NumberFormatException ignored) {
+            return 1;
+        }
     }
 
     private void giveTome(Player player) {

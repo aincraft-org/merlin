@@ -78,7 +78,7 @@ Unknown words are compile errors. New power is a new word, not a newly exposed P
 | `for` | required before a `vanish` duration |
 | `seconds` | required unit after `rest` and `vanish` durations |
 
-Not in the lexicon: `a`, `the`, `upon`, `call`, `forth`, `when`, `if`, `spell`, `damage`, `heal`, `push`, `cooldown`, `fire`, `frost`, `arcane`, `physical`.
+Not in the lexicon: `a`, `the`, `upon`, `call`, `forth`, `when`, `if`, `spell`, `damage`, `heal`, `push`, `cooldown`, `flame`, `frost`, `arcane`, `physical`.
 
 ## Implicit location
 

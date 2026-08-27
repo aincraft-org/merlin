@@ -35,14 +35,14 @@ def augment_example(example: Any, seed: int, *, translation: float = 8.0, scale:
             x = min(127.999999, max(0.0, x + rng.uniform(-jitter, jitter)))
             y = min(127.999999, max(0.0, y + rng.uniform(-jitter, jitter)))
             points.append((x, y))
-        transformed.append((width, points, int(_get(stroke, "started_at_millis", 0))))
+        transformed.append((width, points, int(_get(stroke, "started_at_millis", 0)), _get(stroke, "element")))
     from .schema import GlyphExample, GlyphPointData, GlyphStrokeData
     if isinstance(example, GlyphExample):
         return GlyphExample(example.schema_version, f"{example.example_id}:aug:{seed}", example.label, example.source,
                             example.independent_source, example.lineage_group, str(seed), example.author_group,
                             example.session_group, example.split_group, example.consent,
-                            tuple(GlyphStrokeData(tuple(GlyphPointData(x, y) for x, y in points), width, started)
-                                  for width, points, started in transformed),
+                            tuple(GlyphStrokeData(tuple(GlyphPointData(x, y) for x, y in points), width, started, element)
+                                  for width, points, started, element in transformed),
                             dict(example.generation) if example.generation is not None else None)
     try:
         out = copy.deepcopy(example)
@@ -51,8 +51,10 @@ def augment_example(example: Any, seed: int, *, translation: float = 8.0, scale:
         if hasattr(example, "__dict__"):
             out.__dict__ = dict(example.__dict__)
         out.strokes = [type(stroke)([type(point)(point.x, point.y) for point in _get(stroke, "points", ())], _get(stroke, "brush_width", 1.0)) for stroke in _get(example, "strokes", ())]
-    for stroke, (width, points, _) in zip(_get(out, "strokes", ()), transformed):
+    for stroke, (width, points, _, element) in zip(_get(out, "strokes", ()), transformed):
         _set(stroke, "brush_width", width)
+        if element is not None:
+            _set(stroke, "element", element)
         for point, (x, y) in zip(_get(stroke, "points", ()), points):
             _set(point, "x", x); _set(point, "y", y)
     _set(out, "example_id", f"{_get(example, 'example_id', 'example')}:aug:{seed}")

@@ -1,7 +1,7 @@
 name: Merlin
 version: 1.0.0-SNAPSHOT
 main: dev.mintychochip.merlin.paper.MerlinPlugin
-loader: dev.mintychochip.merlin.paper.mapgui.GlyphPluginLoader
+loader: dev.mintychochip.merlin.paper.loader.GlyphPluginLoader
 api-version: '1.21'
 author: jlo
 dependencies:

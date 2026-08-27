@@ -35,7 +35,7 @@ public final class ModelBundle {
     public double topThreshold() { return topThreshold; }
     public double margin() { return margin; }
     public static ModelBundle load(Path directory) throws IOException { return load(directory, false); }
-    static ModelBundle load(Path directory, boolean allowFixture) throws IOException {
+    public static ModelBundle load(Path directory, boolean allowUnreleased) throws IOException {
         Path root = directory.toAbsolutePath().normalize();
         Path manifestPath = root.resolve("manifest.json");
         if (!Files.isRegularFile(manifestPath)) throw new BundleException("missing manifest");
@@ -46,7 +46,7 @@ public final class ModelBundle {
         for (String field : List.of("model_id", "catalog_id", "preprocessing_id", "training_id", "dataset_id")) if (manifest.path(field).asText().isBlank()) throw new BundleException("missing " + field);
         if (manifest.path("opset").asInt(-1) != 17) throw new BundleException("incompatible opset");
         boolean releaseReady = manifest.path("release_ready").asBoolean(false);
-        if (!releaseReady && !allowFixture) throw new BundleException("bundle is not release ready");
+        if (!releaseReady && !allowUnreleased) throw new BundleException("bundle is not release ready");
         JsonNode labelArray = manifest.path("labels");
         if (!labelArray.isArray() || labelArray.size() != LABEL_IDS.size()) throw new BundleException("incompatible labels");
         List<Label> labels = new ArrayList<>();

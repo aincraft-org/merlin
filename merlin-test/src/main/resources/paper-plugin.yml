@@ -1,4 +1,4 @@
-name: Merlin
+name: MerlinTest
 version: 1.0.0-SNAPSHOT
 main: dev.mintychochip.merlin.test.MerlinPlugin
 api-version: '1.21'

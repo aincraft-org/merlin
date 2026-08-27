@@ -19,14 +19,14 @@ final class TomePagesTest {
     }
 
     @Test void loneFireMaySitUnfinished() {
-        var pages = TomePages.empty().insert(new GlyphToken(Label.FIRE, 1), GlyphCompilerImpl.INSTANCE).orElseThrow();
+        var pages = TomePages.empty().insert(new GlyphToken(Label.FLAME, 1), GlyphCompilerImpl.INSTANCE).orElseThrow();
         assertEquals(1, pages.tokens().size());
         assertInstanceOf(CompileResult.Error.class, GlyphCompilerImpl.INSTANCE.compile(pages.tokens()));
     }
 
     @Test void fireThenDamageIsCastable() {
         var pages = TomePages.empty()
-                .insert(new GlyphToken(Label.FIRE, 1), GlyphCompilerImpl.INSTANCE).orElseThrow()
+                .insert(new GlyphToken(Label.FLAME, 1), GlyphCompilerImpl.INSTANCE).orElseThrow()
                 .insert(new GlyphToken(Label.DAMAGE, 5), GlyphCompilerImpl.INSTANCE).orElseThrow();
         assertInstanceOf(CompileResult.Ok.class, GlyphCompilerImpl.INSTANCE.compile(pages.tokens()));
     }
@@ -45,7 +45,7 @@ final class TomePagesTest {
     @Test void rejectionIsEmptyWhenInsertWouldSucceed() {
         var compiler = GlyphCompilerImpl.INSTANCE;
         assertTrue(TomePages.empty().rejection(new GlyphToken(Label.DAMAGE, 1), compiler).isEmpty());
-        assertTrue(TomePages.empty().rejection(new GlyphToken(Label.FIRE, 1), compiler).isEmpty());
+        assertTrue(TomePages.empty().rejection(new GlyphToken(Label.FLAME, 1), compiler).isEmpty());
     }
 
     @Test void rejectionReportsFirstNonUnfinishedDiagnostic() {
@@ -59,7 +59,7 @@ final class TomePagesTest {
         assertEquals("G0108", charm.code());
         assertEquals("charm is not a combat compile", charm.message());
 
-        var fire = TomePages.empty().insert(new GlyphToken(Label.FIRE, 1), compiler).orElseThrow();
+        var fire = TomePages.empty().insert(new GlyphToken(Label.FLAME, 1), compiler).orElseThrow();
         var twoSchools = fire.rejection(new GlyphToken(Label.FROST, 1), compiler).orElseThrow();
         assertEquals("G0105", twoSchools.code());
     }

@@ -4,8 +4,11 @@ import argparse, hashlib, json, math, random
 from collections import Counter
 from pathlib import Path
 from typing import Any
+from .element import ELEMENTS
 from .schema import load_examples
 PROFILE="synthetic-development"; SCHEMA_VERSION="glyph-dataset-v1"
+INKS=tuple(ELEMENTS)
+CLOSED_GAP=8.0
 POSITIVE_LABELS=("target-ray","damage","heal","push","cooldown","self","target","physical","fire","frost","arcane","on-hit","on-hurt","on-use","periodic","if-health","if-undead","if-outdoors","shield","attacker","area","repeat","charges")
 LABELS=(*POSITIVE_LABELS,"reject"); MIN_TEMPLATES=6
 FINGERPRINT_QUANTIZATION=1e-3
@@ -25,8 +28,36 @@ def _validate_strokes(strokes):
     return None
 
 def _catalog(path: Path):
-    raw=path.read_bytes(); value=json.loads(raw)
-    if not isinstance(value,dict) or not isinstance(value.get("glyphs"),dict): raise ValueError("catalog must contain glyphs object")
+    raw = path.read_bytes()
+    value = json.loads(raw)
+    if not isinstance(value, dict) or not isinstance(value.get("glyphs"), dict):
+        raise ValueError("catalog must contain glyphs object")
+    reject = value["glyphs"].get("reject")
+    if not isinstance(reject, dict):
+        raise ValueError("catalog must contain explicit reject entry")
+    if reject.get("templates") != []:
+        raise ValueError("reject catalog entry must have empty templates")
+    metadata = reject.get("reject_metadata")
+    required = {"label": "reject", "canonical_concept": "no canonical positive sigil"}
+    if not isinstance(metadata, dict) or any(metadata.get(k) != v for k, v in required.items()):
+        raise ValueError("reject metadata mismatch")
+    recipes = reject.get("reject_recipes")
+    families = {
+        "blank-near-blank", "accidental-taps", "partial-positives",
+        "malformed-closures", "ambiguous-blends", "scribbles", "ordinary-doodles",
+    }
+    if (
+        not isinstance(recipes, list)
+        or {item.get("family") for item in recipes if isinstance(item, dict)} != families
+        or any(
+            not isinstance(item, dict)
+            or not item.get("deterministic")
+            or not isinstance(item.get("independent_source"), str)
+            or not isinstance(item.get("lineage_group"), str)
+            for item in recipes
+        )
+    ):
+        raise ValueError("reject recipes must cover all deterministic negative families")
     return value, hashlib.sha256(raw).hexdigest()
 def _fingerprint(strokes):
     validated = _validate_strokes(strokes)
@@ -69,7 +100,11 @@ def _templates(catalog):
                 geometry_issues.append(error)
                 continue
             valid.append(template)
-        fps=[_fingerprint(t["strokes"]) for t in valid]; issues=[]
+        expected_stroke_count = entry.get("logical_strokes") if isinstance(entry,dict) else None
+        if not isinstance(expected_stroke_count,int) or expected_stroke_count <= 0:
+            issues.append("logical_strokes must be a positive integer")
+        elif any(len(template["strokes"]) != expected_stroke_count for template in valid):
+            issues.append("every template stroke count must equal logical_strokes")
         if geometry_issues: issues.append("invalid geometry: "+", ".join(geometry_issues))
         if len(valid)<MIN_TEMPLATES: issues.append(f"requires at least {MIN_TEMPLATES} explicit independent templates (found {len(valid)})")
         if any(not isinstance(i,str) or not i.strip() for i in ids): issues.append("template IDs must be non-blank")
@@ -82,27 +117,83 @@ def _templates(catalog):
     if deficiencies: raise ValueError("invalid catalog prerequisites:\n"+"\n".join(deficiencies))
     return result
 
-def _points(strokes,seed,variant):
+def _closed(stroke):
+    if len(stroke)<3: return False
+    return math.hypot(stroke[-1][0]-stroke[0][0],stroke[-1][1]-stroke[0][1])<=CLOSED_GAP
+
+def _densify(stroke,spacing=2.5):
+    if len(stroke)<2: return [list(point) for point in stroke]
+    out=[list(stroke[0])]
+    for start,end in zip(stroke,stroke[1:]):
+        distance=math.hypot(end[0]-start[0],end[1]-start[1]); steps=max(1,int(distance/spacing))
+        for index in range(1,steps+1):
+            t=index/steps; out.append([start[0]+(end[0]-start[0])*t,start[1]+(end[1]-start[1])*t])
+    if len(out)>256:
+        last=len(out)-1; out=[out[round(index*last/255)] for index in range(256)]
+    return out
+
+def _drop_tail(stroke,keep):
+    if len(stroke)<4: return [list(point) for point in stroke]
+    return [list(point) for point in stroke[:max(3,int(len(stroke)*keep))]]
+
+def _points(strokes,seed,variant,*,open_loop=False):
     rng=random.Random(seed*1009+variant*9176); tx,ty=rng.uniform(-4,4),rng.uniform(-4,4); scale=1+rng.uniform(-.035,.035); angle=rng.uniform(-math.radians(8),math.radians(8)); ca,sa=math.cos(angle),math.sin(angle); result=[]
     for stroke in strokes:
         transformed=[]
         for x,y in stroke:
             xx,yy=(x-64)*scale,(y-64)*scale; transformed.append([round(min(127.5,max(.5,xx*ca-yy*sa+64+tx)),4),round(min(127.5,max(.5,xx*sa+yy*ca+64+ty)),4)])
+        if open_loop and _closed(transformed):
+            transformed=_drop_tail(_densify(transformed),1.0-rng.uniform(.08,.22))
         result.append(transformed)
     return result
 
-def _record(example_id,label,strokes,lineage_group,seed_id,source,independent_source,author_group):
-    return {"schema_version":SCHEMA_VERSION,"example_id":example_id,"label":label,"source":source,"independent_source":independent_source,"lineage_group":lineage_group,"seed_id":seed_id,"author_group":author_group,"session_group":seed_id,"split_group":lineage_group,"consent":None,"strokes":[{"points":[{"x":x,"y":y} for x,y in stroke],"brush_width":6.0,"started_at_millis":0} for stroke in strokes],"generation":{"profile":PROFILE,"kind":"seed-variant" if source=="synthetic" else "balanced-reject"}}
+def _record(example_id,label,strokes,lineage_group,seed_id,source,independent_source,author_group,element=None,**metadata):
+    painted=[]
+    for stroke in strokes:
+        item={"points":[{"x":x,"y":y} for x,y in stroke],"brush_width":6.0,"started_at_millis":0}
+        if element: item["element"]=element
+        painted.append(item)
+    record={"schema_version":SCHEMA_VERSION,"example_id":example_id,"label":label,"source":source,"independent_source":independent_source,"lineage_group":lineage_group,"seed_id":seed_id,"author_group":author_group,"session_group":seed_id,"split_group":lineage_group,"consent":None,"strokes":painted,"generation":{"profile":PROFILE,"kind":"seed-variant" if source=="synthetic" else "balanced-reject"}}
+    record.update(metadata)
+    return record
+def _positive_provenance(positive_templates):
+    return {
+        template["id"]: {
+            "lineage_group": f"catalog:target-ray:{template['id']}",
+            "seed_id": f"geometry:target-ray:{index}",
+            "independent_source": template["independent_source"],
+        }
+        for index, template in enumerate(positive_templates)
+    }
 
 def generate_corpus(catalog_path:Path,output_dir:Path,*,seed_variants=3,derivatives_per_label=100,reject_count=None):
-    catalog,geometry_hash=_catalog(catalog_path); templates=_templates(catalog); output_dir.mkdir(parents=True,exist_ok=True); reject_count=reject_count if reject_count is not None else len(POSITIVE_LABELS)*derivatives_per_label; records=[]
-    for label in LABELS:
-        count=reject_count if label=="reject" else derivatives_per_label
+    catalog,geometry_hash=_catalog(catalog_path); templates=_templates(catalog); recipes=_reject_recipes(catalog); output_dir.mkdir(parents=True,exist_ok=True); reject_count=reject_count if reject_count is not None else len(POSITIVE_LABELS)*derivatives_per_label; records=[]
+    positive_provenance=_positive_provenance(catalog["glyphs"]["target-ray"]["templates"])
+    for label in POSITIVE_LABELS:
         for index,template in enumerate(templates[label]):
-            lineage=f"catalog:{label}:{template['id']}"; seed=f"geometry:{label}:{index}"; source="reject" if label=="reject" else "synthetic"; provenance=template["independent_source"]; author_group=f"synthetic-author:{label}:{index}"
-            records.append(_record(f"{label}:seed:{index}",label,_points(template["strokes"],17+index,index),lineage,seed,source,provenance,author_group))
-            for derivative in range(count): records.append(_record(f"{label}:derivative:{index}:{derivative}",label,_points(template["strokes"],101+index*max(1,count)+derivative,derivative+seed_variants),lineage,seed,source,provenance,author_group))
-    provenance=_provenance_map(records)
+            lineage=f"catalog:{label}:{template['id']}"; seed=f"geometry:{label}:{index}"; provenance=template["independent_source"]; author_group=f"synthetic-author:{label}:{index}"
+            records.append(_record(f"{label}:seed:{index}",label,_points(template["strokes"],17+index,index),lineage,seed,"synthetic",provenance,author_group))
+            for derivative in range(derivatives_per_label):
+                records.append(_record(f"{label}:derivative:{index}:{derivative}",label,_points(template["strokes"],101+index*max(1,derivatives_per_label)+derivative,derivative+seed_variants),lineage,seed,"synthetic",provenance,author_group))
+    partial_sources={recipe["id"]: recipe.get("source_templates",[]) for recipe in recipes if recipe["family"]=="partial positive glyphs"}
+    for index in range(reject_count):
+        recipe=recipes[index % len(recipes)]; strokes=_reject_shape(recipe,index)
+        metadata={}
+        lineage=recipe["lineage_group"]; seed=f"reject:{recipe['id']}:{index}"; provenance=recipe["independent_source"]; author_group=f"reject-author:{recipe['id']}"
+        if recipe["family"]=="partial positive glyphs":
+            source_templates=partial_sources.get(recipe["id"])
+            if not isinstance(source_templates,list) or not source_templates:
+                raise ValueError("partial positive reject recipe requires source_templates")
+            positive_id=source_templates[index % len(source_templates)]
+            selected=positive_provenance.get(positive_id)
+            if selected is None:
+                raise ValueError(f"partial positive reject source template is unknown: {positive_id}")
+            lineage=selected["lineage_group"]; seed=selected["seed_id"]; provenance=selected["independent_source"]
+            metadata["source_positive_template"]=positive_id
+        records.append(_record(f"reject:seed:{index}","reject",_points(strokes,701+index,index),lineage,seed,"reject",provenance,author_group,reject_recipe_id=recipe["id"],reject_family=recipe["family"],**metadata))
+    jsonl=output_dir/"corpus.jsonl"; jsonl.write_text("".join(json.dumps(r,sort_keys=True,separators=(",",":"))+"\n" for r in records)); corpus_hash=hashlib.sha256(jsonl.read_bytes()).hexdigest(); counts=Counter((r["source"],r["label"]) for r in records); groups={l:sorted({r["split_group"] for r in records if r["label"]==l}) for l in LABELS}; lineages={l:sorted({r["lineage_group"] for r in records if r["label"]==l}) for l in LABELS}; authors={l:sorted({r["author_group"] for r in records if r["label"]==l}) for l in LABELS}
+    manifest={"profile":PROFILE,"source":"synthetic","release_ready":False,"catalog_version":catalog.get("catalog_version"),"geometry_sha256":geometry_hash,"corpus_sha256":corpus_hash,"record_count":len(records),"seed_variants_per_label":seed_variants,"derivatives_per_seed":derivatives_per_label,"reject_count":reject_count,"counts":dict(Counter(r["label"] for r in records)),"source_counts":{f"{s}:{l}":c for (s,l),c in sorted(counts.items())},"groups":groups,"lineages":lineages,"lineage_counts":{l:len(lineages[l]) for l in LABELS},"author_groups":authors,"provenance":_provenance_map(records)}
+    (output_dir/"manifest.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n"); return manifest
     jsonl=output_dir/"corpus.jsonl"; jsonl.write_text("".join(json.dumps(r,sort_keys=True,separators=(",",":"))+"\n" for r in records)); corpus_hash=hashlib.sha256(jsonl.read_bytes()).hexdigest(); counts=Counter((r["source"],r["label"]) for r in records); labels={l:sum(c for (s,x),c in counts.items() if x==l) for l in LABELS}; groups={l:sorted({r["split_group"] for r in records if r["label"]==l}) for l in LABELS}; lineages={l:sorted({r["lineage_group"] for r in records if r["label"]==l}) for l in LABELS}; authors={l:sorted({r["author_group"] for r in records if r["label"]==l}) for l in LABELS}
     manifest={"profile":PROFILE,"source":"synthetic","release_ready":False,"catalog_version":catalog.get("catalog_version"),"geometry_sha256":geometry_hash,"corpus_sha256":corpus_hash,"record_count":len(records),"seed_variants_per_label":seed_variants,"derivatives_per_seed":derivatives_per_label,"reject_count":reject_count,"counts":labels,"source_counts":{f"{s}:{l}":c for (s,l),c in sorted(counts.items())},"groups":groups,"lineages":lineages,"lineage_counts":{l:len(lineages[l]) for l in LABELS},"author_groups":authors,"provenance":provenance}
     (output_dir/"manifest.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n"); return manifest

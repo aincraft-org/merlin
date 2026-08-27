@@ -25,7 +25,7 @@ final class GlyphLanguageTest {
         assertEquals(GlyphRole.EFFECT, GlyphRoles.of(Label.HEAL));
         assertEquals(GlyphRole.EFFECT, GlyphRoles.of(Label.PUSH));
         assertEquals(GlyphRole.EFFECT, GlyphRoles.of(Label.SHIELD));
-        assertEquals(GlyphRole.SCHOOL, GlyphRoles.of(Label.FIRE));
+        assertEquals(GlyphRole.SCHOOL, GlyphRoles.of(Label.FLAME));
         assertEquals(GlyphRole.SCHOOL, GlyphRoles.of(Label.FROST));
         assertEquals(GlyphRole.SCHOOL, GlyphRoles.of(Label.ARCANE));
         assertEquals(GlyphRole.SCHOOL, GlyphRoles.of(Label.PHYSICAL));
@@ -49,15 +49,15 @@ final class GlyphLanguageTest {
     @Test void tokenRejectsBadPips() {
         assertThrows(IllegalArgumentException.class, () -> new GlyphToken(Label.DAMAGE, 0));
         assertThrows(IllegalArgumentException.class, () -> new GlyphToken(Label.DAMAGE, 6));
-        assertThrows(IllegalArgumentException.class, () -> new GlyphToken(Label.FIRE, 2));
-        assertEquals(1, new GlyphToken(Label.FIRE, 1).pips());
+        assertThrows(IllegalArgumentException.class, () -> new GlyphToken(Label.FLAME, 2));
+        assertEquals(1, new GlyphToken(Label.FLAME, 1).pips());
     }
 
     @Test void manaTableV1() {
         var mana = ManaTable.v1();
         assertEquals(3, mana.mana(new GlyphToken(Label.DAMAGE, 1)));
         assertEquals(7, mana.mana(new GlyphToken(Label.DAMAGE, 5)));
-        assertEquals(2, mana.mana(new GlyphToken(Label.FIRE, 1)));
+        assertEquals(2, mana.mana(new GlyphToken(Label.FLAME, 1)));
         assertEquals(1, mana.mana(new GlyphToken(Label.SELF, 1)));
         assertEquals(4, mana.mana(new GlyphToken(Label.SHARPNESS, 1)));
         assertEquals(12, mana.mana(new GlyphToken(Label.SHARPNESS, 5)));
@@ -65,7 +65,7 @@ final class GlyphLanguageTest {
 
     @Test void fireAndDamageFiveBurnsTarget() {
         var result = GlyphCompilerImpl.INSTANCE.compile(List.of(
-                new GlyphToken(Label.FIRE, 1),
+                new GlyphToken(Label.FLAME, 1),
                 new GlyphToken(Label.DAMAGE, 5)));
         var spell = assertInstanceOf(CompileResult.Ok.class, result).spell();
         assertEquals("glyph-compiler/0.1", spell.compilerVersion());
@@ -80,9 +80,9 @@ final class GlyphLanguageTest {
 
     @Test void pageOrderDoesNotChangeIdentity() {
         var a = GlyphCompilerImpl.INSTANCE.compile(List.of(
-                new GlyphToken(Label.DAMAGE, 5), new GlyphToken(Label.FIRE, 1)));
+                new GlyphToken(Label.DAMAGE, 5), new GlyphToken(Label.FLAME, 1)));
         var b = GlyphCompilerImpl.INSTANCE.compile(List.of(
-                new GlyphToken(Label.FIRE, 1), new GlyphToken(Label.DAMAGE, 5)));
+                new GlyphToken(Label.FLAME, 1), new GlyphToken(Label.DAMAGE, 5)));
         assertEquals(
                 ((CompileResult.Ok) a).spell().identitySha256(),
                 ((CompileResult.Ok) b).spell().identitySha256());
@@ -109,7 +109,7 @@ final class GlyphLanguageTest {
     }
 
     @Test void loneFireIsUnfinished() {
-        var result = GlyphCompilerImpl.INSTANCE.compile(List.of(new GlyphToken(Label.FIRE, 1)));
+        var result = GlyphCompilerImpl.INSTANCE.compile(List.of(new GlyphToken(Label.FLAME, 1)));
         var error = assertInstanceOf(CompileResult.Error.class, result);
         assertEquals("G0107", error.diagnostics().getFirst().code());
     }
@@ -133,11 +133,11 @@ final class GlyphLanguageTest {
     }
 
     @Test void fourPagesIsG0103() {
-        assertEquals("G0103", code(Label.DAMAGE, Label.FIRE, Label.SELF, Label.PHYSICAL));
+        assertEquals("G0103", code(Label.DAMAGE, Label.FLAME, Label.SELF, Label.PHYSICAL));
     }
 
     @Test void twoSchoolsIsG0105() {
-        assertEquals("G0105", code(Label.FIRE, Label.FROST, Label.DAMAGE));
+        assertEquals("G0105", code(Label.FLAME, Label.FROST, Label.DAMAGE));
     }
 
     @Test void twoPatientsIsG0106() {

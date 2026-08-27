@@ -13,7 +13,7 @@ Merlin is a Paper plugin with a platform-agnostic spell compiler and glyph recog
 - `merlin-test` — runnable test plugin (Merlin) for the development server.
 - `training` — Python tooling and reviewed fixtures for glyph model training.
 
-MapGUI is included as a sibling Gradle build at `../MapGUI` for local development.
+Merlin compiles against MapGUI 2.0.0 from Maven Central. `./gradlew :merlin-test:runServer` fetches that same plugin release into the development server.
 
 ## Build
 

@@ -8,9 +8,18 @@ import dev.mintychochip.merlin.api.glyph.GlyphRoles;
 import dev.mintychochip.merlin.api.glyph.GlyphToken;
 import dev.mintychochip.merlin.api.glyph.ManaTable;
 import dev.mintychochip.merlin.api.ml.Label;
+import dev.mintychochip.merlin.common.glyph.FlameOrb;
 import dev.mintychochip.merlin.common.glyph.GlyphRasterizer;
 import dev.mintychochip.merlin.api.glyph.GlyphStroke;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import net.kyori.adventure.text.Component;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -104,7 +113,9 @@ public final class GlyphDraftStoreAdapter {
             pdc.set(markerKey, PersistentDataType.BYTE, (byte) 1);
             pdc.set(idKey, PersistentDataType.STRING, prepared.itemId().toString());
             pdc.set(dataKey, PersistentDataType.BYTE_ARRAY, prepared.encoded());
+            var token = loadToken(prepared.source()).orElse(null);
             replacement.setItemMeta(mapMeta);
+            presentSavedMap(replacement, token);
             installRenderer(view, prepared.draft());
             return Optional.of(replacement);
         } catch (RuntimeException failure) {
@@ -120,10 +131,10 @@ public final class GlyphDraftStoreAdapter {
         pdc.set(labelKey, PersistentDataType.STRING, encoded.label());
         pdc.set(pipsKey, PersistentDataType.INTEGER, encoded.pips());
         pdc.set(manaKey, PersistentDataType.INTEGER, encoded.mana());
-        String title = tokenTitle(token);
-        meta.displayName(Component.text(title));
+        String title = savedMapTitle(token);
         meta.lore(List.of(Component.text(title), Component.text("mana " + encoded.mana())));
         item.setItemMeta(meta);
+        presentSavedMap(item, token);
         return true;
     }
 
@@ -219,7 +230,11 @@ public final class GlyphDraftStoreAdapter {
     private static void installRenderer(org.bukkit.map.MapView view, GlyphDraft draft) {
         view.setLocked(true);
         for (var renderer : java.util.List.copyOf(view.getRenderers())) view.removeRenderer(renderer);
-        view.addRenderer(new GlyphMapRenderer(GlyphRasterizer.renderFull(draft)));
+        // Walk the orb's own 20-frame clock so a saved map animates at the same cadence
+        // as the rank pips. Frames are rasterized on first use, not up front.
+        int frames = FlameOrb.FRAME_COUNT;
+        view.addRenderer(new GlyphMapRenderer(
+                f -> GlyphRasterizer.renderEmissiveRgb(draft, f / (double) frames), frames));
     }
 
 
@@ -233,28 +248,56 @@ public final class GlyphDraftStoreAdapter {
         return new GlyphToken(Label.fromId(encoded.label()), encoded.pips());
     }
 
+    public static String savedMapTitle(GlyphToken token) {
+        return token == null ? "Glyph" : tokenTitle(token);
+    }
+
     public static String tokenTitle(GlyphToken token) {
         if (!GlyphRoles.hasPips(token.role())) return token.label().id();
         return token.label().id() + " " + "●".repeat(token.pips());
     }
 
+    private static void presentSavedMap(ItemStack item, GlyphToken token) {
+        item.setData(DataComponentTypes.ITEM_NAME, Component.text(savedMapTitle(token)));
+        item.unsetData(DataComponentTypes.CUSTOM_NAME);
+        item.setData(
+                DataComponentTypes.TOOLTIP_DISPLAY,
+                TooltipDisplay.tooltipDisplay().addHiddenComponents(DataComponentTypes.MAP_ID));
+    }
+
+    private static final byte BINARY_VERSION = 4;
+
     public static byte[] encode(GlyphDraft draft) {
-        var out = new StringBuilder("3;");
-        for (var stroke : draft.strokes()) {
-            out.append(stroke.brushWidth()).append(',').append(stroke.startedAtMillis())
-                    .append(',').append(stroke.element().name()).append(':');
-            for (var point : stroke.points()) out.append(point.x()).append(',').append(point.y()).append(';');
-            out.append(':');
-            for (double width : stroke.segmentWidths()) out.append(width).append(',');
-            out.append('|');
+        try {
+            var buf = new ByteArrayOutputStream();
+            var out = new DataOutputStream(buf);
+            out.writeByte(BINARY_VERSION);
+            out.writeShort(draft.strokes().size());
+            for (var stroke : draft.strokes()) {
+                out.writeDouble(stroke.brushWidth());
+                out.writeLong(stroke.startedAtMillis());
+                byte[] name = stroke.element().name().getBytes(StandardCharsets.UTF_8);
+                out.writeByte(name.length);
+                out.write(name);
+                out.writeShort(stroke.points().size());
+                for (var point : stroke.points()) {
+                    out.writeDouble(point.x());
+                    out.writeDouble(point.y());
+                }
+                for (double width : stroke.segmentWidths()) out.writeDouble(width);
+            }
+            return buf.toByteArray();
+        } catch (IOException failed) {
+            throw new IllegalStateException(failed);
         }
-        return Base64.getEncoder().encode(out.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     public static GlyphDraft decode(byte[] bytes) {
-        var raw = new String(Base64.getDecoder().decode(bytes), java.nio.charset.StandardCharsets.UTF_8);
+        if (bytes.length > 0 && bytes[0] == BINARY_VERSION) return decodeBinary(bytes);
+        var raw = new String(Base64.getDecoder().decode(bytes), StandardCharsets.UTF_8);
         boolean hasWidths;
         boolean hasElement;
+
         if (raw.startsWith("3;")) {
             hasWidths = true;
             hasElement = true;
@@ -280,17 +323,45 @@ public final class GlyphDraftStoreAdapter {
             }
             double brushWidth = Double.parseDouble(meta[0]);
             long startedAt = Long.parseLong(meta[1]);
-            var element = hasElement ? GlyphElement.valueOf(meta[2]) : GlyphElement.PHYSICAL;
+            var element = hasElement ? GlyphElement.parse(meta[2]) : GlyphElement.PHYSICAL;
             if (!hasWidths) {
                 strokes.add(new GlyphStroke(points, brushWidth, startedAt));
                 continue;
             }
             var widths = new ArrayList<Double>();
             for (var width : parts[2].split(",")) {
-                if (!width.isBlank()) widths.add(Double.parseDouble(width));
+                if (width.isBlank()) continue;
+                widths.add(Double.parseDouble(width));
             }
             strokes.add(new GlyphStroke(points, brushWidth, startedAt, widths, element));
         }
         return new GlyphDraft(strokes);
+    }
+
+    private static GlyphDraft decodeBinary(byte[] bytes) {
+        try {
+            var in = new DataInputStream(new ByteArrayInputStream(bytes));
+            if (in.readUnsignedByte() != BINARY_VERSION) throw new IllegalArgumentException();
+            int strokeCount = in.readUnsignedShort();
+            var strokes = new ArrayList<GlyphStroke>(strokeCount);
+            for (int s = 0; s < strokeCount; s++) {
+                double brushWidth = in.readDouble();
+                long startedAt = in.readLong();
+                int nameLen = in.readUnsignedByte();
+                byte[] name = in.readNBytes(nameLen);
+                var element = GlyphElement.parse(new String(name, StandardCharsets.UTF_8));
+                int pointCount = in.readUnsignedShort();
+                var points = new ArrayList<GlyphPoint>(pointCount);
+                for (int p = 0; p < pointCount; p++) {
+                    points.add(new GlyphPoint(in.readDouble(), in.readDouble()));
+                }
+                var widths = new ArrayList<Double>(Math.max(0, pointCount - 1));
+                for (int w = 0; w < pointCount - 1; w++) widths.add(in.readDouble());
+                strokes.add(new GlyphStroke(points, brushWidth, startedAt, widths, element));
+            }
+            return new GlyphDraft(strokes);
+        } catch (IOException failed) {
+            throw new IllegalArgumentException(failed);
+        }
     }
 }

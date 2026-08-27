@@ -47,11 +47,15 @@ class GlyphPointData:
         object.__setattr__(self, "y", y)
 
 
+_ELEMENTS = frozenset({"flame", "fire", "frost", "arcane", "physical"})
+
+
 @dataclass(frozen=True, slots=True)
 class GlyphStrokeData:
     points: tuple[GlyphPointData, ...]
     brush_width: float
     started_at_millis: int
+    element: str | None = None
 
     def __post_init__(self) -> None:
         points = tuple(self.points)
@@ -62,8 +66,14 @@ class GlyphStrokeData:
             raise ValueError("brush_width must be in (0, 32]")
         if isinstance(self.started_at_millis, bool) or not isinstance(self.started_at_millis, int):
             raise ValueError("started_at_millis must be an integer")
+        element = self.element
+        if element is not None:
+            if not isinstance(element, str) or element.lower() not in _ELEMENTS:
+                raise ValueError("stroke element must be fire, frost, arcane, or physical")
+            element = element.lower()
         object.__setattr__(self, "points", points)
         object.__setattr__(self, "brush_width", width)
+        object.__setattr__(self, "element", element)
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,7 +142,7 @@ def _record(raw: Any, line: int) -> GlyphExample:
             if not isinstance(stroke, dict):
                 raise ValueError("stroke must be an object")
             points = tuple(GlyphPointData(p["x"], p["y"]) for p in stroke["points"])
-            strokes.append(GlyphStrokeData(points, stroke["brush_width"], stroke["started_at_millis"]))
+            strokes.append(GlyphStrokeData(points, stroke["brush_width"], stroke["started_at_millis"], stroke.get("element")))
         return GlyphExample(raw["schema_version"], raw["example_id"], raw["label"], raw["source"], raw["independent_source"], raw["lineage_group"], raw.get("seed_id"), raw["author_group"], raw["session_group"], raw["split_group"], raw.get("consent"), tuple(strokes), raw.get("generation"))
     except (KeyError, TypeError) as exc:
         raise ValueError(f"line {line}: malformed record field {exc}") from exc

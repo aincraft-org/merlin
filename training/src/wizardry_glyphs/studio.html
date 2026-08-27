@@ -33,7 +33,7 @@
   <header>
     <div>
       <h1>Glyph studio</h1>
-      <p>Draw on the 128×128 map. Placement does not matter. Incomplete marks and the wrong stroke count stay unlabeled.</p>
+      <p>Draw on the 128×128 map. Placement and ink color do not decide the class. A small gap in a closed shape is still that shape. The wrong stroke count stays unlabeled.</p>
     </div>
     <p id="status">loading catalog…</p>
   </header>
@@ -47,10 +47,10 @@
         <label>brush <input id="brush" type="range" min="2" max="12" value="6" /></label>
       </div>
       <div class="row" id="inks">
-        <button type="button" data-ink="physical">bone</button>
-        <button type="button" data-ink="fire">ember</button>
-        <button type="button" data-ink="frost">glacier</button>
-        <button type="button" data-ink="arcane">violet</button>
+        <button type="button" data-ink="physical">physical</button>
+        <button type="button" data-ink="flame">flame</button>
+        <button type="button" data-ink="frost">frost</button>
+        <button type="button" data-ink="arcane">arcane</button>
       </div>
     </section>
     <section class="panel">
@@ -70,7 +70,7 @@
   </main>
   <script>
     const SCALE = 4, SIZE = 128;
-    const INKS = { physical: "#E8E4D9", fire: "#FF4D00", frost: "#3DDCFF", arcane: "#B44AFF" };
+    const INKS = { physical: "#E8E4D9", flame: "#FF4D00", fire: "#FF4D00", frost: "#3DDCFF", arcane: "#B44AFF" };
     const board = document.getElementById("board");
     const seen = document.getElementById("seen");
     const bctx = board.getContext("2d");

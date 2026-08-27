@@ -1,9 +1,13 @@
 package dev.mintychochip.merlin.paper.model;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.ZipEntry;
@@ -26,6 +30,30 @@ final class ModelBundleFetcherTest {
     IOException error = assertThrows(IOException.class, fetcher::ensureBundle);
     assertTrue(error.getMessage().contains("2026.08.18.0"));
     assertTrue(error.getMessage().contains("release_ready"));
+  }
+
+  @Test
+  void downloadFollowsHttpRedirect() throws Exception {
+    byte[] body = "redirected-zip".getBytes();
+    HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+    int port = server.getAddress().getPort();
+    server.createContext("/from", exchange -> {
+      exchange.getResponseHeaders().add("Location", "http://127.0.0.1:" + port + "/to");
+      exchange.sendResponseHeaders(302, -1);
+      exchange.close();
+    });
+    server.createContext("/to", exchange -> {
+      exchange.sendResponseHeaders(200, body.length);
+      exchange.getResponseBody().write(body);
+      exchange.close();
+    });
+    server.start();
+    try {
+      Path dest = ModelBundleFetcher.download(URI.create("http://127.0.0.1:" + port + "/from"));
+      assertArrayEquals(body, Files.readAllBytes(dest));
+    } finally {
+      server.stop(0);
+    }
   }
 
   @Test

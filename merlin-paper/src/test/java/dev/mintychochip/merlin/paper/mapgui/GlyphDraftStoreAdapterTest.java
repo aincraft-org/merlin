@@ -45,10 +45,19 @@ final class GlyphDraftStoreAdapterTest {
         assertEquals(draft, GlyphDraftStoreAdapter.decode(GlyphDraftStoreAdapter.encode(draft)));
     }
 
+    @Test void legacyTextEncodingStillDecodes() {
+        var draft = new GlyphDraft(java.util.List.of(new GlyphStroke(
+                java.util.List.of(new GlyphPoint(1, 1), new GlyphPoint(2, 2)),
+                4, 10, java.util.List.of(4.0), GlyphElement.FLAME)));
+        byte[] v3 = java.util.Base64.getEncoder().encode(
+                "3;4.0,10,FLAME:1.0,1.0;2.0,2.0;:4.0,|".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertEquals(draft, GlyphDraftStoreAdapter.decode(v3));
+    }
+
     @Test void encodingPreservesStrokeElement() {
         var draft = new GlyphDraft(java.util.List.of(new GlyphStroke(
                 java.util.List.of(new GlyphPoint(1, 1), new GlyphPoint(2, 2)),
-                4, 10, java.util.List.of(4.0), GlyphElement.FIRE)));
+                4, 10, java.util.List.of(4.0), GlyphElement.FLAME)));
         assertEquals(draft, GlyphDraftStoreAdapter.decode(GlyphDraftStoreAdapter.encode(draft)));
         assertEquals(GlyphElement.PHYSICAL, GlyphDraftStoreAdapter.decode(
                 GlyphDraftStoreAdapter.encode(new GlyphDraft(java.util.List.of(
@@ -65,9 +74,19 @@ final class GlyphDraftStoreAdapterTest {
         assertEquals(token, decoded);
     }
 
+    @Test void unclassifiedSavedMapIsNamedGlyphNotMap() {
+        assertEquals("Glyph", GlyphDraftStoreAdapter.savedMapTitle(null));
+    }
+
+    @Test void classifiedSavedMapKeepsTokenTitle() {
+        var token = new GlyphToken(Label.DAMAGE, 3);
+        assertEquals(GlyphDraftStoreAdapter.tokenTitle(token), GlyphDraftStoreAdapter.savedMapTitle(token));
+    }
+
     @Test void stampParseAcceptsGrammaticalLabels() {
         assertEquals(new GlyphToken(Label.SHARPNESS, 5), GlyphCommand.parseStamp(new String[]{"stamp", "sharpness", "5"}).orElseThrow());
-        assertEquals(new GlyphToken(Label.FIRE, 1), GlyphCommand.parseStamp(new String[]{"stamp", "fire"}).orElseThrow());
+        assertEquals(new GlyphToken(Label.FLAME, 1), GlyphCommand.parseStamp(new String[]{"stamp", "flame"}).orElseThrow());
+        assertEquals(new GlyphToken(Label.FLAME, 1), GlyphCommand.parseStamp(new String[]{"stamp", "fire"}).orElseThrow());
         assertTrue(GlyphCommand.parseStamp(new String[]{"stamp", "on-hit"}).isEmpty());
         assertTrue(GlyphCommand.parseStamp(new String[]{"stamp", "nope"}).isEmpty());
     }

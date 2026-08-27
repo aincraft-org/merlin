@@ -86,7 +86,7 @@ def test_retrained_bundle_classifies_catalog_heal_and_ignores_placement():
     catalog = json.loads((BUNDLE.parents[1] / "catalog-geometry-v1.json").read_text())
     strokes = [{"points": [{"x": x, "y": y} for x, y in stroke], "brush_width": 6.0}
                for stroke in catalog["glyphs"]["heal"]["templates"][0]["strokes"]]
-    shifted = [{"points": [{"x": min(127.5, p["x"]), "y": min(127.5, p["y"] + 40)} for p in stroke["points"]],
+    shifted = [{"points": [{"x": min(127.5, p["x"]), "y": min(127.5, p["y"] + 12)} for p in stroke["points"]],
                 "brush_width": 6.0} for stroke in strokes]
     center = classify_strokes(strokes, model, labels, torch, calibration=calibration)
     moved = classify_strokes(shifted, model, labels, torch, calibration=calibration)
@@ -157,3 +157,60 @@ def test_bundle_rejects_confident_fragments_with_the_wrong_stroke_count():
     assert cross["reason"] == "wrong_structure"
     assert accepted["accepted"] is True
     assert accepted["label"] == "heal"
+
+
+def _catalog_strokes(label, *, drop_close=False, element=None):
+    catalog = json.loads((BUNDLE.parents[1] / "catalog-geometry-v1.json").read_text())
+    strokes = []
+    for index, raw in enumerate(catalog["glyphs"][label]["templates"][0]["strokes"]):
+        points = list(raw)
+        if drop_close and index == 0 and len(points) > 3:
+            points = points[:-1]
+        stroke = {"points": [{"x": x, "y": y} for x, y in points], "brush_width": 6.0}
+        if element is not None:
+            stroke["element"] = element
+        strokes.append(stroke)
+    return strokes
+
+
+def _rank(candidates, label):
+    for index, item in enumerate(candidates):
+        if item["label"] == label:
+            return index, item["score"]
+    return None, 0.0
+
+
+def test_bundle_ranks_a_fire_ink_diamond_as_self_not_fire():
+    if not (BUNDLE / "model.pt").is_file():
+        pytest.skip("corrected training bundle not present")
+    import torch
+    try:
+        model, labels, calibration = load_checkpoint(BUNDLE / "model.pt", torch)
+    except RuntimeError:
+        pytest.skip("bundle predates the order-sensitive encoder")
+    result = classify_strokes(
+        _catalog_strokes("self", element="fire"), model, labels, torch, calibration=calibration,
+    )
+    self_rank, self_score = _rank(result["candidates"], "self")
+    fire_rank, _ = _rank(result["candidates"], "fire")
+    assert self_rank == 0
+    assert self_score > 0.5
+    assert fire_rank is None or fire_rank > self_rank
+
+
+def test_bundle_ranks_an_open_fire_ink_diamond_as_self():
+    if not (BUNDLE / "model.pt").is_file():
+        pytest.skip("corrected training bundle not present")
+    import torch
+    try:
+        model, labels, calibration = load_checkpoint(BUNDLE / "model.pt", torch)
+    except RuntimeError:
+        pytest.skip("bundle predates the order-sensitive encoder")
+    result = classify_strokes(
+        _catalog_strokes("self", drop_close=True, element="fire"), model, labels, torch, calibration=calibration,
+    )
+    self_rank, self_score = _rank(result["candidates"], "self")
+    fire_rank, _ = _rank(result["candidates"], "fire")
+    assert self_rank is not None and self_rank <= 1
+    assert self_score > 0.25
+    assert fire_rank is None or fire_rank > self_rank

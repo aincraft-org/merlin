@@ -1,7 +1,7 @@
 package dev.mintychochip.merlin.api.glyph;
 
 public enum GlyphElement {
-    FIRE(255, 77, 0),
+    FLAME(255, 77, 0),
     FROST(61, 220, 255),
     ARCANE(180, 74, 255),
     PHYSICAL(232, 228, 217);
@@ -21,6 +21,12 @@ public enum GlyphElement {
     public float b() { return b; }
 
     public float[] rgb() { return new float[] {r, g, b}; }
+
+    public static GlyphElement parse(String raw) {
+        if (raw == null || raw.isBlank()) return PHYSICAL;
+        if ("FIRE".equalsIgnoreCase(raw)) return FLAME;
+        return valueOf(raw.toUpperCase(java.util.Locale.ROOT));
+    }
 
     public static float coverage(double distance, double radius) {
         double raw = radius + 0.5 - distance;

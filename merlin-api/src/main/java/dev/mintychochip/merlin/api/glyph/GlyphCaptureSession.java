@@ -9,18 +9,30 @@ public class GlyphCaptureSession {
     private List<Double> currentWidths;
     private long startedAt;
     private double brushWidth = 1;
+    private GlyphElement currentElement = GlyphElement.PHYSICAL;
     private GlyphDraft lastSnapshot = GlyphDraft.empty();
 
     public void beginStroke(long nowMillis) {
+        beginStroke(nowMillis, GlyphElement.PHYSICAL);
+    }
+
+    public void beginStroke(long nowMillis, GlyphElement element) {
         if (current != null) throw new IllegalStateException("stroke already active");
         current = new ArrayList<>();
         currentWidths = new ArrayList<>();
         startedAt = nowMillis;
+        currentElement = element == null ? GlyphElement.PHYSICAL : element;
     }
 
     public void appendPoint(GlyphPoint point) {
         if (current == null) throw new IllegalStateException("no active stroke");
         current.add(point);
+    }
+
+    public void popLastPoint() {
+        if (current == null || current.size() <= 1) throw new IllegalStateException("no point to pop");
+        current.removeLast();
+        if (!currentWidths.isEmpty()) currentWidths.removeLast();
     }
 
     public void segmentWidth(double width) {
@@ -34,7 +46,7 @@ public class GlyphCaptureSession {
         if (!current.isEmpty()) {
             var widths = new ArrayList<>(currentWidths);
             while (widths.size() < current.size() - 1) widths.add(brushWidth);
-            completed.add(new GlyphStroke(current, brushWidth, startedAt, widths));
+            completed.add(new GlyphStroke(current, brushWidth, startedAt, widths, currentElement));
         }
         current = null;
         currentWidths = null;
@@ -58,12 +70,20 @@ public class GlyphCaptureSession {
         lastSnapshot = GlyphDraft.empty();
     }
 
+    public int completedCount() {
+        return completed.size();
+    }
+
+    public int currentPointCount() {
+        return current == null ? 0 : current.size();
+    }
+
     public GlyphDraft snapshot() {
         if (current == null || current.isEmpty()) return new GlyphDraft(completed);
         var strokes = new ArrayList<>(completed);
         var widths = new ArrayList<>(currentWidths);
         while (widths.size() < current.size() - 1) widths.add(brushWidth);
-        strokes.add(new GlyphStroke(current, brushWidth, startedAt, widths));
+        strokes.add(new GlyphStroke(current, brushWidth, startedAt, widths, currentElement));
         return new GlyphDraft(strokes);
     }
 

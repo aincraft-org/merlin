@@ -60,8 +60,8 @@ final class MlContractsTest {
 
     @Test void fireStrokeKeepsEmberChannel() {
         var raster = new GlyphPreprocessor().preprocess(new GlyphDraft(List.of(
-                new GlyphStroke(List.of(new GlyphPoint(64, 64)), 6, 0, List.of(), GlyphElement.FIRE)))).raster();
-        assertArrayEquals(GlyphElement.FIRE.rgb(), new float[] {raster[0][32][32], raster[1][32][32], raster[2][32][32]}, 1e-5f);
+                new GlyphStroke(List.of(new GlyphPoint(64, 64)), 6, 0, List.of(), GlyphElement.FLAME)))).raster();
+        assertArrayEquals(GlyphElement.FLAME.rgb(), new float[] {raster[0][32][32], raster[1][32][32], raster[2][32][32]}, 1e-5f);
     }
 
     @Test void translatedGlyphHasTheSameModelFeatures() {

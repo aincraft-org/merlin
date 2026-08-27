@@ -6,7 +6,6 @@ dependencies {
     implementation(project(":merlin-api"))
     implementation(project(":merlin-common"))
     compileOnly(libs.mapgui.api)
-    compileOnly(libs.mapgui.layout)
     compileOnly(libs.paper.api)
     compileOnly(libs.onnxruntime)
     testImplementation(platform(libs.junit.bom))
@@ -26,6 +25,10 @@ tasks.test {
 }
 
 tasks.jar {
+    dependsOn(
+        project(":merlin-api").tasks.named("classes"),
+        project(":merlin-common").tasks.named("classes"),
+    )
     from(project(":merlin-api").sourceSets.main.get().output)
     from(project(":merlin-common").sourceSets.main.get().output)
 }

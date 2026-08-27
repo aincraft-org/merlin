@@ -6,7 +6,7 @@ public final class GlyphRoles {
     public static GlyphRole of(Label label) {
         return switch (label) {
             case DAMAGE, HEAL, PUSH, SHIELD -> GlyphRole.EFFECT;
-            case PHYSICAL, FIRE, FROST, ARCANE -> GlyphRole.SCHOOL;
+            case PHYSICAL, FLAME, FROST, ARCANE -> GlyphRole.SCHOOL;
             case SELF, TARGET -> GlyphRole.PATIENT;
             case ATTACKER -> GlyphRole.PATIENT;
             case SHARPNESS -> GlyphRole.CHARM;

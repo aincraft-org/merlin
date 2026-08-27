@@ -8,12 +8,27 @@ dependencies {
     implementation(project(":merlin-common"))
     implementation(project(":merlin-paper"))
     compileOnly(libs.mapgui.api)
-    compileOnly(libs.mapgui.layout)
     compileOnly(libs.paper.api)
     compileOnly(libs.onnxruntime)
 }
 
 java { toolchain.languageVersion.set(JavaLanguageVersion.of(25)) }
+
+val mapGuiPluginJar = layout.buildDirectory.file("mapgui/MapGUI-${libs.versions.mapgui.get()}.jar")
+val fetchMapGuiPlugin = tasks.register("fetchMapGuiPlugin") {
+    val dest = mapGuiPluginJar
+    val version = libs.versions.mapgui.get()
+    outputs.file(dest)
+    doLast {
+        val file = dest.get().asFile
+        if (file.exists() && file.length() > 0L) return@doLast
+        file.parentFile.mkdirs()
+        uri("https://github.com/FloG99/MapGUI/releases/download/v$version/MapGUI-$version.jar")
+            .toURL()
+            .openStream()
+            .use { input -> file.outputStream().use { input.copyTo(it) } }
+    }
+}
 
 tasks {
     runServer {
@@ -22,12 +37,12 @@ tasks {
         dependsOn(
             project.tasks.jar,
             project(":merlin-paper").tasks.named("jar"),
-            gradle.includedBuild("MapGUI").task(":mapgui-plugin:shadowJar")
+            fetchMapGuiPlugin
         )
         pluginJars.from(
             project.tasks.jar,
             project(":merlin-paper").tasks.named("jar"),
-            rootProject.layout.projectDirectory.file("../MapGUI/mapgui-plugin/build/libs/MapGUI-1.0.0-SNAPSHOT.jar")
+            mapGuiPluginJar
         )
         doFirst {
             delete(fileTree(rootProject.layout.projectDirectory.dir("run/plugins")) {

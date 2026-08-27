@@ -1,0 +1,185 @@
+{
+  "catalog_version": "glyph-runes-reference-v1",
+  "status": "reference-only-unlabeled",
+  "canvas": {
+    "width": 128,
+    "height": 128,
+    "coordinate_origin": "top-left"
+  },
+  "stroke_encoding": "Each stroke is an ordered polyline; points are [x,y]. Stroke array order is part of the shape signal.",
+  "brush_width": 6,
+  "note": "Reference geometry for six Elder Futhark rune shapes. This catalog is UNLABELED: rune ids are shape identifiers only, not classifier labels. No rune-to-Merlin-word mapping is implied. Shapes are hand-authored approximations of the standard rune forms for drawing experiments; they are not canonical tracings.",
+  "glyphs": {
+    "isaz": {
+      "intent": "single vertical staff",
+      "ambiguity_risks": [
+        "a single line is scale-invariant; only one distinct normalized geometry"
+      ],
+      "reference_sources": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Elder_Futhark.svg",
+          "license": "CC0 1.0 Universal Public Domain Dedication",
+          "use": "visual grammar only; no traced geometry"
+        },
+        {
+          "url": "https://en.wikipedia.org/wiki/Elder_Futhark",
+          "license": "CC BY-SA 4.0 (text reference)",
+          "use": "rune form reference only; no copied geometry"
+        }
+      ],
+      "templates": [
+        {
+          "id": "isaz-ref-0",
+          "independent_source": "rune-author:isaz:0",
+          "strokes": [
+            [
+              [64.0, 20.0],
+              [64.0, 108.0]
+            ]
+          ]
+        }
+      ]
+    },
+    "kaunan": {
+      "intent": "single bent line (angular torch)",
+      "ambiguity_risks": [
+        "bend angle and proportions distinguish it from other angular forms"
+      ],
+      "reference_sources": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Elder_Futhark.svg",
+          "license": "CC0 1.0 Universal Public Domain Dedication",
+          "use": "visual grammar only; no traced geometry"
+        }
+      ],
+      "templates": [
+        {
+          "id": "kaunan-ref-0",
+          "independent_source": "rune-author:kaunan:0",
+          "strokes": [
+            [
+              [88.0, 28.0],
+              [64.0, 64.0],
+              [40.0, 100.0]
+            ]
+          ]
+        }
+      ]
+    },
+    "sowilo": {
+      "intent": "single zigzag (lightning bolt)",
+      "ambiguity_risks": [
+        "zigzag segment lengths and angle distinguish it from kaunan"
+      ],
+      "reference_sources": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Elder_Futhark.svg",
+          "license": "CC0 1.0 Universal Public Domain Dedication",
+          "use": "visual grammar only; no traced geometry"
+        }
+      ],
+      "templates": [
+        {
+          "id": "sowilo-ref-0",
+          "independent_source": "rune-author:sowilo:0",
+          "strokes": [
+            [
+              [40.0, 24.0],
+              [88.0, 56.0],
+              [40.0, 72.0],
+              [88.0, 104.0]
+            ]
+          ]
+        }
+      ]
+    },
+    "uruz": {
+      "intent": "vertical staff with a descending diagonal",
+      "ambiguity_risks": [
+        "diagonal length and angle distinguish it from other staff-plus-branch forms"
+      ],
+      "reference_sources": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Elder_Futhark.svg",
+          "license": "CC0 1.0 Universal Public Domain Dedication",
+          "use": "visual grammar only; no traced geometry"
+        }
+      ],
+      "templates": [
+        {
+          "id": "uruz-ref-0",
+          "independent_source": "rune-author:uruz:0",
+          "strokes": [
+            [
+              [48.0, 24.0],
+              [48.0, 104.0]
+            ],
+            [
+              [48.0, 24.0],
+              [80.0, 104.0]
+            ]
+          ]
+        }
+      ]
+    },
+    "gebo": {
+      "intent": "two crossing diagonals (X)",
+      "ambiguity_risks": [
+        "crossing angle and arm length distinguish it from single diagonals"
+      ],
+      "reference_sources": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Elder_Futhark.svg",
+          "license": "CC0 1.0 Universal Public Domain Dedication",
+          "use": "visual grammar only; no traced geometry"
+        }
+      ],
+      "templates": [
+        {
+          "id": "gebo-ref-0",
+          "independent_source": "rune-author:gebo:0",
+          "strokes": [
+            [
+              [40.0, 24.0],
+              [88.0, 104.0]
+            ],
+            [
+              [88.0, 24.0],
+              [40.0, 104.0]
+            ]
+          ]
+        }
+      ]
+    },
+    "wunjo": {
+      "intent": "vertical staff with a top chevron",
+      "ambiguity_risks": [
+        "chevron width and height distinguish it from other staff-plus-branch forms"
+      ],
+      "reference_sources": [
+        {
+          "url": "https://commons.wikimedia.org/wiki/File:Elder_Futhark.svg",
+          "license": "CC0 1.0 Universal Public Domain Dedication",
+          "use": "visual grammar only; no traced geometry"
+        }
+      ],
+      "templates": [
+        {
+          "id": "wunjo-ref-0",
+          "independent_source": "rune-author:wunjo:0",
+          "strokes": [
+            [
+              [48.0, 24.0],
+              [48.0, 104.0]
+            ],
+            [
+              [48.0, 24.0],
+              [64.0, 44.0],
+              [80.0, 24.0]
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}

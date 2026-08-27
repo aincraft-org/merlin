@@ -5,11 +5,12 @@ from __future__ import annotations
 import numpy as np
 
 ELEMENTS = {
-    "fire": np.array([255, 77, 0], dtype=np.float32) / 255.0,
+    "flame": np.array([255, 77, 0], dtype=np.float32) / 255.0,
     "frost": np.array([61, 220, 255], dtype=np.float32) / 255.0,
     "arcane": np.array([180, 74, 255], dtype=np.float32) / 255.0,
     "physical": np.array([232, 228, 217], dtype=np.float32) / 255.0,
 }
+ELEMENTS["fire"] = ELEMENTS["flame"]
 
 
 def coverage(distance: float, radius: float) -> float:

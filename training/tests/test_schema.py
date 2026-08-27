@@ -128,3 +128,16 @@ def test_invalid_json_rejected(tmp_path):
     path.write_text("not json\n")
     with pytest.raises(ValueError, match="line 1"):
         load_examples(path)
+
+
+def test_stroke_element_is_optional_and_loaded(tmp_path):
+    bare = load_examples(write_jsonl(tmp_path, record()))[0]
+    assert bare.strokes[0].element is None
+    painted = record(strokes=[{
+        "points": [{"x": 1.0, "y": 2.0}, {"x": 3.0, "y": 4.0}],
+        "brush_width": 1.0,
+        "started_at_millis": 0,
+        "element": "fire",
+    }])
+    example = load_examples(write_jsonl(tmp_path, painted))[0]
+    assert example.strokes[0].element == "fire"

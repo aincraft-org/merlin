@@ -9,9 +9,10 @@ import org.junit.jupiter.api.Test;
 
 final class GlyphTomeStoreTest {
     @Test void pageLinesRoundTrip() {
-        var tokens = List.of(new GlyphToken(Label.FIRE, 1), new GlyphToken(Label.DAMAGE, 5));
+        var tokens = List.of(new GlyphToken(Label.FLAME, 1), new GlyphToken(Label.DAMAGE, 5));
         var encoded = GlyphTomeStore.encodePages(tokens);
-        assertEquals("fire|1|2\ndamage|5|7", encoded);
+        assertEquals("flame|1|2\ndamage|5|7", encoded);
         assertEquals(tokens, GlyphTomeStore.decodePages(encoded));
+        assertEquals(List.of(new GlyphToken(Label.FLAME, 1)), GlyphTomeStore.decodePages("fire|1|2"));
     }
 }

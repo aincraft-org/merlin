@@ -3,6 +3,7 @@ package dev.mintychochip.merlin.paper.mapgui;
 import static org.junit.jupiter.api.Assertions.*;
 
 import ai.onnxruntime.OrtEnvironment;
+import dev.mintychochip.merlin.paper.loader.GlyphPluginLoader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
@@ -18,7 +19,7 @@ final class OnnxRuntimePackagingTest {
     void unifiedDescriptorDeclaresMainLoaderDependencyAndPermissions() throws IOException {
         var descriptor = Files.readString(Path.of("src/main/resources/paper-plugin.yml"));
         assertTrue(descriptor.lines().anyMatch(line -> line.equals("main: dev.mintychochip.merlin.paper.MerlinPlugin")));
-        assertTrue(descriptor.lines().anyMatch(line -> line.equals("loader: dev.mintychochip.merlin.paper.mapgui.GlyphPluginLoader")));
+        assertTrue(descriptor.lines().anyMatch(line -> line.equals("loader: dev.mintychochip.merlin.paper.loader.GlyphPluginLoader")));
         assertTrue(descriptor.contains("MapGUI:"));
         assertTrue(descriptor.contains("merlin.scribe.book:"));
         assertTrue(descriptor.contains("merlin.glyph.draw:"));
@@ -46,11 +47,16 @@ final class OnnxRuntimePackagingTest {
         assertEquals("central", repository.getId());
         assertEquals(io.papermc.paper.plugin.loader.library.impl.MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR, repository.getUrl());
         var dependencies = privateField(resolver, "dependencies");
-        assertEquals(1, dependencies.size());
-        var artifact = ((Dependency) dependencies.getFirst()).getArtifact();
-        assertEquals("com.microsoft.onnxruntime", artifact.getGroupId());
-        assertEquals("onnxruntime", artifact.getArtifactId());
-        assertEquals("1.29.0", artifact.getVersion());
+        assertEquals(2, dependencies.size());
+        var artifacts = dependencies.stream().map(dependency -> ((Dependency) dependency).getArtifact()).toList();
+        assertTrue(artifacts.stream().anyMatch(artifact ->
+                artifact.getGroupId().equals("com.microsoft.onnxruntime")
+                        && artifact.getArtifactId().equals("onnxruntime")
+                        && artifact.getVersion().equals("1.29.0")));
+        assertTrue(artifacts.stream().anyMatch(artifact ->
+                artifact.getGroupId().equals("com.fasterxml.jackson.core")
+                        && artifact.getArtifactId().equals("jackson-databind")
+                        && artifact.getVersion().equals("2.18.3")));
     }
 
     @SuppressWarnings("unchecked")
@@ -64,6 +70,21 @@ final class OnnxRuntimePackagingTest {
     void ortEnvironmentInitializes() {
         assertNotNull(OrtEnvironment.getEnvironment());
     }
+    @Test
+    void pluginJarContainsStrokeTrackerOutsideTheLoaderPackage() throws IOException {
+        var jar = Path.of("build/libs/merlin-paper-1.0.0-SNAPSHOT.jar");
+        assertTrue(Files.exists(jar), "build the plugin jar before running this packaging check");
+        try (var fs = java.nio.file.FileSystems.newFileSystem(jar)) {
+            assertTrue(Files.exists(fs.getPath("/dev/mintychochip/merlin/paper/mapgui/GlyphStrokeTracker.class")));
+            assertTrue(Files.exists(fs.getPath("/dev/mintychochip/merlin/paper/loader/GlyphPluginLoader.class")));
+            assertFalse(Files.exists(fs.getPath("/dev/mintychochip/merlin/paper/mapgui/GlyphPluginLoader.class")));
+            assertTrue(Files.exists(fs.getPath("/dev/mintychochip/merlin/api/glyph/GlyphDraft.class")));
+            assertTrue(Files.exists(fs.getPath("/dev/mintychochip/merlin/api/glyph/GlyphElement.class")));
+            assertTrue(Files.exists(fs.getPath("/dev/mintychochip/merlin/api/glyph/MagicalInk.class")));
+            assertTrue(Files.exists(fs.getPath("/dev/mintychochip/merlin/api/glyph/GlyphCaptureSession.class")));
+        }
+    }
+
     @Test
     void pluginJarDoesNotEmbedOnnxRuntime() throws IOException {
         var jar = Path.of("build/libs/merlin-paper-1.0.0-SNAPSHOT.jar");

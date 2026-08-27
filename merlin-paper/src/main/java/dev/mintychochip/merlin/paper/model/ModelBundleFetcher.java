@@ -24,17 +24,33 @@ public final class ModelBundleFetcher {
   private final String version;
   private final Path cacheRoot;
   private final Function<URI, Path> archiveSource;
+  private final boolean allowUnreleased;
 
   public ModelBundleFetcher(String repository, String version, Path cacheRoot) {
-    this(repository, version, cacheRoot, uri -> download(uri));
+    this(repository, version, cacheRoot, uri -> download(uri), false);
+  }
+
+  public ModelBundleFetcher(
+      String repository, String version, Path cacheRoot, boolean allowUnreleased) {
+    this(repository, version, cacheRoot, uri -> download(uri), allowUnreleased);
   }
 
   ModelBundleFetcher(
       String repository, String version, Path cacheRoot, Function<URI, Path> archiveSource) {
+    this(repository, version, cacheRoot, archiveSource, false);
+  }
+
+  ModelBundleFetcher(
+      String repository,
+      String version,
+      Path cacheRoot,
+      Function<URI, Path> archiveSource,
+      boolean allowUnreleased) {
     this.repository = repository;
     this.version = version;
     this.cacheRoot = cacheRoot;
     this.archiveSource = archiveSource;
+    this.allowUnreleased = allowUnreleased;
   }
 
   public Path ensureBundle() throws IOException {
@@ -64,7 +80,7 @@ public final class ModelBundleFetcher {
       if (!Files.isRegularFile(root.resolve(file))) throw new IOException("missing " + file);
     }
     try {
-      ModelBundle.load(root);
+      ModelBundle.load(root, allowUnreleased);
     } catch (ModelBundle.BundleException error) {
       throw new IOException(
           "model "
@@ -80,10 +96,14 @@ public final class ModelBundleFetcher {
     return URI.create(repository + "/archive/refs/tags/" + version + ".zip");
   }
 
-  private static Path download(URI uri) {
+  static Path download(URI uri) {
     try {
       Path target = Files.createTempFile("merlin-model-", ".zip");
-      HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+      HttpClient client =
+          HttpClient.newBuilder()
+              .followRedirects(HttpClient.Redirect.NORMAL)
+              .connectTimeout(Duration.ofSeconds(10))
+              .build();
       HttpRequest request =
           HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(60)).GET().build();
       HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(target));
