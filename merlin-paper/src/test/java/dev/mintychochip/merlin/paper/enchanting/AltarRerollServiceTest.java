@@ -3,78 +3,52 @@ package dev.mintychochip.merlin.paper.enchanting;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
 
 final class AltarRerollServiceTest {
     @Test
     void rejectsWhenSessionClosed() {
-        ItemStack lapis = mock(ItemStack.class);
-        when(lapis.getType()).thenReturn(Material.LAPIS_LAZULI);
-        when(lapis.getAmount()).thenReturn(5);
-
-        AltarRerollService.Result res = AltarRerollService.processReroll(true, lapis);
+        AltarRerollService.Result res = AltarRerollService.processReroll(true, Material.LAPIS_LAZULI, 5);
         assertInstanceOf(AltarRerollService.Result.Failure.class, res);
         assertTrue(((AltarRerollService.Result.Failure) res).reason().contains("closed"));
     }
 
     @Test
-    void rejectsWhenLapisMissingOrNull() {
-        AltarRerollService.Result res = AltarRerollService.processReroll(false, null);
+    void rejectsWhenMaterialNull() {
+        AltarRerollService.Result res = AltarRerollService.processReroll(false, null, 0);
         assertInstanceOf(AltarRerollService.Result.Failure.class, res);
         assertTrue(((AltarRerollService.Result.Failure) res).reason().contains("Lapis Lazuli"));
     }
 
     @Test
     void rejectsWhenWrongMaterial() {
-        ItemStack wrong = mock(ItemStack.class);
-        when(wrong.getType()).thenReturn(Material.DIAMOND);
-        when(wrong.getAmount()).thenReturn(5);
-
-        AltarRerollService.Result res = AltarRerollService.processReroll(false, wrong);
+        AltarRerollService.Result res = AltarRerollService.processReroll(false, Material.DIAMOND, 5);
         assertInstanceOf(AltarRerollService.Result.Failure.class, res);
         assertTrue(((AltarRerollService.Result.Failure) res).reason().contains("Lapis Lazuli"));
     }
 
     @Test
-    void rejectsWhenAmountLessThanOne() {
-        ItemStack emptyLapis = mock(ItemStack.class);
-        when(emptyLapis.getType()).thenReturn(Material.LAPIS_LAZULI);
-        when(emptyLapis.getAmount()).thenReturn(0);
-
-        AltarRerollService.Result res = AltarRerollService.processReroll(false, emptyLapis);
+    void rejectsWhenAmountZero() {
+        AltarRerollService.Result res = AltarRerollService.processReroll(false, Material.LAPIS_LAZULI, 0);
         assertInstanceOf(AltarRerollService.Result.Failure.class, res);
         assertTrue(((AltarRerollService.Result.Failure) res).reason().contains("Lapis Lazuli"));
     }
 
     @Test
     void decrementsLapisAndReturnsSuccessWhenLapisAvailable() {
-        ItemStack lapis = mock(ItemStack.class);
-        when(lapis.getType()).thenReturn(Material.LAPIS_LAZULI);
-        when(lapis.getAmount()).thenReturn(3);
-
-        AltarRerollService.Result res = AltarRerollService.processReroll(false, lapis);
+        AltarRerollService.Result res = AltarRerollService.processReroll(false, Material.LAPIS_LAZULI, 3);
         assertInstanceOf(AltarRerollService.Result.Success.class, res);
         AltarRerollService.Result.Success success = (AltarRerollService.Result.Success) res;
-        assertEquals(2, success.remainingLapis());
-        verify(lapis).setAmount(2);
+        assertEquals(2, success.newAmount());
     }
 
     @Test
     void returnsZeroRemainingWhenSingleLapisConsumed() {
-        ItemStack lapis = mock(ItemStack.class);
-        when(lapis.getType()).thenReturn(Material.LAPIS_LAZULI);
-        when(lapis.getAmount()).thenReturn(1);
-
-        AltarRerollService.Result res = AltarRerollService.processReroll(false, lapis);
+        AltarRerollService.Result res = AltarRerollService.processReroll(false, Material.LAPIS_LAZULI, 1);
         assertInstanceOf(AltarRerollService.Result.Success.class, res);
         AltarRerollService.Result.Success success = (AltarRerollService.Result.Success) res;
-        assertEquals(0, success.remainingLapis());
-        verify(lapis).setAmount(0);
+        assertEquals(0, success.newAmount());
     }
 }

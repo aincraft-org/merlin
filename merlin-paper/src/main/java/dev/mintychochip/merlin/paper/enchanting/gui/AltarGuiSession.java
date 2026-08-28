@@ -116,15 +116,20 @@ public final class AltarGuiSession {
     public boolean handleRerollClick() {
         if (closed) return false;
         ItemStack lapis = inventory.getItem(SLOT_LAPIS);
-        AltarRerollService.Result result = AltarRerollService.processReroll(closed, lapis);
+        Material mat = lapis != null ? lapis.getType() : null;
+        int amt = lapis != null ? lapis.getAmount() : 0;
+
+        AltarRerollService.Result result = AltarRerollService.processReroll(closed, mat, amt);
         if (result instanceof AltarRerollService.Result.Failure failure) {
             player.sendMessage(Component.text(failure.reason(), NamedTextColor.RED));
             return false;
         }
 
         AltarRerollService.Result.Success success = (AltarRerollService.Result.Success) result;
-        if (success.remainingLapis() <= 0) {
+        if (success.newAmount() <= 0) {
             inventory.setItem(SLOT_LAPIS, null);
+        } else if (lapis != null) {
+            lapis.setAmount(success.newAmount());
         }
 
         rerollOffers();

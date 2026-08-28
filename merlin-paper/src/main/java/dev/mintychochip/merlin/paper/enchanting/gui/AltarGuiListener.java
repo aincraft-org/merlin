@@ -94,7 +94,7 @@ public final class AltarGuiListener implements Listener {
         // Click inside GUI (top inventory)
         if (rawSlot < 54) {
             if (rawSlot == AltarGuiSession.SLOT_TARGET) {
-                handleInputSlotClick(event, this::isEnchantable);
+                handleTargetSlotClick(event, inv);
                 session.rerollOffers();
             } else if (rawSlot == AltarGuiSession.SLOT_LAPIS) {
                 handleInputSlotClick(event, mat -> mat == Material.LAPIS_LAZULI);
@@ -107,6 +107,48 @@ public final class AltarGuiListener implements Listener {
                 else if (rawSlot == AltarGuiSession.SLOT_TIER_2) session.handleEnchantClick(2);
                 else if (rawSlot == AltarGuiSession.SLOT_TIER_3) session.handleEnchantClick(3);
                 else if (rawSlot == AltarGuiSession.SLOT_REROLL) session.handleRerollClick();
+            }
+        }
+    }
+
+    private void handleTargetSlotClick(InventoryClickEvent event, Inventory topInv) {
+        ClickType click = event.getClick();
+        if (click == ClickType.NUMBER_KEY) {
+            int hotbarButton = event.getHotbarButton();
+            if (hotbarButton >= 0 && event.getWhoClicked() instanceof Player player) {
+                ItemStack hotbarItem = player.getInventory().getItem(hotbarButton);
+                if (hotbarItem == null || hotbarItem.isEmpty() || !isEnchantable(hotbarItem.getType())) {
+                    event.setCancelled(true);
+                    return;
+                }
+                ItemStack existing = topInv.getItem(AltarGuiSession.SLOT_TARGET);
+                if (existing == null || existing.isEmpty()) {
+                    event.setCancelled(true);
+                    ItemStack single = hotbarItem.clone();
+                    single.setAmount(1);
+                    topInv.setItem(AltarGuiSession.SLOT_TARGET, single);
+                    hotbarItem.setAmount(hotbarItem.getAmount() - 1);
+                    if (hotbarItem.getAmount() <= 0) {
+                        player.getInventory().setItem(hotbarButton, null);
+                    }
+                }
+            }
+            return;
+        }
+
+        ItemStack cursor = event.getCursor();
+        if (cursor != null && !cursor.isEmpty()) {
+            if (!isEnchantable(cursor.getType())) {
+                event.setCancelled(true);
+                return;
+            }
+            ItemStack existing = topInv.getItem(AltarGuiSession.SLOT_TARGET);
+            if ((existing == null || existing.isEmpty()) && cursor.getAmount() > 1) {
+                event.setCancelled(true);
+                ItemStack single = cursor.clone();
+                single.setAmount(1);
+                topInv.setItem(AltarGuiSession.SLOT_TARGET, single);
+                cursor.setAmount(cursor.getAmount() - 1);
             }
         }
     }
@@ -144,7 +186,6 @@ public final class AltarGuiListener implements Listener {
         } else if (isEnchantable(mat)) {
             ItemStack existing = topInv.getItem(AltarGuiSession.SLOT_TARGET);
             if (existing == null || existing.isEmpty()) {
-                // Target slot strictly accepts exactly 1 item (e.g. 1 book from a stack of 16)
                 if (clicked.getAmount() == 1) {
                     topInv.setItem(AltarGuiSession.SLOT_TARGET, clicked.clone());
                     event.setCurrentItem(null);
@@ -200,7 +241,7 @@ public final class AltarGuiListener implements Listener {
         for (int slot : event.getRawSlots()) {
             if (slot < 54) {
                 if (slot == AltarGuiSession.SLOT_TARGET) {
-                    if (!isEnchantable(dragged.getType())) {
+                    if (!isEnchantable(dragged.getType()) || event.getNewItems().get(slot).getAmount() > 1) {
                         event.setCancelled(true);
                         return;
                     }

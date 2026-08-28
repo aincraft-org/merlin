@@ -1,9 +1,15 @@
 package dev.mintychochip.merlin.paper.enchanting;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.junit.jupiter.api.Test;
 
 final class AltarScannerTest {
@@ -39,5 +45,28 @@ final class AltarScannerTest {
         AltarProfile profile = AltarScanner.calculateProfile(config, scannedBlocks);
         assertEquals(1.0, profile.totalEterna(), 0.001);
         assertEquals(-0.20, profile.totalQuanta(), 0.001);
+    }
+
+    @Test
+    void ddaRaycastDetectsObstructionsAlongPath() {
+        World world = mock(World.class);
+
+        // Ray from (0, 0, 0) to (2, 0, 1) passes through (1, 0, 0) or (1, 0, 1)
+        Block clearBlock = mock(Block.class);
+        when(clearBlock.isEmpty()).thenReturn(true);
+        when(clearBlock.getType()).thenReturn(Material.AIR);
+
+        Block solidBlock = mock(Block.class);
+        when(solidBlock.isEmpty()).thenReturn(false);
+        when(solidBlock.getType()).thenReturn(Material.STONE);
+
+        // When (1, 0, 0) is air -> unobstructed
+        when(world.getBlockAt(1, 0, 0)).thenReturn(clearBlock);
+        when(world.getBlockAt(1, 0, 1)).thenReturn(clearBlock);
+        assertTrue(AltarScanner.hasLineOfSight(world, 0, 0, 0, 2, 0, 1));
+
+        // When (1, 0, 0) is solid stone -> obstructed
+        when(world.getBlockAt(1, 0, 0)).thenReturn(solidBlock);
+        assertFalse(AltarScanner.hasLineOfSight(world, 0, 0, 0, 2, 0, 1));
     }
 }
