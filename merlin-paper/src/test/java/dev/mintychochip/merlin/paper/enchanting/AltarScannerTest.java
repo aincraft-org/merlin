@@ -69,4 +69,30 @@ final class AltarScannerTest {
         when(world.getBlockAt(1, 0, 0)).thenReturn(solidBlock);
         assertFalse(AltarScanner.hasLineOfSight(world, 0, 0, 0, 2, 0, 1));
     }
+
+    @Test
+    void supercoverCatchesTiedAxisBorderVoxels() {
+        World world = mock(World.class);
+
+        Block clearBlock = mock(Block.class);
+        when(clearBlock.isEmpty()).thenReturn(true);
+        when(clearBlock.getType()).thenReturn(Material.AIR);
+
+        Block solidBlock = mock(Block.class);
+        when(solidBlock.isEmpty()).thenReturn(false);
+        when(solidBlock.getType()).thenReturn(Material.STONE);
+
+        // 45-degree ray from (0, 0, 0) to (2, 0, 2) has X/Z ties
+        when(world.getBlockAt(1, 0, 0)).thenReturn(clearBlock);
+        when(world.getBlockAt(0, 0, 1)).thenReturn(clearBlock);
+        when(world.getBlockAt(1, 0, 1)).thenReturn(clearBlock);
+        when(world.getBlockAt(2, 0, 1)).thenReturn(clearBlock);
+        when(world.getBlockAt(1, 0, 2)).thenReturn(clearBlock);
+
+        assertTrue(AltarScanner.hasLineOfSight(world, 0, 0, 0, 2, 0, 2));
+
+        // Obstructing a bordering tied voxel (1, 0, 0) must be caught by supercover
+        when(world.getBlockAt(1, 0, 0)).thenReturn(solidBlock);
+        assertFalse(AltarScanner.hasLineOfSight(world, 0, 0, 0, 2, 0, 2));
+    }
 }

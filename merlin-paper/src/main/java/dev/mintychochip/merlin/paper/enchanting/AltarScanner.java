@@ -16,6 +16,8 @@ public final class AltarScanner {
             Material.REDSTONE_TORCH, Material.REDSTONE_WALL_TORCH
     );
 
+    private static final double EPSILON = 1e-9;
+
     private final AltarConfig config;
 
     public AltarScanner(AltarConfig config) {
@@ -48,8 +50,9 @@ public final class AltarScanner {
     }
 
     /**
-     * Exact 3D Digital Differential Analyzer (DDA) voxel raycast from start block to end block.
-     * Every voxel pierced along the 3D ray segment is checked for solid block obstruction.
+     * True 3D Supercover Voxel Traversal between start block and target block.
+     * When a ray intersects voxel edges or corners (axis ties), all adjacent bordering
+     * voxels are checked for solid block obstructions.
      */
     public static boolean hasLineOfSight(World world, int x1, int y1, int z1, int x2, int y2, int z2) {
         double startX = x1 + 0.5;
@@ -86,26 +89,47 @@ public final class AltarScanner {
         double tMaxZ = (stepZ > 0) ? ((currentZ + 1.0 - startZ) * tDeltaZ) : ((startZ - currentZ) * tDeltaZ);
 
         while (true) {
-            if (tMaxX < tMaxY) {
-                if (tMaxX < tMaxZ) {
-                    currentX += stepX;
-                    if (tMaxX > dist) break;
-                    tMaxX += tDeltaX;
-                } else {
-                    currentZ += stepZ;
-                    if (tMaxZ > dist) break;
-                    tMaxZ += tDeltaZ;
+            double minT = Math.min(tMaxX, Math.min(tMaxY, tMaxZ));
+            if (minT > dist) break;
+
+            boolean stepAxisX = Math.abs(tMaxX - minT) < EPSILON;
+            boolean stepAxisY = Math.abs(tMaxY - minT) < EPSILON;
+            boolean stepAxisZ = Math.abs(tMaxZ - minT) < EPSILON;
+
+            // Supercover edge & corner tie checks
+            if (stepAxisX && stepAxisY) {
+                Block sideX = world.getBlockAt(currentX + stepX, currentY, currentZ);
+                Block sideY = world.getBlockAt(currentX, currentY + stepY, currentZ);
+                if (isObstructing(sideX) || isObstructing(sideY)) {
+                    return false;
                 }
-            } else {
-                if (tMaxY < tMaxZ) {
-                    currentY += stepY;
-                    if (tMaxY > dist) break;
-                    tMaxY += tDeltaY;
-                } else {
-                    currentZ += stepZ;
-                    if (tMaxZ > dist) break;
-                    tMaxZ += tDeltaZ;
+            }
+            if (stepAxisX && stepAxisZ) {
+                Block sideX = world.getBlockAt(currentX + stepX, currentY, currentZ);
+                Block sideZ = world.getBlockAt(currentX, currentY, currentZ + stepZ);
+                if (isObstructing(sideX) || isObstructing(sideZ)) {
+                    return false;
                 }
+            }
+            if (stepAxisY && stepAxisZ) {
+                Block sideY = world.getBlockAt(currentX, currentY + stepY, currentZ);
+                Block sideZ = world.getBlockAt(currentX, currentY, currentZ + stepZ);
+                if (isObstructing(sideY) || isObstructing(sideZ)) {
+                    return false;
+                }
+            }
+
+            if (stepAxisX) {
+                currentX += stepX;
+                tMaxX += tDeltaX;
+            }
+            if (stepAxisY) {
+                currentY += stepY;
+                tMaxY += tDeltaY;
+            }
+            if (stepAxisZ) {
+                currentZ += stepZ;
+                tMaxZ += tDeltaZ;
             }
 
             if (currentX == x2 && currentY == y2 && currentZ == z2) {
