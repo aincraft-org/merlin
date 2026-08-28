@@ -48,6 +48,7 @@ public final class MerlinPlugin extends JavaPlugin {
   private GlyphDraftStoreAdapter store;
   private GlyphMapSaveAction mapSaveAction;
   private GlyphClassificationService classificationService;
+  private AltarGuiListener altarGuiListener;
 
   @Override
   public void onEnable() {
@@ -111,7 +112,8 @@ public final class MerlinPlugin extends JavaPlugin {
     var offerConfig = OfferConfig.fromSection(getConfig().getConfigurationSection("enchanting_offers"));
     var quantaRollEngine = new QuantaRollEngine(enchantmentRegistry, offerConfig);
 
-    getServer().getPluginManager().registerEvents(new AltarGuiListener(), this);
+    altarGuiListener = new AltarGuiListener();
+    getServer().getPluginManager().registerEvents(altarGuiListener, this);
     getServer().getPluginManager().registerEvents(new AltarInteractListener(altarScanner, enchantmentRegistry, quantaRollEngine, overcapAdapter), this);
     getServer().getPluginManager().registerEvents(new OvercapEnchantmentListener(overcapAdapter, enchantmentRegistry), this);
   }
@@ -161,6 +163,10 @@ public final class MerlinPlugin extends JavaPlugin {
 
   @Override
   public void onDisable() {
+    if (altarGuiListener != null) {
+      altarGuiListener.closeAllSessions();
+      altarGuiListener = null;
+    }
     if (classificationService != null) classificationService.close();
     classificationService = null;
   }

@@ -1,16 +1,22 @@
 package dev.mintychochip.merlin.paper.enchanting.gui;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -20,6 +26,36 @@ public final class AltarGuiListener implements Listener {
             Material.ECHO_SHARD,
             Material.GLOWSTONE_DUST
     );
+
+    private final Map<UUID, AltarGuiSession> activeSessions = new ConcurrentHashMap<>();
+
+    public void registerSession(AltarGuiSession session) {
+        if (session != null && session.getPlayer() != null) {
+            activeSessions.put(session.getPlayer().getUniqueId(), session);
+        }
+    }
+
+    public void unregisterSession(UUID playerId) {
+        activeSessions.remove(playerId);
+    }
+
+    public void closeAllSessions() {
+        for (AltarGuiSession session : activeSessions.values()) {
+            session.handleClose();
+        }
+        activeSessions.clear();
+    }
+
+    public Map<UUID, AltarGuiSession> getActiveSessions() {
+        return activeSessions;
+    }
+
+    @EventHandler
+    public void onOpen(InventoryOpenEvent event) {
+        if (event.getInventory().getHolder() instanceof AltarInventoryHolder holder) {
+            registerSession(holder.session());
+        }
+    }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onClick(InventoryClickEvent event) {
@@ -70,7 +106,7 @@ public final class AltarGuiListener implements Listener {
                 if (rawSlot == AltarGuiSession.SLOT_TIER_1) session.handleEnchantClick(1);
                 else if (rawSlot == AltarGuiSession.SLOT_TIER_2) session.handleEnchantClick(2);
                 else if (rawSlot == AltarGuiSession.SLOT_TIER_3) session.handleEnchantClick(3);
-                else if (rawSlot == AltarGuiSession.SLOT_REROLL) session.rerollOffers();
+                else if (rawSlot == AltarGuiSession.SLOT_REROLL) session.handleRerollClick();
             }
         }
     }
@@ -108,8 +144,16 @@ public final class AltarGuiListener implements Listener {
         } else if (isEnchantable(mat)) {
             ItemStack existing = topInv.getItem(AltarGuiSession.SLOT_TARGET);
             if (existing == null || existing.isEmpty()) {
-                topInv.setItem(AltarGuiSession.SLOT_TARGET, clicked.clone());
-                event.setCurrentItem(null);
+                // Target slot strictly accepts exactly 1 item (e.g. 1 book from a stack of 16)
+                if (clicked.getAmount() == 1) {
+                    topInv.setItem(AltarGuiSession.SLOT_TARGET, clicked.clone());
+                    event.setCurrentItem(null);
+                } else {
+                    ItemStack singleItem = clicked.clone();
+                    singleItem.setAmount(1);
+                    topInv.setItem(AltarGuiSession.SLOT_TARGET, singleItem);
+                    clicked.setAmount(clicked.getAmount() - 1);
+                }
             }
         }
     }
@@ -182,6 +226,23 @@ public final class AltarGuiListener implements Listener {
     public void onClose(InventoryCloseEvent event) {
         if (event.getInventory().getHolder() instanceof AltarInventoryHolder holder) {
             holder.session().handleClose();
+            unregisterSession(event.getPlayer().getUniqueId());
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        AltarGuiSession session = activeSessions.remove(event.getPlayer().getUniqueId());
+        if (session != null) {
+            session.handleClose();
+        }
+    }
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        AltarGuiSession session = activeSessions.remove(event.getEntity().getUniqueId());
+        if (session != null) {
+            session.handleClose();
         }
     }
 }

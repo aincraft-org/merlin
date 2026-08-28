@@ -63,6 +63,14 @@ public final class AltarGuiSession {
         return closed;
     }
 
+    public Player getPlayer() {
+        return player;
+    }
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
     public void open() {
         if (closed) return;
         player.openInventory(inventory);
@@ -102,6 +110,25 @@ public final class AltarGuiSession {
         offer2 = rollEngine.generateOffer(mat, profile, 2, random);
         offer3 = rollEngine.generateOffer(mat, profile, 3, random);
         updateOfferButtons();
+    }
+
+    public boolean handleRerollClick() {
+        if (closed) return false;
+        ItemStack lapis = inventory.getItem(SLOT_LAPIS);
+        if (lapis == null || lapis.getType() != Material.LAPIS_LAZULI || lapis.getAmount() < 1) {
+            player.sendMessage(Component.text("You need at least 1 Lapis Lazuli to reroll offers!", NamedTextColor.RED));
+            return false;
+        }
+
+        // Deduct 1 lapis
+        lapis.setAmount(lapis.getAmount() - 1);
+        if (lapis.getAmount() <= 0) {
+            inventory.setItem(SLOT_LAPIS, null);
+        }
+
+        rerollOffers();
+        player.sendMessage(Component.text("Enchantment offers refreshed!", NamedTextColor.GREEN));
+        return true;
     }
 
     private void updateOfferButtons() {
