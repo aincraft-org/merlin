@@ -1,5 +1,7 @@
 package dev.mintychochip.merlin.paper.enchanting;
 
+import dev.mintychochip.merlin.paper.enchanting.handler.FortuneOvercapHandler;
+import dev.mintychochip.merlin.paper.enchanting.handler.SharpnessOvercapHandler;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,12 +29,24 @@ public final class EnchantmentRegistry {
                 Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS
         );
 
-        reg.register(new EnchantmentDefinition(NamespacedKey.minecraft("sharpness"), "Sharpness", 5, 7, 0, 5, 10, swords, Optional.empty()));
-        reg.register(new EnchantmentDefinition(NamespacedKey.minecraft("smite"), "Smite", 5, 7, 0, 5, 5, swords, Optional.empty()));
-        reg.register(new EnchantmentDefinition(NamespacedKey.minecraft("fortune"), "Fortune", 3, 5, 10, 8, 3, tools, Optional.empty()));
-        reg.register(new EnchantmentDefinition(NamespacedKey.minecraft("efficiency"), "Efficiency", 5, 7, 0, 4, 10, tools, Optional.empty()));
-        reg.register(new EnchantmentDefinition(NamespacedKey.minecraft("protection"), "Protection", 4, 6, 0, 5, 10, armor, Optional.empty()));
-        reg.register(new EnchantmentDefinition(NamespacedKey.minecraft("unbreaking"), "Unbreaking", 3, 5, 0, 5, 8, swords, Optional.empty()));
+        reg.register(new EnchantmentDefinition(
+                NamespacedKey.minecraft("sharpness"), "Sharpness", 5, 7, 0, 5, 10, swords,
+                Optional.of(new SharpnessOvercapHandler())));
+        reg.register(new EnchantmentDefinition(
+                NamespacedKey.minecraft("smite"), "Smite", 5, 7, 0, 5, 5, swords,
+                Optional.empty()));
+        reg.register(new EnchantmentDefinition(
+                NamespacedKey.minecraft("fortune"), "Fortune", 3, 5, 10, 8, 3, tools,
+                Optional.of(new FortuneOvercapHandler())));
+        reg.register(new EnchantmentDefinition(
+                NamespacedKey.minecraft("efficiency"), "Efficiency", 5, 7, 0, 4, 10, tools,
+                Optional.empty()));
+        reg.register(new EnchantmentDefinition(
+                NamespacedKey.minecraft("protection"), "Protection", 4, 6, 0, 5, 10, armor,
+                Optional.empty()));
+        reg.register(new EnchantmentDefinition(
+                NamespacedKey.minecraft("unbreaking"), "Unbreaking", 3, 5, 0, 5, 8, swords,
+                Optional.empty()));
         return reg;
     }
 

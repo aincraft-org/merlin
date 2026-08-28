@@ -40,10 +40,10 @@ public final class OvercapItemAdapter {
         return result;
     }
 
-    public void applyEnchantments(ItemStack item, Map<NamespacedKey, Integer> enchants) {
-        if (item == null || item.isEmpty()) return;
+    public boolean applyEnchantments(ItemStack item, Map<NamespacedKey, Integer> enchants) {
+        if (item == null || item.isEmpty() || enchants == null || enchants.isEmpty()) return false;
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) return;
+        if (meta == null) return false;
         PersistentDataContainer root = meta.getPersistentDataContainer();
         PersistentDataContainer sub = root.getAdapterContext().newPersistentDataContainer();
 
@@ -73,6 +73,6 @@ public final class OvercapItemAdapter {
             lore.addAll(overcapLore);
             meta.lore(lore);
         }
-        item.setItemMeta(meta);
+        return item.setItemMeta(meta);
     }
 }
