@@ -2,3 +2,65 @@ model:
   repository: https://github.com/aincraft-org/merlin-weights
   version: 2026.08.18.0
   allow-unreleased: false
+
+altar:
+  scan_radius_horizontal: 2
+  scan_radius_vertical_down: 1
+  scan_radius_vertical_up: 1
+  blocks:
+    BOOKSHELF:
+      eterna: 1.0
+      quanta: 0.0
+      max_eterna_cap: 15.0
+    CHISELED_BOOKSHELF:
+      eterna: 1.2
+      quanta: 0.0
+      max_eterna_cap: 18.0
+    AMETHYST_BLOCK:
+      eterna: 1.5
+      quanta: 0.05
+      max_eterna_cap: 30.0
+      max_quanta_cap: 0.25
+    BUDDING_AMETHYST:
+      eterna: 2.0
+      quanta: 0.08
+      max_eterna_cap: 35.0
+      max_quanta_cap: 0.35
+    CRYING_OBSIDIAN:
+      eterna: 2.5
+      quanta: 0.15
+      max_eterna_cap: 45.0
+      max_quanta_cap: 0.60
+    SCULK_CATALYST:
+      eterna: 3.0
+      quanta: 0.25
+      max_eterna_cap: 50.0
+      max_quanta_cap: 0.80
+    CANDLE:
+      eterna: 0.25
+      quanta: -0.05
+      max_eterna_cap: 10.0
+      max_quanta_cap: -0.30
+
+enchanting_offers:
+  tier_1:
+    xp_level_cost: 1
+    xp_level_requirement: 10
+    lapis_cost: 1
+    min_enchantments: 1
+    max_enchantments: 1
+    quanta_bonus_multiplier: 0.5
+  tier_2:
+    xp_level_cost: 2
+    xp_level_requirement: 20
+    lapis_cost: 2
+    min_enchantments: 1
+    max_enchantments: 2
+    quanta_bonus_multiplier: 1.0
+  tier_3:
+    xp_level_cost: 3
+    xp_level_requirement: 30
+    lapis_cost: 3
+    min_enchantments: 2
+    max_enchantments: 3
+    quanta_bonus_multiplier: 1.5
