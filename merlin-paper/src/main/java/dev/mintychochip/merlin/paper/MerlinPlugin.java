@@ -28,6 +28,15 @@ import dev.mintychochip.merlin.paper.model.ModelBundleFetcher;
 import dev.mintychochip.merlin.paper.runtime.SpellRuntime;
 import dev.mintychochip.merlin.paper.tome.GlyphTomeListener;
 import dev.mintychochip.merlin.paper.tome.GlyphTomeStore;
+import dev.mintychochip.merlin.paper.enchanting.AltarConfig;
+import dev.mintychochip.merlin.paper.enchanting.AltarInteractListener;
+import dev.mintychochip.merlin.paper.enchanting.AltarScanner;
+import dev.mintychochip.merlin.paper.enchanting.EnchantmentRegistry;
+import dev.mintychochip.merlin.paper.enchanting.OfferConfig;
+import dev.mintychochip.merlin.paper.enchanting.OvercapEnchantmentListener;
+import dev.mintychochip.merlin.paper.enchanting.OvercapItemAdapter;
+import dev.mintychochip.merlin.paper.enchanting.QuantaRollEngine;
+import dev.mintychochip.merlin.paper.enchanting.gui.AltarGuiListener;
 import java.io.IOException;
 import java.nio.file.Path;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -94,6 +103,17 @@ public final class MerlinPlugin extends JavaPlugin {
     getServer().getPluginManager().registerEvents(new GlyphTomeListener(tomes, store), this);
     registerCommand(
             "glyph", new GlyphCommand(store, mapSaveAction, classificationService, tomes, runtime, inks));
+
+    var altarConfig = AltarConfig.fromSection(getConfig().getConfigurationSection("altar"));
+    var altarScanner = new AltarScanner(altarConfig);
+    var enchantmentRegistry = EnchantmentRegistry.defaultRegistry();
+    var overcapAdapter = new OvercapItemAdapter(this, enchantmentRegistry);
+    var offerConfig = OfferConfig.fromSection(getConfig().getConfigurationSection("enchanting_offers"));
+    var quantaRollEngine = new QuantaRollEngine(enchantmentRegistry, offerConfig);
+
+    getServer().getPluginManager().registerEvents(new AltarGuiListener(), this);
+    getServer().getPluginManager().registerEvents(new AltarInteractListener(altarScanner, enchantmentRegistry, quantaRollEngine, overcapAdapter), this);
+    getServer().getPluginManager().registerEvents(new OvercapEnchantmentListener(overcapAdapter, enchantmentRegistry), this);
   }
 
   private void preloadBundledClasses() {
