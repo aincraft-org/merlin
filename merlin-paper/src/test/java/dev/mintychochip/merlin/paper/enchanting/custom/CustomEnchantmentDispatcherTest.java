@@ -11,6 +11,8 @@ import dev.mintychochip.merlin.paper.enchanting.OvercapEffectHandler;
 import dev.mintychochip.merlin.paper.enchanting.OvercapItemAdapter;
 import dev.mintychochip.merlin.paper.enchanting.custom.trigger.BlockBreakTrigger;
 import dev.mintychochip.merlin.paper.enchanting.custom.trigger.EntityHitTrigger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -76,5 +78,46 @@ final class CustomEnchantmentDispatcherTest {
 
         dispatcher.dispatchBlockBreak(player, block, pickaxe, scope);
         verify(handler).onBlockBreak(player, block, 3, scope);
+    }
+
+    @Test
+    void executesTriggersInDescendingPriorityOrder() {
+        NamespacedKey lowKey = new NamespacedKey("merlin", "low_priority");
+        NamespacedKey highKey = new NamespacedKey("merlin", "high_priority");
+
+        List<String> executionOrder = new ArrayList<>();
+
+        TestHitHandler lowHandler = mock(TestHitHandler.class);
+        when(lowHandler.key()).thenReturn(lowKey);
+        when(lowHandler.priority()).thenReturn(10);
+        org.mockito.Mockito.doAnswer(inv -> {
+            executionOrder.add("low");
+            return null;
+        }).when(lowHandler).onEntityHit(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt());
+
+        TestHitHandler highHandler = mock(TestHitHandler.class);
+        when(highHandler.key()).thenReturn(highKey);
+        when(highHandler.priority()).thenReturn(100);
+        org.mockito.Mockito.doAnswer(inv -> {
+            executionOrder.add("high");
+            return null;
+        }).when(highHandler).onEntityHit(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt());
+
+        EnchantmentRegistry registry = new EnchantmentRegistry();
+        registry.register(new EnchantmentDefinition(lowKey, "Low", 0, 3, 10, 5, 10, Set.of(Material.DIAMOND_SWORD), Optional.of(lowHandler)));
+        registry.register(new EnchantmentDefinition(highKey, "High", 0, 3, 10, 5, 10, Set.of(Material.DIAMOND_SWORD), Optional.of(highHandler)));
+
+        OvercapItemAdapter adapter = mock(OvercapItemAdapter.class);
+        ItemStack sword = mock(ItemStack.class);
+        when(adapter.readOvercap(sword)).thenReturn(Map.of(lowKey, 1, highKey, 1));
+
+        CustomEnchantmentDispatcher dispatcher = new CustomEnchantmentDispatcher(adapter, registry);
+
+        Player attacker = mock(Player.class);
+        LivingEntity victim = mock(LivingEntity.class);
+        MutableDamage dmg = new MutableDamage(10.0);
+
+        dispatcher.dispatchEntityHit(attacker, victim, dmg, sword);
+        assertEquals(List.of("high", "low"), executionOrder);
     }
 }

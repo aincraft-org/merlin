@@ -8,6 +8,10 @@ import org.bukkit.event.entity.EntityDamageEvent;
 public interface OvercapEffectHandler {
     NamespacedKey key();
 
+    default int priority() {
+        return 0;
+    }
+
     default void onDamageDealt(EntityDamageByEntityEvent event, int level) {}
 
     default void onBlockBreak(BlockBreakEvent event, int level) {}
