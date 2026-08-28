@@ -45,6 +45,12 @@ public final class AltarGuiSession {
 
     public AltarGuiSession(Player player, Location altarLocation, AltarProfile profile,
                            EnchantmentRegistry registry, QuantaRollEngine rollEngine, OvercapItemAdapter itemAdapter) {
+        this(player, altarLocation, profile, registry, rollEngine, itemAdapter, null);
+    }
+
+    public AltarGuiSession(Player player, Location altarLocation, AltarProfile profile,
+                           EnchantmentRegistry registry, QuantaRollEngine rollEngine, OvercapItemAdapter itemAdapter,
+                           Inventory inventoryOverride) {
         this.player = player;
         this.altarLocation = altarLocation;
         this.profile = profile;
@@ -52,11 +58,15 @@ public final class AltarGuiSession {
         this.rollEngine = rollEngine;
         this.itemAdapter = itemAdapter;
 
-        AltarInventoryHolder holder = new AltarInventoryHolder(this);
-        this.inventory = Bukkit.createInventory(holder, 54, Component.text("Enchanter's Altar Matrix"));
-        holder.setInventory(inventory);
-        populateDecorations();
-        rerollOffers();
+        if (inventoryOverride != null) {
+            this.inventory = inventoryOverride;
+        } else {
+            AltarInventoryHolder holder = new AltarInventoryHolder(this);
+            this.inventory = Bukkit.createInventory(holder, 54, Component.text("Enchanter's Altar Matrix"));
+            holder.setInventory(inventory);
+            populateDecorations();
+            rerollOffers();
+        }
     }
 
     public boolean isClosed() {
@@ -82,24 +92,24 @@ public final class AltarGuiSession {
             if (i != SLOT_TARGET && i != SLOT_LAPIS && i != SLOT_CATALYST &&
                 i != SLOT_ETERNA_METER && i != SLOT_QUANTA_METER &&
                 i != SLOT_TIER_1 && i != SLOT_TIER_2 && i != SLOT_TIER_3 && i != SLOT_REROLL) {
-                inventory.setItem(i, filler);
+                if (filler != null) inventory.setItem(i, filler);
             }
         }
 
         ItemStack eterna = createItem(Material.CYAN_STAINED_GLASS_PANE,
                 Component.text("✦ Eterna: " + String.format("%.1f", profile.totalEterna()), NamedTextColor.AQUA),
                 List.of(Component.text("Altar Matrix Power Ceiling", NamedTextColor.GRAY)));
-        inventory.setItem(SLOT_ETERNA_METER, eterna);
+        if (eterna != null) inventory.setItem(SLOT_ETERNA_METER, eterna);
 
         ItemStack quanta = createItem(Material.YELLOW_STAINED_GLASS_PANE,
                 Component.text("⚡ Quanta: " + String.format("+%.0f%%", profile.totalQuanta() * 100), NamedTextColor.YELLOW),
                 List.of(Component.text("Roll Volatility & Critical Odds", NamedTextColor.GRAY)));
-        inventory.setItem(SLOT_QUANTA_METER, quanta);
+        if (quanta != null) inventory.setItem(SLOT_QUANTA_METER, quanta);
 
         ItemStack reroll = createItem(Material.LAPIS_LAZULI,
                 Component.text("[ Reroll Seeds ]", NamedTextColor.GOLD),
                 List.of(Component.text("Costs 1 Lapis Lazuli", NamedTextColor.GRAY)));
-        inventory.setItem(SLOT_REROLL, reroll);
+        if (reroll != null) inventory.setItem(SLOT_REROLL, reroll);
     }
 
     public void rerollOffers() {
@@ -204,13 +214,19 @@ public final class AltarGuiSession {
     }
 
     private static ItemStack createItem(Material mat, Component name, List<Component> lore) {
-        ItemStack item = new ItemStack(mat);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.displayName(name);
-            meta.lore(lore);
-            item.setItemMeta(meta);
+        try {
+            ItemStack item = new ItemStack(mat);
+            try {
+                ItemMeta meta = item.getItemMeta();
+                if (meta != null) {
+                    meta.displayName(name);
+                    meta.lore(lore);
+                    item.setItemMeta(meta);
+                }
+            } catch (Throwable ignored) {}
+            return item;
+        } catch (Throwable ignored) {
+            return null;
         }
-        return item;
     }
 }
