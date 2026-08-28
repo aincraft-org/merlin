@@ -40,16 +40,40 @@ public final class AltarScanner {
     }
 
     public static boolean hasLineOfSight(World world, int x1, int y1, int z1, int x2, int y2, int z2) {
-        int dx = Math.abs(x2 - x1);
-        int dy = Math.abs(y2 - y1);
-        int dz = Math.abs(z2 - z1);
-        if (dx <= 1 && dy <= 1 && dz <= 1) return true;
-        int midX = x1 + (x2 - x1) / 2;
-        int midY = y1 + (y2 - y1) / 2;
-        int midZ = z1 + (z2 - z1) / 2;
-        if (midX == x1 && midY == y1 && midZ == z1) return true;
-        Block midBlock = world.getBlockAt(midX, midY, midZ);
-        return midBlock.isEmpty() || !midBlock.getType().isSolid();
+        double dx = x2 - x1;
+        double dy = y2 - y1;
+        double dz = z2 - z1;
+        double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist <= 1.0) return true;
+
+        int steps = (int) Math.ceil(dist * 3.0); // sample every ~0.33 blocks along ray
+        int lastBx = x1;
+        int lastBy = y1;
+        int lastBz = z1;
+
+        for (int i = 1; i < steps; i++) {
+            double t = (double) i / steps;
+            int bx = (int) Math.floor(x1 + 0.5 + dx * t);
+            int by = (int) Math.floor(y1 + 0.5 + dy * t);
+            int bz = (int) Math.floor(z1 + 0.5 + dz * t);
+
+            // Skip endpoints
+            if ((bx == x1 && by == y1 && bz == z1) || (bx == x2 && by == y2 && bz == z2)) {
+                continue;
+            }
+            if (bx == lastBx && by == lastBy && bz == lastBz) {
+                continue;
+            }
+            lastBx = bx;
+            lastBy = by;
+            lastBz = bz;
+
+            Block block = world.getBlockAt(bx, by, bz);
+            if (!block.isEmpty() && block.getType().isSolid()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static AltarProfile calculateProfile(AltarConfig config, Map<Material, Integer> counts) {

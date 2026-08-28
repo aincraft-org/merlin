@@ -1,6 +1,7 @@
 package dev.mintychochip.merlin.paper.enchanting.gui;
 
 import dev.mintychochip.merlin.paper.enchanting.AltarProfile;
+import dev.mintychochip.merlin.paper.enchanting.AltarRerollService;
 import dev.mintychochip.merlin.paper.enchanting.EnchantingOffer;
 import dev.mintychochip.merlin.paper.enchanting.EnchantmentRegistry;
 import dev.mintychochip.merlin.paper.enchanting.OfferValidator;
@@ -45,12 +46,6 @@ public final class AltarGuiSession {
 
     public AltarGuiSession(Player player, Location altarLocation, AltarProfile profile,
                            EnchantmentRegistry registry, QuantaRollEngine rollEngine, OvercapItemAdapter itemAdapter) {
-        this(player, altarLocation, profile, registry, rollEngine, itemAdapter, null);
-    }
-
-    public AltarGuiSession(Player player, Location altarLocation, AltarProfile profile,
-                           EnchantmentRegistry registry, QuantaRollEngine rollEngine, OvercapItemAdapter itemAdapter,
-                           Inventory inventoryOverride) {
         this.player = player;
         this.altarLocation = altarLocation;
         this.profile = profile;
@@ -58,15 +53,11 @@ public final class AltarGuiSession {
         this.rollEngine = rollEngine;
         this.itemAdapter = itemAdapter;
 
-        if (inventoryOverride != null) {
-            this.inventory = inventoryOverride;
-        } else {
-            AltarInventoryHolder holder = new AltarInventoryHolder(this);
-            this.inventory = Bukkit.createInventory(holder, 54, Component.text("Enchanter's Altar Matrix"));
-            holder.setInventory(inventory);
-            populateDecorations();
-            rerollOffers();
-        }
+        AltarInventoryHolder holder = new AltarInventoryHolder(this);
+        this.inventory = Bukkit.createInventory(holder, 54, Component.text("Enchanter's Altar Matrix"));
+        holder.setInventory(inventory);
+        populateDecorations();
+        rerollOffers();
     }
 
     public boolean isClosed() {
@@ -92,24 +83,24 @@ public final class AltarGuiSession {
             if (i != SLOT_TARGET && i != SLOT_LAPIS && i != SLOT_CATALYST &&
                 i != SLOT_ETERNA_METER && i != SLOT_QUANTA_METER &&
                 i != SLOT_TIER_1 && i != SLOT_TIER_2 && i != SLOT_TIER_3 && i != SLOT_REROLL) {
-                if (filler != null) inventory.setItem(i, filler);
+                inventory.setItem(i, filler);
             }
         }
 
         ItemStack eterna = createItem(Material.CYAN_STAINED_GLASS_PANE,
                 Component.text("✦ Eterna: " + String.format("%.1f", profile.totalEterna()), NamedTextColor.AQUA),
                 List.of(Component.text("Altar Matrix Power Ceiling", NamedTextColor.GRAY)));
-        if (eterna != null) inventory.setItem(SLOT_ETERNA_METER, eterna);
+        inventory.setItem(SLOT_ETERNA_METER, eterna);
 
         ItemStack quanta = createItem(Material.YELLOW_STAINED_GLASS_PANE,
                 Component.text("⚡ Quanta: " + String.format("+%.0f%%", profile.totalQuanta() * 100), NamedTextColor.YELLOW),
                 List.of(Component.text("Roll Volatility & Critical Odds", NamedTextColor.GRAY)));
-        if (quanta != null) inventory.setItem(SLOT_QUANTA_METER, quanta);
+        inventory.setItem(SLOT_QUANTA_METER, quanta);
 
         ItemStack reroll = createItem(Material.LAPIS_LAZULI,
                 Component.text("[ Reroll Seeds ]", NamedTextColor.GOLD),
                 List.of(Component.text("Costs 1 Lapis Lazuli", NamedTextColor.GRAY)));
-        if (reroll != null) inventory.setItem(SLOT_REROLL, reroll);
+        inventory.setItem(SLOT_REROLL, reroll);
     }
 
     public void rerollOffers() {
@@ -125,14 +116,14 @@ public final class AltarGuiSession {
     public boolean handleRerollClick() {
         if (closed) return false;
         ItemStack lapis = inventory.getItem(SLOT_LAPIS);
-        if (lapis == null || lapis.getType() != Material.LAPIS_LAZULI || lapis.getAmount() < 1) {
-            player.sendMessage(Component.text("You need at least 1 Lapis Lazuli to reroll offers!", NamedTextColor.RED));
+        AltarRerollService.Result result = AltarRerollService.processReroll(closed, lapis);
+        if (result instanceof AltarRerollService.Result.Failure failure) {
+            player.sendMessage(Component.text(failure.reason(), NamedTextColor.RED));
             return false;
         }
 
-        // Deduct 1 lapis
-        lapis.setAmount(lapis.getAmount() - 1);
-        if (lapis.getAmount() <= 0) {
+        AltarRerollService.Result.Success success = (AltarRerollService.Result.Success) result;
+        if (success.remainingLapis() <= 0) {
             inventory.setItem(SLOT_LAPIS, null);
         }
 
@@ -214,19 +205,13 @@ public final class AltarGuiSession {
     }
 
     private static ItemStack createItem(Material mat, Component name, List<Component> lore) {
-        try {
-            ItemStack item = new ItemStack(mat);
-            try {
-                ItemMeta meta = item.getItemMeta();
-                if (meta != null) {
-                    meta.displayName(name);
-                    meta.lore(lore);
-                    item.setItemMeta(meta);
-                }
-            } catch (Throwable ignored) {}
-            return item;
-        } catch (Throwable ignored) {
-            return null;
+        ItemStack item = new ItemStack(mat);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(name);
+            meta.lore(lore);
+            item.setItemMeta(meta);
         }
+        return item;
     }
 }
