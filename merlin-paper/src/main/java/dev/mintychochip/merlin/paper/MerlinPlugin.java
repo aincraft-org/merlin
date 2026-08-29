@@ -119,7 +119,10 @@ public final class MerlinPlugin extends JavaPlugin {
     getServer().getPluginManager().registerEvents(new AltarInteractListener(altarScanner, enchantmentRegistry, quantaRollEngine, overcapAdapter), this);
     getServer().getPluginManager().registerEvents(new OvercapEnchantmentListener(overcapAdapter, enchantmentRegistry), this);
     var customDispatcher = new CustomEnchantmentDispatcher(overcapAdapter, enchantmentRegistry);
-    getServer().getPluginManager().registerEvents(new CustomEnchantmentListener(customDispatcher), this);
+    getServer().getPluginManager().registerEvents(
+            new CustomEnchantmentListener(
+                    customDispatcher, task -> getServer().getScheduler().runTask(this, task)),
+            this);
   }
 
   private void preloadBundledClasses() {

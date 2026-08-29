@@ -248,17 +248,19 @@ final class CustomEnchantmentListenerCoverageTest {
         when(bucketEmpty.getPlayer()).thenReturn(player);
         when(bucketEmpty.getBlock()).thenReturn(block);
         when(bucketEmpty.getBlockFace()).thenReturn(BlockFace.UP);
+        when(bucketEmpty.getHand()).thenReturn(EquipmentSlot.HAND);
         when(bucketEmpty.getItemStack()).thenReturn(item);
         listener.onBucketEmpty(bucketEmpty);
-        verify(dispatcher).dispatchBucketEmpty(eq(player), eq(block), eq(BlockFace.UP), eq(item));
+        verify(dispatcher).dispatchBucketEmpty(eq(player), eq(block), eq(BlockFace.UP), eq(item), eq(EquipmentSlot.HAND));
 
         PlayerBucketFillEvent bucketFill = mock(PlayerBucketFillEvent.class);
         when(bucketFill.getPlayer()).thenReturn(player);
         when(bucketFill.getBlock()).thenReturn(block);
         when(bucketFill.getBlockFace()).thenReturn(BlockFace.UP);
+        when(bucketFill.getHand()).thenReturn(EquipmentSlot.HAND);
         when(bucketFill.getItemStack()).thenReturn(item);
         listener.onBucketFill(bucketFill);
-        verify(dispatcher).dispatchBucketFill(eq(player), eq(block), eq(BlockFace.UP), eq(item));
+        verify(dispatcher).dispatchBucketFill(eq(player), eq(block), eq(BlockFace.UP), eq(item), eq(EquipmentSlot.HAND));
 
         PlayerItemDamageEvent playerItemDamage = mock(PlayerItemDamageEvent.class);
         when(playerItemDamage.getPlayer()).thenReturn(player);

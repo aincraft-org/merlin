@@ -82,8 +82,8 @@ final class CustomEnchantmentDispatcherCoverageTest {
         dispatcher.dispatchBlockPlace(player, block, block, item);
         dispatcher.dispatchPlayerFish(player, hook, entity, State.CAUGHT_ENTITY, item);
         dispatcher.dispatchShearEntity(player, entity, item, EquipmentSlot.HAND);
-        dispatcher.dispatchBucketEmpty(player, block, BlockFace.UP, item);
-        dispatcher.dispatchBucketFill(player, block, BlockFace.UP, item);
+        dispatcher.dispatchBucketEmpty(player, block, BlockFace.UP, item, EquipmentSlot.HAND);
+        dispatcher.dispatchBucketFill(player, block, BlockFace.UP, item, EquipmentSlot.HAND);
         assertEquals(2, dispatcher.dispatchItemDamage(player, item, 2));
         assertEquals(2, dispatcher.dispatchEntityItemDamage(entity, item, 2));
         dispatcher.dispatchItemConsume(player, item);
@@ -231,12 +231,14 @@ final class CustomEnchantmentDispatcherCoverageTest {
         }
 
         @Override
-        public void onBucketEmpty(Player player, Block clickedBlock, BlockFace face, ItemStack bucket, int level) {
+        public void onBucketEmpty(
+                Player player, Block clickedBlock, BlockFace face, ItemStack bucket, EquipmentSlot hand, int level) {
             seen.add("bucketEmpty");
         }
 
         @Override
-        public void onBucketFill(Player player, Block clickedBlock, BlockFace face, ItemStack bucket, int level) {
+        public void onBucketFill(
+                Player player, Block clickedBlock, BlockFace face, ItemStack bucket, EquipmentSlot hand, int level) {
             seen.add("bucketFill");
         }
 

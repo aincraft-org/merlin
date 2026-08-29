@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -32,6 +33,8 @@ import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
+import org.bukkit.Material;
+import org.bukkit.event.player.PlayerBucketEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -49,13 +52,23 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ArmoredHorseInventory;
 
 public final class CustomEnchantmentListener implements Listener {
+    private record BucketRestoration(Player player, EquipmentSlot hand, ItemStack item, Material result) {}
+
     private final CustomEnchantmentDispatcher dispatcher;
+    private final Consumer<Runnable> schedulePostOperation;
     private final Map<UUID, ItemStack> projectileItems = new HashMap<>();
     private final Map<EntityShootBowEvent, ItemStack> pendingBowSources = new IdentityHashMap<>();
     private final Map<UUID, ItemStack> fishingRods = new HashMap<>();
+    private final Map<PlayerBucketEvent, BucketRestoration> pendingBucketRestorations = new IdentityHashMap<>();
 
     public CustomEnchantmentListener(CustomEnchantmentDispatcher dispatcher) {
+        this(dispatcher, Runnable::run);
+    }
+
+    public CustomEnchantmentListener(
+            CustomEnchantmentDispatcher dispatcher, Consumer<Runnable> schedulePostOperation) {
         this.dispatcher = dispatcher;
+        this.schedulePostOperation = schedulePostOperation;
     }
 
     private static ItemStack mainHandItem(LivingEntity entity) {
@@ -328,8 +341,8 @@ public final class CustomEnchantmentListener implements Listener {
         if (hook != null) {
             fishingRods.remove(hook.getUniqueId());
         }
-    }
 
+    }
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onShear(PlayerShearEntityEvent event) {
         if (!CascadeGuard.canCascade()) return;
@@ -341,18 +354,59 @@ public final class CustomEnchantmentListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBucketEmpty(PlayerBucketEmptyEvent event) {
         if (!CascadeGuard.canCascade()) return;
+        EquipmentSlot hand = event.getHand();
+        if (hand == null) return;
+        Player player = event.getPlayer();
+        ItemStack preActionItem = player.getInventory().getItem(hand);
+        if (preActionItem == null) return;
         CascadeGuard.runInScope(() -> {
-            dispatcher.dispatchBucketEmpty(event.getPlayer(), event.getBlock(), event.getBlockFace(), event.getItemStack());
+            if (dispatcher.dispatchBucketEmpty(
+                    player, event.getBlock(), event.getBlockFace(), preActionItem, hand)) {
+                pendingBucketRestorations.put(
+                        event, new BucketRestoration(player, hand, preActionItem, Material.WATER_BUCKET));
+            }
         });
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onBucketEmptyFinal(PlayerBucketEmptyEvent event) {
+        finishBucketRestoration(event);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBucketFill(PlayerBucketFillEvent event) {
         if (!CascadeGuard.canCascade()) return;
+        EquipmentSlot hand = event.getHand();
+        if (hand == null) return;
+        Player player = event.getPlayer();
+        ItemStack preActionItem = player.getInventory().getItem(hand);
+        if (preActionItem == null) return;
         CascadeGuard.runInScope(() -> {
-            dispatcher.dispatchBucketFill(event.getPlayer(), event.getBlock(), event.getBlockFace(), event.getItemStack());
+            if (dispatcher.dispatchBucketFill(
+                    player, event.getBlock(), event.getBlockFace(), preActionItem, hand)) {
+                pendingBucketRestorations.put(
+                        event, new BucketRestoration(player, hand, preActionItem, Material.BUCKET));
+            }
         });
     }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onBucketFillFinal(PlayerBucketFillEvent event) {
+        finishBucketRestoration(event);
+    }
+
+    private void finishBucketRestoration(PlayerBucketEvent event) {
+        BucketRestoration restoration = pendingBucketRestorations.remove(event);
+        if (restoration == null || event.isCancelled()) return;
+        schedulePostOperation.accept(() -> {
+            restoration.item().setType(restoration.result());
+            var inventory = restoration.player().getInventory();
+            if (inventory != null) {
+                inventory.setItem(restoration.hand(), restoration.item());
+            }
+        });
+    }
+
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onItemDamage(PlayerItemDamageEvent event) {

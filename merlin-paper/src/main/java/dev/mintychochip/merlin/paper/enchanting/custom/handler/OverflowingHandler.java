@@ -20,30 +20,18 @@ public final class OverflowingHandler implements OvercapEffectHandler, BucketEmp
     }
 
     @Override
-    public void onBucketEmpty(Player player, Block clickedBlock, BlockFace face, ItemStack bucket, int level) {
+    public void onBucketEmpty(
+            Player player, Block clickedBlock, BlockFace face, ItemStack bucket, EquipmentSlot hand, int level) {
         if (player == null || bucket == null || bucket.getType() != Material.WATER_BUCKET || level <= 0) return;
+        if (hand == null) return;
 
         PlayerInventory inventory = player.getInventory();
         if (inventory == null) return;
-        EquipmentSlot hand = matchingHand(inventory, bucket);
-        if (hand == null) return;
         bucket.setType(Material.WATER_BUCKET);
         setItem(inventory, hand, bucket);
     }
-
     private static void setItem(PlayerInventory inventory, EquipmentSlot hand, ItemStack item) {
-        if (hand == EquipmentSlot.HAND) inventory.setItemInMainHand(item);
-        else inventory.setItemInOffHand(item);
+        inventory.setItem(hand, item);
     }
 
-    private static EquipmentSlot matchingHand(PlayerInventory inventory, ItemStack eventItem) {
-        ItemStack main = inventory.getItemInMainHand();
-        if (sameItem(main, eventItem)) return EquipmentSlot.HAND;
-        ItemStack off = inventory.getItemInOffHand();
-        return sameItem(off, eventItem) ? EquipmentSlot.OFF_HAND : null;
-    }
-
-    private static boolean sameItem(ItemStack first, ItemStack second) {
-        return first == second || (first != null && first.equals(second));
-    }
 }

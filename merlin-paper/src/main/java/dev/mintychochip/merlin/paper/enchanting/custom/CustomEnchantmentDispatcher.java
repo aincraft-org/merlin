@@ -206,16 +206,22 @@ public final class CustomEnchantmentDispatcher {
         }
     }
 
-    public void dispatchBucketEmpty(Player player, Block clicked, BlockFace face, ItemStack bucket) {
-        for (var bound : resolveTriggers(bucket, BucketEmptyTrigger.class)) {
-            bound.trigger().onBucketEmpty(player, clicked, face, bucket, bound.level());
+    public boolean dispatchBucketEmpty(
+            Player player, Block clicked, BlockFace face, ItemStack bucket, EquipmentSlot hand) {
+        var resolved = resolveTriggers(bucket, BucketEmptyTrigger.class);
+        for (var bound : resolved) {
+            bound.trigger().onBucketEmpty(player, clicked, face, bucket, hand, bound.level());
         }
+        return !resolved.isEmpty();
     }
 
-    public void dispatchBucketFill(Player player, Block clicked, BlockFace face, ItemStack bucket) {
-        for (var bound : resolveTriggers(bucket, BucketFillTrigger.class)) {
-            bound.trigger().onBucketFill(player, clicked, face, bucket, bound.level());
+    public boolean dispatchBucketFill(
+            Player player, Block clicked, BlockFace face, ItemStack bucket, EquipmentSlot hand) {
+        var resolved = resolveTriggers(bucket, BucketFillTrigger.class);
+        for (var bound : resolved) {
+            bound.trigger().onBucketFill(player, clicked, face, bucket, hand, bound.level());
         }
+        return !resolved.isEmpty();
     }
 
     public int dispatchItemDamage(Player player, ItemStack item, int amount) {

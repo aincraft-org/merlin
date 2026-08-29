@@ -4,21 +4,32 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
+import dev.mintychochip.merlin.paper.enchanting.EnchantmentDefinition;
+import dev.mintychochip.merlin.paper.enchanting.EnchantmentRegistry;
+import dev.mintychochip.merlin.paper.enchanting.OvercapItemAdapter;
+import dev.mintychochip.merlin.paper.enchanting.custom.CustomEnchantmentDispatcher;
+import dev.mintychochip.merlin.paper.enchanting.custom.CustomEnchantmentListener;
 import dev.mintychochip.merlin.paper.enchanting.custom.MutableDamage;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -140,9 +151,86 @@ final class ArmorAndUtilityCustomEnchantmentTest {
         PlayerInventory inventory = org.mockito.Mockito.mock(PlayerInventory.class);
         when(player.getInventory()).thenReturn(inventory);
         when(inventory.getItemInMainHand()).thenReturn(bucket);
-        new OverflowingHandler().onBucketEmpty(player, null, null, bucket, 1);
-        verify(inventory, never()).setItemInMainHand(any(ItemStack.class));
-        verify(inventory, never()).setItemInOffHand(any(ItemStack.class));
+        new OverflowingHandler().onBucketEmpty(player, null, null, bucket, EquipmentSlot.HAND, 1);
+        verify(inventory, never()).setItem(any(EquipmentSlot.class), any(ItemStack.class));
+    }
+
+    @Test
+    void bucketListenersResolvePreActionItemsAndRestoreTheEventHandAfterVanillaCompletion() {
+        OvercapItemAdapter adapter = org.mockito.Mockito.mock(OvercapItemAdapter.class);
+        EnchantmentRegistry registry = new EnchantmentRegistry();
+        registry.register(new EnchantmentDefinition(
+                CustomEnchantmentSupport.customKey("overflowing"), "Overflowing", 0, 3, 0, 1, 1,
+                java.util.Set.of(Material.WATER_BUCKET), java.util.Optional.of(new OverflowingHandler())));
+        registry.register(new EnchantmentDefinition(
+                CustomEnchantmentSupport.customKey("vacuum"), "Vacuum", 0, 3, 0, 1, 1,
+                java.util.Set.of(Material.BUCKET), java.util.Optional.of(new VacuumHandler())));
+        CustomEnchantmentDispatcher dispatcher = new CustomEnchantmentDispatcher(adapter, registry);
+        ArrayList<Runnable> scheduled = new ArrayList<>();
+        CustomEnchantmentListener listener = new CustomEnchantmentListener(dispatcher, scheduled::add);
+
+        Player player = org.mockito.Mockito.mock(Player.class);
+        PlayerInventory inventory = org.mockito.Mockito.mock(PlayerInventory.class);
+        when(player.getInventory()).thenReturn(inventory);
+        java.util.concurrent.atomic.AtomicReference<ItemStack> offhand =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        when(inventory.getItem(EquipmentSlot.OFF_HAND)).thenAnswer(invocation -> offhand.get());
+        org.mockito.Mockito.doAnswer(invocation -> {
+                    offhand.set(invocation.getArgument(1));
+                    return null;
+                })
+                .when(inventory)
+                .setItem(eq(EquipmentSlot.OFF_HAND), any(ItemStack.class));
+
+        ItemStack emptyInput = org.mockito.Mockito.mock(ItemStack.class);
+        ItemStack emptyMain = emptyInput;
+        ItemStack emptyOutput = org.mockito.Mockito.mock(ItemStack.class);
+        when(emptyInput.getType()).thenReturn(Material.WATER_BUCKET);
+        when(emptyOutput.getType()).thenReturn(Material.BUCKET);
+        offhand.set(emptyInput);
+        when(inventory.getItem(EquipmentSlot.HAND)).thenReturn(emptyMain);
+        when(adapter.readOvercap(emptyInput))
+                .thenReturn(Map.of(CustomEnchantmentSupport.customKey("overflowing"), 1));
+        PlayerBucketEmptyEvent emptyEvent = org.mockito.Mockito.mock(PlayerBucketEmptyEvent.class);
+        when(emptyEvent.getPlayer()).thenReturn(player);
+        when(emptyEvent.getHand()).thenReturn(EquipmentSlot.OFF_HAND);
+        when(emptyEvent.getBlockFace()).thenReturn(org.bukkit.block.BlockFace.UP);
+        when(emptyEvent.getItemStack()).thenReturn(emptyOutput);
+        listener.onBucketEmpty(emptyEvent);
+        verify(adapter).readOvercap(emptyInput);
+        verify(emptyEvent, never()).getItemStack();
+        offhand.set(emptyOutput);
+        listener.onBucketEmptyFinal(emptyEvent);
+        scheduled.remove(0).run();
+        assertEquals(Material.WATER_BUCKET, offhand.get().getType());
+        org.junit.jupiter.api.Assertions.assertSame(emptyInput, offhand.get());
+        verify(inventory, never()).setItem(eq(EquipmentSlot.HAND), any(ItemStack.class));
+        assertEquals(emptyInput, emptyMain);
+
+        ItemStack fillInput = org.mockito.Mockito.mock(ItemStack.class);
+        ItemStack fillMain = fillInput;
+        ItemStack fillOutput = org.mockito.Mockito.mock(ItemStack.class);
+        when(fillInput.getType()).thenReturn(Material.BUCKET);
+        when(fillOutput.getType()).thenReturn(Material.WATER_BUCKET);
+        when(inventory.getItem(EquipmentSlot.HAND)).thenReturn(fillMain);
+        offhand.set(fillInput);
+        when(adapter.readOvercap(fillInput))
+                .thenReturn(Map.of(CustomEnchantmentSupport.customKey("vacuum"), 1));
+        PlayerBucketFillEvent fillEvent = org.mockito.Mockito.mock(PlayerBucketFillEvent.class);
+        when(fillEvent.getPlayer()).thenReturn(player);
+        when(fillEvent.getHand()).thenReturn(EquipmentSlot.OFF_HAND);
+        when(fillEvent.getBlockFace()).thenReturn(org.bukkit.block.BlockFace.UP);
+        when(fillEvent.getItemStack()).thenReturn(fillOutput);
+        listener.onBucketFill(fillEvent);
+        verify(adapter).readOvercap(fillInput);
+        verify(fillEvent, never()).getItemStack();
+        offhand.set(fillOutput);
+        listener.onBucketFillFinal(fillEvent);
+        scheduled.remove(0).run();
+        assertEquals(Material.BUCKET, offhand.get().getType());
+        org.junit.jupiter.api.Assertions.assertSame(fillInput, offhand.get());
+        verify(inventory, never()).setItem(eq(EquipmentSlot.HAND), any(ItemStack.class));
+        assertEquals(fillInput, fillMain);
     }
 
     private static void assertBucketRestored(EquipmentSlot hand, Object handler, Material source) {
@@ -151,24 +239,15 @@ final class ArmorAndUtilityCustomEnchantmentTest {
         ItemStack bucket = org.mockito.Mockito.mock(ItemStack.class);
         when(player.getInventory()).thenReturn(inventory);
         when(bucket.getType()).thenReturn(source);
-        if (hand == EquipmentSlot.HAND) {
-            when(inventory.getItemInMainHand()).thenReturn(bucket);
-        } else {
-            when(inventory.getItemInOffHand()).thenReturn(bucket);
-        }
 
         if (handler instanceof OverflowingHandler overflowing) {
-            overflowing.onBucketEmpty(player, null, null, bucket, 1);
+            overflowing.onBucketEmpty(player, null, null, bucket, hand, 1);
         } else {
-            ((VacuumHandler) handler).onBucketFill(player, null, null, bucket, 1);
+            ((VacuumHandler) handler).onBucketFill(player, null, null, bucket, hand, 1);
         }
 
         Material expected = handler instanceof OverflowingHandler ? Material.WATER_BUCKET : Material.BUCKET;
         verify(bucket).setType(expected);
-        if (hand == EquipmentSlot.HAND) {
-            verify(inventory).setItemInMainHand(bucket);
-        } else {
-            verify(inventory).setItemInOffHand(bucket);
-        }
+        verify(inventory).setItem(hand, bucket);
     }
 }
