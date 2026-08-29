@@ -1,8 +1,9 @@
 package dev.mintychochip.merlin.paper.enchanting.custom.trigger;
 
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.ItemStack;
 
 public interface BowShootTrigger {
-    void onBowShoot(Player shooter, Projectile projectile, float force, int level);
+    void onBowShoot(LivingEntity shooter, Entity projectile, ItemStack bow, float force, int level);
 }
