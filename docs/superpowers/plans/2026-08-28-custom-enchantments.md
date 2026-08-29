@@ -139,7 +139,7 @@ public interface EntityEnvironmentalDamageTrigger {
 **Interfaces:**
 - `EnchantmentRegistry.defaultRegistry()` remains the public factory.
 - Keys are `new NamespacedKey("merlin", "<lower_snake_case>")`.
-- Each active definition's `overcapHandler` contains the handler implementing its event contract; Expertise uses `Optional.empty()`.
+- Register each definition with its exact metadata and `Optional.empty()` until its handler class exists; Task 6 fills every active definition's handler while preserving the same definition key. Expertise remains `Optional.empty()` permanently.
 
 **Registration data:**
 
