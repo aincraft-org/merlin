@@ -150,6 +150,11 @@ public final class EnchantmentRegistry {
                 Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS
         );
         Set<Material> armor = Set.of(
+                Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE, Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS,
+                Material.NETHERITE_HELMET, Material.NETHERITE_CHESTPLATE, Material.NETHERITE_LEGGINGS, Material.NETHERITE_BOOTS,
+                Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS
+        );
+        Set<Material> allArmor = Set.of(
                 Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE, Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS,
                 Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE, Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS,
                 Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS,
@@ -217,16 +222,16 @@ public final class EnchantmentRegistry {
         registerCustom(reg, "replenish", "Replenish", 3, 10, 5, 10, pickaxes, new ReplenishHandler());
         registerCustom(reg, "unbreakable", "Unbreakable", 1, 20, 20, 3, durableItems, new UnbreakableHandler());
         registerCustom(reg, "reforged", "Reforged", 5, 10, 5, 8, durableItems, new ReforgedHandler());
-        registerCustom(reg, "aegis", "Aegis", 3, 10, 5, 10, armor, new AegisHandler());
-        registerCustom(reg, "angelic", "Angelic", 3, 10, 5, 10, armor, new AngelicHandler());
-        registerCustom(reg, "armored", "Armored", 3, 10, 5, 10, armor, new ArmoredHandler());
-        registerCustom(reg, "chunky", "Chunky", 3, 10, 5, 10, armor, new ChunkyHandler());
-        registerCustom(reg, "dodge", "Dodge", 3, 10, 5, 10, armor, new DodgeHandler());
-        registerCustom(reg, "heavy", "Heavy", 3, 10, 5, 10, armor, new HeavyHandler());
-        registerCustom(reg, "molten", "Molten", 3, 10, 5, 10, armor, new MoltenHandler());
-        registerCustom(reg, "reflect", "Reflect", 3, 10, 5, 10, armor, new ReflectHandler());
-        registerCustom(reg, "safeguard", "Safeguard", 3, 10, 5, 10, armor, new SafeguardHandler());
-        registerCustom(reg, "tank", "Tank", 3, 10, 5, 10, armor, new TankHandler());
+        registerCustom(reg, "aegis", "Aegis", 3, 10, 5, 10, allArmor, new AegisHandler());
+        registerCustom(reg, "angelic", "Angelic", 3, 10, 5, 10, allArmor, new AngelicHandler());
+        registerCustom(reg, "armored", "Armored", 3, 10, 5, 10, allArmor, new ArmoredHandler());
+        registerCustom(reg, "chunky", "Chunky", 3, 10, 5, 10, allArmor, new ChunkyHandler());
+        registerCustom(reg, "dodge", "Dodge", 3, 10, 5, 10, allArmor, new DodgeHandler());
+        registerCustom(reg, "heavy", "Heavy", 3, 10, 5, 10, allArmor, new HeavyHandler());
+        registerCustom(reg, "molten", "Molten", 3, 10, 5, 10, allArmor, new MoltenHandler());
+        registerCustom(reg, "reflect", "Reflect", 3, 10, 5, 10, allArmor, new ReflectHandler());
+        registerCustom(reg, "safeguard", "Safeguard", 3, 10, 5, 10, allArmor, new SafeguardHandler());
+        registerCustom(reg, "tank", "Tank", 3, 10, 5, 10, allArmor, new TankHandler());
         return reg;
     }
 

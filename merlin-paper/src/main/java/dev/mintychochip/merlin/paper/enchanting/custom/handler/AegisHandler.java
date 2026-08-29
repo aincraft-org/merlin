@@ -1,6 +1,7 @@
 package dev.mintychochip.merlin.paper.enchanting.custom.handler;
 
 import dev.mintychochip.merlin.paper.enchanting.OvercapEffectHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.MutableDamage;
 import dev.mintychochip.merlin.paper.enchanting.custom.trigger.EnvironmentalDamageTrigger;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -19,9 +20,9 @@ public final class AegisHandler implements OvercapEffectHandler, EnvironmentalDa
     }
 
     @Override
-    public void onEnvironmentalDamage(Player player, DamageCause cause, dev.mintychochip.merlin.paper.enchanting.custom.MutableDamage damage,
-                                      int level) {
-        if (player == null || cause != DamageCause.FALL || level <= 0) return;
+    public void onEnvironmentalDamage(Player player, DamageCause cause, MutableDamage damage, int level) {
+        if (player == null || cause != DamageCause.FALL || damage == null || damage.isCancelled()
+                || damage.getFinalDamage() <= 0.0 || level <= 0) return;
 
         int duration = (int) Math.min(Integer.MAX_VALUE, (long) TICKS_PER_LEVEL * level);
         int amplifier = Math.min(MAX_AMPLIFIER, level - 1);

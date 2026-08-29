@@ -40,4 +40,14 @@ final class AegisHandlerTest {
 
         verify(player, never()).addPotionEffect(any(PotionEffect.class));
     }
+    @Test
+    void ignoresMissingOrZeroDamage() {
+        Player player = mock(Player.class);
+        AegisHandler handler = new AegisHandler();
+
+        handler.onEnvironmentalDamage(player, DamageCause.FALL, null, 1);
+        handler.onEnvironmentalDamage(player, DamageCause.FALL, new MutableDamage(0.0), 1);
+
+        verify(player, never()).addPotionEffect(any(PotionEffect.class));
+    }
 }
