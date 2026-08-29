@@ -14,10 +14,8 @@ tasks.withType<JavaCompile>().configureEach {
 dependencies {
     implementation(project(":merlin-api"))
     implementation(libs.jackson.databind)
-    compileOnly(libs.onnxruntime)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.onnxruntime)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 

@@ -1,4 +1,4 @@
-package dev.mintychochip.merlin.common.ml;
+package dev.mintychochip.merlin.paper.ml;
 
 import ai.onnxruntime.OnnxTensor;
 import ai.onnxruntime.OrtEnvironment;
