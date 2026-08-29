@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 import org.mockito.ArgumentCaptor;
 
 import com.destroystokyo.paper.event.player.PlayerJumpEvent;
@@ -19,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.Location;
+import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
 import org.bukkit.block.Block;
 import org.bukkit.damage.DamageSource;
@@ -598,6 +600,7 @@ final class CustomEnchantmentListenerTest {
         when(event.getDamager()).thenReturn(attacker);
         when(event.getDamage()).thenReturn(10.0);
         when(event.isCancelled()).thenReturn(false);
+        when(event.getFinalDamage()).thenReturn(10.0);
 
         listener.onAttack(event);
 
@@ -633,10 +636,95 @@ final class CustomEnchantmentListenerTest {
         when(event.getDamager()).thenReturn(attacker);
         when(event.getDamage()).thenReturn(10.0);
         when(event.isCancelled()).thenReturn(false);
+        when(event.getFinalDamage()).thenReturn(10.0);
 
         listener.onAttack(event);
 
         assertTrue(scheduled.isEmpty());
+        verify(dispatcher, never()).dispatchArmorDefensePost(
+                any(), any(), any(MutableDamage.class), any(ItemStack[].class));
+    }
+    @Test
+    void skipsCancelledPlayerInteraction() {
+        CustomEnchantmentDispatcher dispatcher = mock(CustomEnchantmentDispatcher.class);
+        CustomEnchantmentListener listener = new CustomEnchantmentListener(dispatcher);
+        Player player = mock(Player.class);
+        ItemStack item = mock(ItemStack.class);
+        PlayerInteractEvent event = mock(PlayerInteractEvent.class);
+        when(event.getItem()).thenReturn(item);
+        when(event.isCancelled()).thenReturn(true);
+
+        listener.onInteract(event);
+
+        verifyNoInteractions(dispatcher);
+    }
+
+    @Test
+    void skipsDeniedPlayerInteraction() {
+        CustomEnchantmentDispatcher dispatcher = mock(CustomEnchantmentDispatcher.class);
+        CustomEnchantmentListener listener = new CustomEnchantmentListener(dispatcher);
+        PlayerInteractEvent event = mock(PlayerInteractEvent.class);
+        when(event.getItem()).thenReturn(mock(ItemStack.class));
+        when(event.useInteractedBlock()).thenReturn(Event.Result.DENY);
+
+        listener.onInteract(event);
+
+        verifyNoInteractions(dispatcher);
+    }
+    @Test
+    void doesNotRunPostArmorDefenseWhenFinalEventDamageIsZero() {
+        CustomEnchantmentDispatcher dispatcher = mock(CustomEnchantmentDispatcher.class);
+        List<Runnable> scheduled = new ArrayList<>();
+        CustomEnchantmentListener listener = new CustomEnchantmentListener(dispatcher, scheduled::add);
+        Player defender = mock(Player.class);
+        PlayerInventory inventory = mock(PlayerInventory.class);
+        ItemStack[] armor = new ItemStack[]{mock(ItemStack.class)};
+        Entity attacker = mock(Entity.class);
+        when(defender.getInventory()).thenReturn(inventory);
+        when(inventory.getItemInMainHand()).thenReturn(null);
+        when(inventory.getExtraContents()).thenReturn(new ItemStack[0]);
+        when(inventory.getArmorContents()).thenReturn(armor);
+
+        EntityDamageByEntityEvent event = mock(EntityDamageByEntityEvent.class);
+        when(event.getEntity()).thenReturn(defender);
+        when(event.getDamager()).thenReturn(attacker);
+        when(event.getDamage()).thenReturn(10.0);
+        when(event.getFinalDamage()).thenReturn(0.0);
+        when(event.isCancelled()).thenReturn(false);
+
+        listener.onAttack(event);
+
+        assertEquals(1, scheduled.size());
+        scheduled.get(0).run();
+        verify(dispatcher, never()).dispatchArmorDefensePost(
+                any(), any(), any(MutableDamage.class), any(ItemStack[].class));
+    }
+    @Test
+    void doesNotRunPostArmorDefenseForDeadDefender() {
+        CustomEnchantmentDispatcher dispatcher = mock(CustomEnchantmentDispatcher.class);
+        List<Runnable> scheduled = new ArrayList<>();
+        CustomEnchantmentListener listener = new CustomEnchantmentListener(dispatcher, scheduled::add);
+        Player defender = mock(Player.class);
+        PlayerInventory inventory = mock(PlayerInventory.class);
+        ItemStack[] armor = new ItemStack[]{mock(ItemStack.class)};
+        Entity attacker = mock(Entity.class);
+        when(defender.getInventory()).thenReturn(inventory);
+        when(inventory.getItemInMainHand()).thenReturn(null);
+        when(inventory.getExtraContents()).thenReturn(new ItemStack[0]);
+        when(inventory.getArmorContents()).thenReturn(armor);
+        when(defender.isDead()).thenReturn(true);
+
+        EntityDamageByEntityEvent event = mock(EntityDamageByEntityEvent.class);
+        when(event.getEntity()).thenReturn(defender);
+        when(event.getDamager()).thenReturn(attacker);
+        when(event.getDamage()).thenReturn(10.0);
+        when(event.getFinalDamage()).thenReturn(10.0);
+        when(event.isCancelled()).thenReturn(false);
+
+        listener.onAttack(event);
+
+        assertEquals(1, scheduled.size());
+        scheduled.get(0).run();
         verify(dispatcher, never()).dispatchArmorDefensePost(
                 any(), any(), any(MutableDamage.class), any(ItemStack[].class));
     }

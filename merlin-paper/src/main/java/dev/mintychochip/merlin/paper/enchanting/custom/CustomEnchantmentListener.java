@@ -15,6 +15,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -148,7 +149,8 @@ public final class CustomEnchantmentListener implements Listener {
                 event.setDamage(finalDamage);
                 if (defender != null && finalDamage > 0.0) {
                     schedulePostOperation.accept(() -> {
-                        if (!event.isCancelled()) {
+                        if (!event.isCancelled() && Double.isFinite(event.getFinalDamage())
+                                && event.getFinalDamage() > 0.0 && !defender.isDead()) {
                             dispatcher.dispatchArmorDefensePost(
                                     defender, event.getDamager(), damage, defenderArmor);
                         }
@@ -445,14 +447,18 @@ public final class CustomEnchantmentListener implements Listener {
         });
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInteract(PlayerInteractEvent event) {
-        if (!CascadeGuard.canCascade()) return;
+        if (!CascadeGuard.canCascade() || event.isCancelled()) return;
         ItemStack item = event.getItem();
         if (item == null || item.isEmpty()) return;
         CascadeGuard.runInScope(() -> {
-            dispatcher.dispatchActiveInteract(event.getPlayer(), event.getAction(), event.getClickedBlock(), item);
-            if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            if (event.useInteractedBlock() != Event.Result.DENY
+                    && event.useItemInHand() != Event.Result.DENY) {
+                dispatcher.dispatchActiveInteract(event.getPlayer(), event.getAction(), event.getClickedBlock(), item);
+            }
+            if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)
+                    && event.useItemInHand() != Event.Result.DENY) {
                 dispatcher.dispatchActivate(event.getPlayer(), item);
             }
         });

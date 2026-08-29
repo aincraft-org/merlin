@@ -35,12 +35,26 @@ final class AngelicHandlerTest {
         verify(defender, never()).setHealth(org.mockito.ArgumentMatchers.anyDouble());
     }
     @Test
+    void doesNotHealDeadDefender() {
+        Player defender = mock(Player.class);
+        AttributeInstance maxHealth = mock(AttributeInstance.class);
+        when(defender.isDead()).thenReturn(true);
+        when(defender.getAttribute(Attribute.MAX_HEALTH)).thenReturn(maxHealth);
+        when(maxHealth.getValue()).thenReturn(20.0);
+        when(defender.getHealth()).thenReturn(10.0);
+
+        new AngelicHandler().onArmorDefensePost(defender, mock(Entity.class), new MutableDamage(4.0), 1);
+
+        verify(defender, never()).setHealth(org.mockito.ArgumentMatchers.anyDouble());
+    }
+
+    @Test
     void doesNotHealCancelledDamage() {
         Player defender = mock(Player.class);
         MutableDamage damage = new MutableDamage(4.0);
         damage.setCancelled(true);
 
-        new AngelicHandler().onArmorDefense(defender, mock(Entity.class), damage, 1);
+        new AngelicHandler().onArmorDefensePost(defender, mock(Entity.class), damage, 1);
 
         verify(defender, never()).setHealth(org.mockito.ArgumentMatchers.anyDouble());
     }
