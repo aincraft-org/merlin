@@ -48,6 +48,7 @@ final class ReplanterHandlerTest {
         when(below.getType()).thenReturn(Material.FARMLAND);
 
         Block replant = mock(Block.class);
+        when(replant.isEmpty()).thenReturn(true);
         when(replant.getRelative(0, -1, 0)).thenReturn(below);
 
         when(world.getBlockAt(location)).thenReturn(replant);
@@ -57,7 +58,7 @@ final class ReplanterHandlerTest {
         when(drop.getItemStack()).thenReturn(dropStack);
         List<Item> drops = new ArrayList<>(List.of(drop));
 
-        new ReplanterHandler().onBlockDrop(player, state, drops, 1);
+        new ReplanterHandler().onBlockBreakPost(player, state, 1);
 
         verify(replant).setType(Material.WHEAT, false);
         verify(replant).setBlockData(data, true);
@@ -85,7 +86,7 @@ final class ReplanterHandlerTest {
         Block replant = mock(Block.class);
         when(world.getBlockAt(location)).thenReturn(replant);
 
-        new ReplanterHandler().onBlockDrop(player, state, List.of(), 1);
+        new ReplanterHandler().onBlockBreakPost(player, state, 1);
 
         verify(replant, never()).setType(any(), anyBoolean());
         verify(replant, never()).setBlockData(any(), anyBoolean());
@@ -116,7 +117,7 @@ final class ReplanterHandlerTest {
 
         when(world.getBlockAt(location)).thenReturn(replant);
 
-        new ReplanterHandler().onBlockDrop(player, state, List.of(), 1);
+        new ReplanterHandler().onBlockBreakPost(player, state, 1);
 
         verify(replant, never()).setType(any(), anyBoolean());
     }
@@ -143,11 +144,12 @@ final class ReplanterHandlerTest {
         when(below.getType()).thenReturn(Material.SOUL_SAND);
 
         Block replant = mock(Block.class);
+        when(replant.isEmpty()).thenReturn(true);
         when(replant.getRelative(0, -1, 0)).thenReturn(below);
 
         when(world.getBlockAt(location)).thenReturn(replant);
 
-        new ReplanterHandler().onBlockDrop(player, state, List.of(), 1);
+        new ReplanterHandler().onBlockBreakPost(player, state, 1);
 
         verify(replant).setType(Material.NETHER_WART, false);
         verify(replant).setBlockData(data, true);
@@ -158,7 +160,7 @@ final class ReplanterHandlerTest {
         Player player = mock(Player.class);
         BlockState state = mock(BlockState.class);
 
-        new ReplanterHandler().onBlockDrop(player, state, List.of(), 0);
+        new ReplanterHandler().onBlockBreakPost(player, state, 0);
 
         verify(state, never()).getBlockData();
     }

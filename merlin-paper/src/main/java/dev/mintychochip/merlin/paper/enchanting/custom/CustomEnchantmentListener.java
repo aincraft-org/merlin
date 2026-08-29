@@ -18,6 +18,8 @@ import java.util.function.Consumer;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -281,15 +283,25 @@ public final class CustomEnchantmentListener implements Listener {
     // 3. Mining, Harvesting & Blocks
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        if (!CascadeGuard.canCascade()) return;
+        if (!CascadeGuard.canCascade() || event.isCancelled()) return;
         Player player = event.getPlayer();
+        Block block = event.getBlock();
+        if (player == null || block == null) return;
         ItemStack tool = player.getInventory().getItemInMainHand();
+        ItemStack toolSnapshot = tool == null ? null : tool.clone();
+        final ItemStack postTool = toolSnapshot == null ? tool : toolSnapshot;
+        final BlockState originalState = block.getState();
         CascadeGuard.runInScope(() -> {
-            CascadeScope scope = new CascadeScope(event.getBlock().getWorld(), player, tool, CascadeGuard.getDepth());
-            dispatcher.dispatchBlockBreak(player, event.getBlock(), tool, scope);
+            CascadeScope scope = new CascadeScope(block.getWorld(), player, tool, CascadeGuard.getDepth());
+            dispatcher.dispatchBlockBreak(player, block, tool, scope);
+        });
+        if (event.isCancelled()) return;
+        schedulePostOperation.accept(() -> {
+            if (!event.isCancelled()) {
+                dispatcher.dispatchBlockBreakPost(player, originalState, postTool);
+            }
         });
     }
-
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockDrop(BlockDropItemEvent event) {
         if (!CascadeGuard.canCascade()) return;

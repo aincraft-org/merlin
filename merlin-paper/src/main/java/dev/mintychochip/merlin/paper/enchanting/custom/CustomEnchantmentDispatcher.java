@@ -187,6 +187,12 @@ public final class CustomEnchantmentDispatcher {
         }
     }
 
+    public void dispatchBlockBreakPost(Player player, BlockState state, ItemStack tool) {
+        for (var bound : resolveTriggers(tool, BlockBreakTrigger.class)) {
+            bound.trigger().onBlockBreakPost(player, state, bound.level());
+        }
+    }
+
     public void dispatchBlockDrop(Player player, BlockState state, List<Item> items, ItemStack tool) {
         for (var bound : resolveTriggers(tool, BlockDropTrigger.class)) {
             bound.trigger().onBlockDrop(player, state, items, bound.level());

@@ -1,21 +1,18 @@
 package dev.mintychochip.merlin.paper.enchanting.custom.handler;
 
 import dev.mintychochip.merlin.paper.enchanting.OvercapEffectHandler;
-import dev.mintychochip.merlin.paper.enchanting.custom.trigger.BlockDropTrigger;
-import org.bukkit.block.data.Ageable;
+import dev.mintychochip.merlin.paper.enchanting.custom.CascadeScope;
+import dev.mintychochip.merlin.paper.enchanting.custom.trigger.BlockBreakTrigger;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.block.BlockState;
-import org.bukkit.entity.Item;
+import org.bukkit.block.data.Ageable;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
-import java.util.List;
-
-public final class ReplanterHandler implements OvercapEffectHandler, BlockDropTrigger {
+public final class ReplanterHandler implements OvercapEffectHandler, BlockBreakTrigger {
     private static final NamespacedKey KEY = CustomEnchantmentSupport.customKey("replanter");
 
     @Override
@@ -24,7 +21,10 @@ public final class ReplanterHandler implements OvercapEffectHandler, BlockDropTr
     }
 
     @Override
-    public void onBlockDrop(Player player, BlockState state, List<Item> items, int level) {
+    public void onBlockBreak(Player player, Block block, int level, CascadeScope scope) {}
+
+    @Override
+    public void onBlockBreakPost(Player player, BlockState state, int level) {
         if (player == null || state == null || level <= 0) return;
 
         BlockData data = state.getBlockData();
@@ -39,11 +39,13 @@ public final class ReplanterHandler implements OvercapEffectHandler, BlockDropTr
 
         Block replant = state.getLocation() == null ? null : world.getBlockAt(state.getLocation());
         if (replant == null) return;
+        if (!replant.isEmpty()) return;
         Block below = replant.getRelative(0, -1, 0);
         if (below == null || !isValidSoil(cropType, below.getType())) return;
 
         BlockData replantData = data.clone();
-        ((Ageable) replantData).setAge(0);
+        if (!(replantData instanceof Ageable replantAgeable)) return;
+        replantAgeable.setAge(0);
         replant.setType(cropType, false);
         replant.setBlockData(replantData, true);
     }
