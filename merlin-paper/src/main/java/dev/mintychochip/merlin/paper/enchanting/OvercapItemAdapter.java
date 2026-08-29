@@ -51,11 +51,17 @@ public final class OvercapItemAdapter {
         for (var entry : enchants.entrySet()) {
             NamespacedKey key = entry.getKey();
             int level = entry.getValue();
-            Enchantment vanilla = Enchantment.getByKey(key);
             EnchantmentDefinition def = registry.get(key).orElse(null);
+            Enchantment vanilla = def != null && def.vanillaMaxLevel() == 0
+                    ? null : Enchantment.getByKey(key);
+            boolean registeredCustom = def != null && vanilla == null;
             int vanillaMax = def != null ? def.vanillaMaxLevel() : (vanilla != null ? vanilla.getMaxLevel() : 1);
 
-            if (level > vanillaMax) {
+            if (registeredCustom && level > 0) {
+                sub.set(key, PersistentDataType.INTEGER, level);
+                overcapLore.add(Component.text(def.displayName() + " " + QuantaRollEngine.toRoman(level),
+                        NamedTextColor.GRAY));
+            } else if (!registeredCustom && level > vanillaMax) {
                 sub.set(key, PersistentDataType.INTEGER, level);
                 if (vanilla != null) {
                     meta.addEnchant(vanilla, vanillaMax, true);
