@@ -53,6 +53,9 @@ public final class OvercapItemAdapter {
         List<Component> overcapLore = new ArrayList<>();
         for (var entry : enchants.entrySet()) {
             NamespacedKey key = entry.getKey();
+            if (registry.isDisabled(key)) {
+                continue;
+            }
             int level = entry.getValue();
             EnchantmentDefinition def = registry.get(key).orElse(null);
             Enchantment vanilla = def != null && def.vanillaMaxLevel() == 0

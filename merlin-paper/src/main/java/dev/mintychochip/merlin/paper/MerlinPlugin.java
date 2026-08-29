@@ -41,6 +41,10 @@ import dev.mintychochip.merlin.paper.enchanting.custom.CustomEnchantmentDispatch
 import dev.mintychochip.merlin.paper.enchanting.custom.CustomEnchantmentListener;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class MerlinPlugin extends JavaPlugin {
@@ -109,7 +113,11 @@ public final class MerlinPlugin extends JavaPlugin {
 
     var altarConfig = AltarConfig.fromSection(getConfig().getConfigurationSection("altar"));
     var altarScanner = new AltarScanner(altarConfig);
-    var enchantmentRegistry = EnchantmentRegistry.defaultRegistry();
+    List<String> disabledNames = getConfig().getStringList("enchantments.disabled");
+    Set<NamespacedKey> disabledKeys = disabledNames.stream()
+            .map(name -> new NamespacedKey("merlin", name))
+            .collect(Collectors.toUnmodifiableSet());
+    var enchantmentRegistry = EnchantmentRegistry.defaultRegistry(disabledKeys);
     var overcapAdapter = new OvercapItemAdapter(this, enchantmentRegistry);
     var offerConfig = OfferConfig.fromSection(getConfig().getConfigurationSection("enchanting_offers"));
     var quantaRollEngine = new QuantaRollEngine(enchantmentRegistry, offerConfig);

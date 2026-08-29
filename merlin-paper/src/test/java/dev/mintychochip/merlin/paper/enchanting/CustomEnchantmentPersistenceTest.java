@@ -132,4 +132,52 @@ final class CustomEnchantmentPersistenceTest {
             return true;
         }
     }
+
+    @Test
+    void skipsDisabledCustomKeysButPersistsOthers() {
+        Plugin plugin = mock(Plugin.class);
+        when(plugin.getName()).thenReturn("Merlin");
+        when(plugin.namespace()).thenReturn("merlin");
+
+        PersistentDataContainer root = mock(PersistentDataContainer.class);
+        PersistentDataAdapterContext context = mock(PersistentDataAdapterContext.class);
+        Map<PersistentDataContainer, Map<NamespacedKey, Integer>> valuesByContainer = new IdentityHashMap<>();
+        AtomicReference<PersistentDataContainer> subRef = new AtomicReference<>();
+        when(root.getAdapterContext()).thenReturn(context);
+        when(root.get(any(NamespacedKey.class), eq(PersistentDataType.TAG_CONTAINER)))
+                .thenAnswer(ignored -> subRef.get());
+        when(context.newPersistentDataContainer()).thenAnswer(ignored -> {
+            PersistentDataContainer created = mock(PersistentDataContainer.class);
+            valuesByContainer.put(created, new HashMap<>());
+            wireContainer(created, valuesByContainer);
+            return created;
+        });
+        doAnswer(invocation -> {
+            subRef.set(invocation.getArgument(2));
+            return null;
+        }).when(root).set(any(NamespacedKey.class), eq(PersistentDataType.TAG_CONTAINER),
+                any(PersistentDataContainer.class));
+
+        ItemMeta meta = mock(ItemMeta.class);
+        when(meta.getPersistentDataContainer()).thenReturn(root);
+        PersistentDataContainer existingSub = mock(PersistentDataContainer.class);
+        valuesByContainer.put(existingSub, new HashMap<>());
+        wireContainer(existingSub, valuesByContainer);
+        subRef.set(existingSub);
+        AtomicReference<List<Component>> lore = new AtomicReference<>(List.of());
+        when(meta.lore()).thenAnswer(ignored -> lore.get());
+        doAnswer(invocation -> {
+            lore.set(invocation.getArgument(0));
+            return null;
+        }).when(meta).lore(any());
+        ItemStack item = new TestItemStack(meta);
+        EnchantmentRegistry registry = EnchantmentRegistry.defaultRegistry(Set.of(new NamespacedKey("merlin", "heat_wave")));
+        OvercapItemAdapter adapter = new OvercapItemAdapter(plugin, registry);
+        NamespacedKey stickyGrip = new NamespacedKey("merlin", "sticky_grip");
+        NamespacedKey disabledKey = new NamespacedKey("merlin", "heat_wave");
+
+        assertTrue(adapter.applyEnchantments(item, Map.of(stickyGrip, 1, disabledKey, 1)));
+        Map<NamespacedKey, Integer> result = adapter.readOvercap(item);
+        assertEquals(Map.of(stickyGrip, 1), result);
+    }
 }

@@ -83,6 +83,30 @@ final class CustomEnchantmentRegistryTest {
         assertTargets(registry, "heat_wave", Set.of(Material.FLINT_AND_STEEL), Material.BUCKET);
     }
 
+    @Test
+    void disabledKeysRemainVisibleButAreExcludedFromQueries() {
+        Set<NamespacedKey> disabled = Set.of(key("expertise"), key("heat_wave"));
+        EnchantmentRegistry registry = EnchantmentRegistry.defaultRegistry(disabled);
+
+        assertTrue(registry.isDisabled(key("expertise")));
+        assertTrue(registry.isDisabled(key("heat_wave")));
+
+        // Still visible for admin/debug inspection
+        assertTrue(registry.get(key("expertise")).isPresent());
+        assertTrue(registry.get(key("heat_wave")).isPresent());
+
+        // Blocked from offers / applications
+        assertEquals(0, registry.findForMaterial(Material.FLINT_AND_STEEL).stream()
+                .filter(d -> disabled.contains(d.key())).count());
+
+        Material diamondSword = Material.DIAMOND_SWORD;
+        Set<NamespacedKey> expected = Set.of(key("equilibrium"), key("vampirism"));
+        assertTrue(registry.findEligible(diamondSword, 100.0).stream()
+                .anyMatch(d -> expected.contains(d.key())));
+        assertEquals(0, registry.findEligible(diamondSword, 100.0).stream()
+                .filter(d -> disabled.contains(d.key())).count());
+    }
+
     private static void assertTargets(EnchantmentRegistry registry, String name,
                                       Set<Material> accepted, Material rejected) {
         EnchantmentDefinition definition = registry.get(key(name)).orElseThrow();

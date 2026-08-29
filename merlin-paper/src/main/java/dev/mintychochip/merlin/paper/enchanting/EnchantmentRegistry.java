@@ -35,9 +35,22 @@ import org.bukkit.NamespacedKey;
 
 public final class EnchantmentRegistry {
     private final Map<NamespacedKey, EnchantmentDefinition> definitions = new ConcurrentHashMap<>();
+    private final Set<NamespacedKey> disabledKeys;
+
+    public EnchantmentRegistry() {
+        this(Set.of());
+    }
+
+    public EnchantmentRegistry(Set<NamespacedKey> disabledKeys) {
+        this.disabledKeys = Set.copyOf(disabledKeys == null ? Set.of() : disabledKeys);
+    }
 
     public static EnchantmentRegistry defaultRegistry() {
-        EnchantmentRegistry reg = new EnchantmentRegistry();
+        return defaultRegistry(Set.of());
+    }
+
+    public static EnchantmentRegistry defaultRegistry(Set<NamespacedKey> disabledKeys) {
+        EnchantmentRegistry reg = new EnchantmentRegistry(disabledKeys);
         Set<Material> swords = Set.of(
                 Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
                 Material.GOLDEN_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD
@@ -166,12 +179,24 @@ public final class EnchantmentRegistry {
         return Optional.ofNullable(definitions.get(key));
     }
 
+    public boolean isDisabled(NamespacedKey key) {
+        return disabledKeys.contains(key);
+    }
+
+    public Set<NamespacedKey> disabledKeys() {
+        return disabledKeys;
+    }
+
     public List<EnchantmentDefinition> findForMaterial(Material mat) {
-        return definitions.values().stream().filter(d -> d.canApplyTo(mat)).toList();
+        return definitions.values().stream()
+                .filter(d -> !isDisabled(d.key()))
+                .filter(d -> d.canApplyTo(mat))
+                .toList();
     }
 
     public List<EnchantmentDefinition> findEligible(Material mat, double eterna) {
         return definitions.values().stream()
+                .filter(d -> !isDisabled(d.key()))
                 .filter(d -> d.canApplyTo(mat))
                 .filter(d -> d.minEternaForLevel(1) <= eterna)
                 .toList();

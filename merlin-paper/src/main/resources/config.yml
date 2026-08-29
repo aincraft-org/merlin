@@ -64,3 +64,6 @@ enchanting_offers:
     min_enchantments: 2
     max_enchantments: 3
     quanta_bonus_multiplier: 1.5
+
+enchantments:
+  disabled: []
