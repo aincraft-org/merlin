@@ -3,6 +3,10 @@ package dev.mintychochip.merlin.paper.enchanting;
 import dev.mintychochip.merlin.paper.enchanting.handler.FortuneOvercapHandler;
 import dev.mintychochip.merlin.paper.enchanting.handler.SharpnessOvercapHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ArrayHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.AegisHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.AngelicHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ArmoredHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ChunkyHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.CarrotPlanterHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ColdAspectHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ColoramaHandler;
@@ -15,23 +19,29 @@ import dev.mintychochip.merlin.paper.enchanting.custom.handler.FlurryHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.HeatWaveHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.KnowledgeHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.LeapingHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.DodgeHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.MoltenTouchHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.NetherScourgeHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.OverflowingHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.HeavyHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.PlanterHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.PlunderHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.PotatoPlanterHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.PrismaticHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.QuenchingHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ReforgedHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.MoltenHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ReplanterHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ReplenishHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.RebreatherHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.StickyGripHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ReflectHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.TelepathyHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.TimberHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.SafeguardHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ToxinAspectHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.TrenchHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.TankHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.UnbreakableHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.VacuumHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.VampirismHandler;
@@ -140,9 +150,12 @@ public final class EnchantmentRegistry {
                 Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS
         );
         Set<Material> armor = Set.of(
+                Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE, Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS,
+                Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE, Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS,
+                Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS,
+                Material.GOLDEN_HELMET, Material.GOLDEN_CHESTPLATE, Material.GOLDEN_LEGGINGS, Material.GOLDEN_BOOTS,
                 Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE, Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS,
-                Material.NETHERITE_HELMET, Material.NETHERITE_CHESTPLATE, Material.NETHERITE_LEGGINGS, Material.NETHERITE_BOOTS,
-                Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS
+                Material.NETHERITE_HELMET, Material.NETHERITE_CHESTPLATE, Material.NETHERITE_LEGGINGS, Material.NETHERITE_BOOTS
         );
 
 
@@ -204,6 +217,16 @@ public final class EnchantmentRegistry {
         registerCustom(reg, "replenish", "Replenish", 3, 10, 5, 10, pickaxes, new ReplenishHandler());
         registerCustom(reg, "unbreakable", "Unbreakable", 1, 20, 20, 3, durableItems, new UnbreakableHandler());
         registerCustom(reg, "reforged", "Reforged", 5, 10, 5, 8, durableItems, new ReforgedHandler());
+        registerCustom(reg, "aegis", "Aegis", 3, 10, 5, 10, armor, new AegisHandler());
+        registerCustom(reg, "angelic", "Angelic", 3, 10, 5, 10, armor, new AngelicHandler());
+        registerCustom(reg, "armored", "Armored", 3, 10, 5, 10, armor, new ArmoredHandler());
+        registerCustom(reg, "chunky", "Chunky", 3, 10, 5, 10, armor, new ChunkyHandler());
+        registerCustom(reg, "dodge", "Dodge", 3, 10, 5, 10, armor, new DodgeHandler());
+        registerCustom(reg, "heavy", "Heavy", 3, 10, 5, 10, armor, new HeavyHandler());
+        registerCustom(reg, "molten", "Molten", 3, 10, 5, 10, armor, new MoltenHandler());
+        registerCustom(reg, "reflect", "Reflect", 3, 10, 5, 10, armor, new ReflectHandler());
+        registerCustom(reg, "safeguard", "Safeguard", 3, 10, 5, 10, armor, new SafeguardHandler());
+        registerCustom(reg, "tank", "Tank", 3, 10, 5, 10, armor, new TankHandler());
         return reg;
     }
 

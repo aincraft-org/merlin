@@ -48,7 +48,17 @@ final class CustomEnchantmentRegistryTest {
             entry("rebreather", "Rebreather", 3),
             entry("replenish", "Replenish", 3),
             entry("unbreakable", "Unbreakable", 1),
-            entry("reforged", "Reforged", 5)
+            entry("reforged", "Reforged", 5),
+            entry("aegis", "Aegis", 3),
+            entry("angelic", "Angelic", 3),
+            entry("armored", "Armored", 3),
+            entry("chunky", "Chunky", 3),
+            entry("dodge", "Dodge", 3),
+            entry("heavy", "Heavy", 3),
+            entry("molten", "Molten", 3),
+            entry("reflect", "Reflect", 3),
+            entry("safeguard", "Safeguard", 3),
+            entry("tank", "Tank", 3)
     );
 
     @Test
@@ -98,6 +108,18 @@ final class CustomEnchantmentRegistryTest {
         assertTargets(registry, "trench", Set.of(Material.DIAMOND_PICKAXE, Material.DIAMOND_SHOVEL),
                 Material.DIAMOND_SWORD);
         assertTargets(registry, "replanter", Set.of(Material.DIAMOND_HOE), Material.DIAMOND_PICKAXE);
+        Set<Material> armorMaterials = Set.of(
+                Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE, Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS,
+                Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE, Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS,
+                Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS,
+                Material.GOLDEN_HELMET, Material.GOLDEN_CHESTPLATE, Material.GOLDEN_LEGGINGS, Material.GOLDEN_BOOTS,
+                Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE, Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS,
+                Material.NETHERITE_HELMET, Material.NETHERITE_CHESTPLATE, Material.NETHERITE_LEGGINGS, Material.NETHERITE_BOOTS
+        );
+        for (String name : Set.of("aegis", "angelic", "armored", "chunky", "dodge",
+                "heavy", "molten", "reflect", "safeguard", "tank")) {
+            assertTargets(registry, name, armorMaterials, Material.DIAMOND_SWORD);
+        }
         assertTargets(registry, "planter", Set.of(Material.DIAMOND_HOE), Material.DIAMOND_PICKAXE);
         assertTargets(registry, "carrot_planter", Set.of(Material.DIAMOND_HOE), Material.DIAMOND_PICKAXE);
         assertTargets(registry, "potato_planter", Set.of(Material.DIAMOND_HOE), Material.DIAMOND_PICKAXE);
