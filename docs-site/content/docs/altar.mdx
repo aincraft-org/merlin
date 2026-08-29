@@ -1,0 +1,60 @@
+---
+title: "Eterna and Quanta Altar"
+description: "The current custom enchanting-table flow, altar structure, offers, and transaction rules."
+---
+
+## Current flow
+
+1. Right-click a vanilla `ENCHANTING_TABLE`.
+2. Merlin cancels the vanilla table interaction and scans the surrounding altar structure.
+3. The **Enchanter's Altar Matrix** opens as a 54-slot inventory.
+4. Place a target item or book, lapis, and optionally a catalyst.
+5. Choose a generated Tier I, II, or III offer, or spend lapis to reroll.
+6. Merlin validates the offer, applies the enchantments, deducts costs only after successful application, and rerolls the offers.
+7. Closing the GUI returns or safely drops target, lapis, and catalyst inputs.
+
+## Structure scan and block stats
+
+The scanner checks a horizontal radius of 2 blocks and one block below or above the table. Configured blocks contribute only when the line-of-sight rules allow them; contributions are capped per block type.
+
+| Block | Eterna | Quanta | Eterna cap | Quanta cap |
+|---|---:|---:|---:|---:|
+| Bookshelf | 1.0 | 0.00 | 15.0 | — |
+| Chiseled bookshelf | 1.2 | 0.00 | 18.0 | — |
+| Amethyst block | 1.5 | 0.05 | 30.0 | 0.25 |
+| Budding amethyst | 2.0 | 0.08 | 35.0 | 0.35 |
+| Crying obsidian | 2.5 | 0.15 | 45.0 | 0.60 |
+| Sculk catalyst | 3.0 | 0.25 | 50.0 | 0.80 |
+| Candle | 0.25 | -0.05 | 10.0 | -0.30 |
+
+Eterna gates eligible enchantment ranks. Quanta controls the high-roll check and secondary-enchantment chance. The runtime high-roll chance is capped at 0.90 after multiplying total Quanta by the offer's configured multiplier.
+
+## Offer tiers
+
+| Tier | Required player level | XP-level cost | Lapis cost | Enchantments | Quanta multiplier |
+|---|---:|---:|---:|---:|---:|
+| I | 10 | 1 | 1 | 1 | 0.5 |
+| II | 20 | 2 | 2 | 1–2 | 1.0 |
+| III | 30 | 3 | 3 | 2–3 | 1.5 |
+
+The reroll button costs one lapis. Valid catalysts are amethyst shards, echo shards, and glowstone dust; a catalyst is accepted but is not required by the current validator.
+
+## GUI slots and transaction rules
+
+| Slot | Purpose |
+|---:|---|
+| 2 | Eterna meter |
+| 6 | Quanta meter |
+| 20 | Target item or book |
+| 22 | Lapis Lazuli |
+| 24 | Optional catalyst |
+| 38 / 40 / 42 | Tier I / II / III offer buttons |
+| 44 | Reroll |
+
+The target validator is registry-driven, so custom targets such as fishing rods, saddles, shears, buckets, flint and steel, and elytra can enter the same altar flow. Custom book offers use the same registry applicability rule as validation and PDC application.
+
+Set `enchantments.disabled` to a list of custom keys to remove those definitions from offer and target queries. Definitions remain available for inspection, but disabled entries are skipped during application.
+
+Relevant source: [altar package](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/enchanting/).
+
+---

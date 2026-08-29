@@ -1,0 +1,30 @@
+---
+title: "Ritual Crafting"
+description: "Ritual Anchors, Pedestals, glyph recipes, catalysts, and marked intermediate outputs."
+---
+
+## Current setup and activation
+
+- Craft a marked **Ritual Anchor** from one obsidian and one dropper.
+- Craft a marked **Ritual Pedestal** from one cobblestone and one dropper.
+- Place one anchor and one or more marked pedestals in the surrounding layout.
+- Put one frozen glyph map and one matching vanilla material into the anchor inventory.
+- Put a non-empty ink bottle matching the recipe school into a pedestal.
+- Hold a Mortar & Pestle and right-click the marked anchor.
+- On success, the glyph and material are consumed, one matching ink bottle is consumed, and a marked product is dropped. Yield is based on glyph pips and capped at three.
+
+## Current recipe table
+
+| Glyph | Material in anchor | Required school / catalyst block | Product name | Output material |
+|---|---|---|---|---|
+| `damage` | Iron ingot | Physical ink; current code does not require a catalyst block | Aether Ingot | Stone |
+| `heal` | Gold ingot | Physical ink; current code does not require a catalyst block | Sun Drop | Gold ingot |
+| `push` | Copper ingot | Physical ink; current code does not require a catalyst block | Kinetic Coil | Piston |
+| `flame` | Redstone | Flame ink; current code does not require a catalyst block | Cinder Salt | Redstone |
+| `frost` | Amethyst shard | Frost ink; current code does not require a catalyst block | Rime Crystal | Amethyst shard |
+
+The product has a `ritual_product` PDC marker and a maximum stack size of one. Ritual products are intermediates, not finished weapons, armor, wands, or scrolls.
+
+Relevant sources: [RitualAnchor.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/ritual/RitualAnchor.java), [RitualPedestal.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/ritual/RitualPedestal.java), [RitualCircle.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/ritual/RitualCircle.java), [RitualRecipeTable.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/ritual/RitualRecipeTable.java), and [RitualListener.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/ritual/RitualListener.java).
+
+---

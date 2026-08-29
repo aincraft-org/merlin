@@ -1,0 +1,16 @@
+{
+  "title": "Merlin",
+  "pages": [
+    "index",
+    "enchantments",
+    "altar",
+    "scribe",
+    "glyphcraft",
+    "ink",
+    "ritual-crafting",
+    "runtime",
+    "items-and-persistence",
+    "configuration",
+    "status"
+  ]
+}
