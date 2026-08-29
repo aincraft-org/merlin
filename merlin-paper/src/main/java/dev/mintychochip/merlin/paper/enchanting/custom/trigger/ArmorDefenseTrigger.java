@@ -6,4 +6,6 @@ import org.bukkit.entity.Player;
 
 public interface ArmorDefenseTrigger {
     void onArmorDefense(Player defender, Entity attacker, MutableDamage damage, int level);
+
+    default void onArmorDefensePost(Player defender, Entity attacker, MutableDamage damage, int level) {}
 }

@@ -106,6 +106,12 @@ public final class CustomEnchantmentDispatcher {
             bound.trigger().onArmorDefense(defender, attacker, damage, bound.level());
         }
     }
+
+    public void dispatchArmorDefensePost(Player defender, Entity attacker, MutableDamage damage, ItemStack[] armor) {
+        for (var bound : resolveAllEquipped(armor, ArmorDefenseTrigger.class)) {
+            bound.trigger().onArmorDefensePost(defender, attacker, damage, bound.level());
+        }
+    }
     public void dispatchEntityKill(
             LivingEntity killer,
             LivingEntity victim,

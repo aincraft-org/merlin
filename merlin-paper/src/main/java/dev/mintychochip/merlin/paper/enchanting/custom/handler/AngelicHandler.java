@@ -16,7 +16,10 @@ public final class AngelicHandler implements OvercapEffectHandler, ArmorDefenseT
     }
 
     @Override
-    public void onArmorDefense(Player defender, Entity attacker, MutableDamage damage, int level) {
+    public void onArmorDefense(Player defender, Entity attacker, MutableDamage damage, int level) {}
+
+    @Override
+    public void onArmorDefensePost(Player defender, Entity attacker, MutableDamage damage, int level) {
         if (defender == null || damage == null || level <= 0 || damage.isCancelled()
                 || damage.getFinalDamage() <= 0.0) return;
         CustomEnchantmentSupport.healToMax(defender, level);

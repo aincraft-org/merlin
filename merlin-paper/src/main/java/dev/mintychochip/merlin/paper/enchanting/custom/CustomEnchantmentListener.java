@@ -135,15 +135,25 @@ public final class CustomEnchantmentListener implements Listener {
 
             dispatcher.dispatchEntityHitByEntity(
                     victim, event.getDamager(), damage, equippedItems(victim));
-            if (victim instanceof Player defender) {
-                dispatcher.dispatchArmorDefense(
-                        defender, event.getDamager(), damage, defender.getInventory().getArmorContents());
+            Player defender = victim instanceof Player player ? player : null;
+            ItemStack[] defenderArmor = defender == null ? null : defender.getInventory().getArmorContents();
+            if (defender != null) {
+                dispatcher.dispatchArmorDefense(defender, event.getDamager(), damage, defenderArmor);
             }
 
             if (damage.isCancelled()) {
                 event.setCancelled(true);
             } else {
-                event.setDamage(damage.getFinalDamage());
+                double finalDamage = damage.getFinalDamage();
+                event.setDamage(finalDamage);
+                if (defender != null && finalDamage > 0.0) {
+                    schedulePostOperation.accept(() -> {
+                        if (!event.isCancelled()) {
+                            dispatcher.dispatchArmorDefensePost(
+                                    defender, event.getDamager(), damage, defenderArmor);
+                        }
+                    });
+                }
             }
         });
     }
