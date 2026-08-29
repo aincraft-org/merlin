@@ -1,0 +1,27 @@
+---
+title: "Runtime Enchantment Features"
+description: "Event dispatch, passive equipment effects, and active custom-enchantment behavior."
+---
+
+## Event dispatch
+
+The registered `CustomEnchantmentListener` adapts high-priority Paper events into narrow trigger contracts. Active trigger coverage includes:
+
+- Entity attacks, entity hits, environmental damage, and armor defense.
+- Entity death and mutable dropped experience.
+- Item dropping, food changes, horse jumps, and entity interaction.
+- Bow shooting, projectile hits, and projectile tracking.
+- Block breaking, block drops, block placement, buckets, and shearing.
+- Fishing, hook contact, item damage, item consumption, and interactions.
+- Player/entity movement, jumps, sneaking, sprinting, gliding, firework boosts, and experience gain.
+- Quit/death cleanup and bounded cascade protection.
+
+`CustomEnchantmentDispatcher` reads PDC ranks, resolves definitions through the registry, sorts handlers by priority/key, and dispatches only the trigger interface implemented by each handler. `CascadeGuard` and `CascadeScope` bound simulated damage and block-break cascades.
+
+## Passive equipment effects
+
+`PassiveEquipListener` and `PassiveEffectApplier` periodically inspect equipped items. The current passive set is Gears, Springs, Aquatic, Glowing, Implants, Obsidianshield, Overload, and Wings. Passive effects are refreshed by the scheduled equipment tick; implants use the same periodic path for food and saturation restoration.
+
+A separate hook-contact tracker runs every five ticks for Fire Hook and Poisoned Hook contact effects. The passive/active listeners are registered in [MerlinPlugin.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/MerlinPlugin.java).
+
+---

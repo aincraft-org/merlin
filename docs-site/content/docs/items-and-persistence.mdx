@@ -1,0 +1,20 @@
+---
+title: "Marked Items and Persistence"
+description: "Plugin-owned item markers, persistent data keys, and item lifecycle rules."
+---
+
+| Item or data | Marker / keys | Purpose |
+|---|---|---|
+| Scribe writable book | `scribe_book`, `scribe_book_id`, `scribe_source` | Identifies a Merlin Scribe book and stores its source. |
+| Glyph canvas / frozen map | `glyph_item`, `glyph_item_id`, `glyph_draft_v1`, then `glyph_label`, `glyph_pips`, `glyph_mana` | Tracks drafts and committed glyph tokens. |
+| Glyph tome | `glyph_tome`, `glyph_tome_id`, `glyph_tome_pages`, `glyph_tome_index`, draft slots | Stores up to three glyph pages and the current page. |
+| Magical ink bottle | `magical_ink`, `ink_element`, `ink_remaining`, `ink_max` | Stores elemental ink identity and fill. |
+| Ritual Anchor | `ritual_anchor` | Marks the special dropper item and placed tile. |
+| Ritual Pedestal | `ritual_pedestal` | Marks the special pedestal dropper item and placed tile. |
+| Ritual product | `ritual_product` | Marks an intermediate output item. |
+| Mortar & Pestle | `mortar_pestle` | Marks the bowl tool used for grinding and ritual activation. |
+| Custom enchantments | `merlin:overcap_enchantments` TAG_CONTAINER with namespaced INTEGER entries | Stores custom ranks and over-cap vanilla ranks; lore mirrors entries. |
+
+The plugin does not use native Bukkit `Enchantment` objects for the custom `merlin:` definitions. Custom effects resolve through the registry and PDC adapter.
+
+---

@@ -1,0 +1,168 @@
+---
+title: "Enchantments"
+description: "The complete registered Merlin enchantment catalog, targets, ranks, effects, and storage."
+---
+
+## Registry rules
+
+- Vanilla definitions use their `minecraft` keys and may be stored natively up to their vanilla maximum. Higher ranks are stored in the `merlin:overcap_enchantments` PDC container and handled by the over-cap dispatcher where a handler exists.
+- Custom definitions use `merlin:<key>` keys, `vanillaMaxLevel = 0`, and are stored in `merlin:overcap_enchantments` even at rank I. Lore mirrors the stored custom rank.
+- The **Max** column is the registered absolute maximum rank, not the rank guaranteed by a particular altar tier.
+- The row target is the direct gear target. A plain `BOOK` is also a universal matrix target, so the altar can generate and persist custom enchanted books; applying a definition to concrete gear still uses the row target rules.
+- Custom ranks are selected only when the target and Eterna requirement are eligible. They are weighted rolls, not a guarantee that every roll contains a different enchantment.
+
+## Completeness audit
+
+The tables use the exact keys from `EnchantmentRegistry.defaultRegistry()`: 6 `minecraft:` definitions and 75 `merlin:` definitions. The executable registry contract is [CustomEnchantmentRegistryTest.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/test/java/dev/mintychochip/merlin/paper/enchanting/CustomEnchantmentRegistryTest.java); target eligibility is covered by [EnchantmentRegistryTest.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/test/java/dev/mintychochip/merlin/paper/enchanting/EnchantmentRegistryTest.java) and offer bounds by [QuantaRollEngineTest.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/test/java/dev/mintychochip/merlin/paper/enchanting/QuantaRollEngineTest.java).
+
+To re-audit the catalog after registry changes:
+
+```text
+./gradlew :merlin-paper:test --tests 'dev.mintychochip.merlin.paper.enchanting.CustomEnchantmentRegistryTest' --tests 'dev.mintychochip.merlin.paper.enchanting.EnchantmentRegistryTest' --tests 'dev.mintychochip.merlin.paper.enchanting.QuantaRollEngineTest'
+```
+
+## Target shorthand
+
+| Shorthand | Materials |
+|---|---|
+| `swords` | Wooden, stone, iron, golden, diamond, and netherite swords. |
+| `weapons` | `swords` plus wooden, stone, iron, golden, diamond, and netherite axes. |
+| `weapons/tools` | Swords, axes, pickaxes, shovels, and hoes. |
+| `custom tools` | Pickaxes, axes, shovels, and hoes. |
+| `pickaxes` | Wooden through netherite pickaxes. |
+| `pickaxes + shovels` | Wooden through netherite pickaxes and shovels. |
+| `durable items` | `custom tools` plus bows, crossbows, and tridents. |
+| `all armor` | Leather, chainmail, iron, golden, diamond, and netherite armor. |
+| `leather armor` | Leather helmet, chestplate, leggings, and boots. |
+| `boots` | Leather through netherite boots. |
+| `leggings` | Leather through netherite leggings. |
+| `bows` / `crossbows` | The corresponding ranged weapon. |
+| `fishing rods` | Fishing rods. |
+| `elytra` | Elytra. |
+| `saddle` | Saddles. |
+| `buckets` | Empty and water buckets where listed. |
+
+## Vanilla and over-cap definitions (6)
+
+| Name / key | Target | Max | Implemented behavior | Trigger / storage |
+|---|---|---:|---|---|
+| Sharpness (`minecraft:sharpness`) | `swords` | VII | Normal Sharpness behavior through V; the over-cap handler adds the registered high-rank damage delta. | Native enchantment through V; over-cap PDC and damage handler. |
+| Smite (`minecraft:smite`) | `swords` | VII | Normal Smite behavior. | Native enchantment; no custom over-cap handler. |
+| Fortune (`minecraft:fortune`) | `pickaxes` | V | Normal Fortune behavior through III; the over-cap handler supports high-rank drop scaling. | Native enchantment through III; over-cap PDC and block-drop handler. |
+| Efficiency (`minecraft:efficiency`) | `pickaxes` | VII | Normal Efficiency behavior. | Native enchantment; no custom over-cap handler. |
+| Protection (`minecraft:protection`) | Iron, diamond, and netherite armor | VI | Normal Protection behavior. | Native enchantment; no custom over-cap handler. |
+| Unbreaking (`minecraft:unbreaking`) | `swords` | V | Normal Unbreaking behavior. | Native enchantment; no custom over-cap handler. |
+
+## Core custom definitions (24)
+
+These are the original Merlin custom entries. All are `merlin:` PDC-backed definitions.
+
+| Name / key | Target | Max | Implemented behavior | Trigger / storage |
+|---|---|---:|---|---|
+| Sticky Grip (`merlin:sticky_grip`) | `weapons/tools` | I | Prevents the holder from dropping the enchanted item. | Player item-drop event. |
+| Equilibrium (`merlin:equilibrium`) | `weapons` | V | Adds a random 1–3 damage bonus per rank and applies half of that bonus back to the attacker through a guarded damage call. | Entity hit; PDC rank. |
+| Nether's Scourge (`merlin:nethers_scourge`) | `weapons` | VI | Adds a random 1–3 damage bonus per rank against native Nether hostile mobs. | Entity hit; PDC rank. |
+| Cold Aspect (`merlin:cold_aspect`) | `weapons` | III | Extends the victim's freeze duration to at least 20 ticks per rank. | Entity hit. |
+| Confusing Aspect (`merlin:confusing_aspect`) | `weapons` | III | Applies Nausea for 100 ticks per rank. | Entity hit. |
+| Toxin Aspect (`merlin:toxin_aspect`) | `weapons` | III | Applies Poison for 80 ticks per rank. | Entity hit. |
+| Knowledge (`merlin:knowledge`) | `weapons` | III | Adds a random 3–4 experience per rank on entity death. | Entity death. |
+| Vorpal (`merlin:vorpal`) | `weapons` | III | Gives a 0.5% per-rank chance to produce a mob head. | Entity death. |
+| Vampirism (`merlin:vampirism`) | `weapons` | V | Heals the attacking player on successful hits; the amount is rank-scaled by the handler. | Entity hit. |
+| Flurry (`merlin:flurry`) | `swords` | III | On entity interaction, knocks back up to three times the rank in nearby living entities within four blocks. | Entity interaction. |
+| Array (`merlin:array`) | `bows` | II | Spawns two additional projectiles per rank with a small random spread. | Bow shoot; projectile spawn. |
+| Plunder (`merlin:plunder`) | `bows` | III | Adds one copy of each non-empty original entity drop per rank. | Entity death. |
+| Wisdom (`merlin:wisdom`) | `bows` | III | Adds base death experience multiplied by the enchantment rank. | Entity death. |
+| Drill (`merlin:drill`) | `pickaxes` | III | Vein-mines matching connected ores, up to four blocks per rank. | Block break with cascade guard. |
+| Expertise (`merlin:expertise`) | `pickaxes` | III | Registered metadata-only enchantment; no effect handler is currently attached. | PDC rank only. |
+| Quenching (`merlin:quenching`) | `leggings` | IV | Restores up to the rank when food level decreases, capped at full food. | Food-level change. |
+| Colorama (`merlin:colorama`) | `leather armor` | I | Randomizes leather armor color when the item takes damage. | Item damage. |
+| Leaping (`merlin:leaping`) | `saddle` | III | Adds 0.1 horse jump power per rank. | Horse jump. |
+| Feather Hooves (`merlin:feather_hooves`) | `saddle` | I | Prevents horse fall damage. | Entity environmental damage. |
+| Molten Touch (`merlin:molten_touch`) | `custom tools` | I | Smelts eligible block drops. | Block drop. |
+| Prismatic (`merlin:prismatic`) | Shears | I | Produces additional shearing drops. | Shear event. |
+| Overflowing (`merlin:overflowing`) | `buckets` | I | Refills an emptied water bucket. | Bucket empty. |
+| Vacuum (`merlin:vacuum`) | `buckets` | I | Returns an empty bucket when a bucket is filled. | Bucket fill. |
+| Heat Wave (`merlin:heat_wave`) | Flint and steel | I | Places fire around the interaction location. | Active interaction. |
+
+## Tools and durability custom definitions (12)
+
+| Name / key | Target | Max | Implemented behavior | Trigger / storage |
+|---|---|---:|---|---|
+| Telepathy (`merlin:telepathy`) | `custom tools` | I | Routes mined drops into the player's inventory. | Block drop. |
+| Timber (`merlin:timber`) | Axes | III | Breaks connected matching logs with cascade protection. | Block break. |
+| Trench (`merlin:trench`) | `pickaxes + shovels` | III | Breaks an area around the original block with bounded cascades. | Block break. |
+| Replanter (`merlin:replanter`) | Hoes | I | Replants a mature crop after harvest. | Block break. |
+| Planter (`merlin:planter`) | Hoes | I | Plants seeds in a 3×3 area when interacting with tilled soil. | Active interaction. |
+| Carrot Planter (`merlin:carrot_planter`) | Hoes | I | Plants carrots in a 3×3 area when interacting with tilled soil. | Active interaction. |
+| Potato Planter (`merlin:potato_planter`) | Hoes | I | Plants potatoes in a 3×3 area when interacting with tilled soil. | Active interaction. |
+| Experience (`merlin:experience`) | `pickaxes` | III | Adds experience from eligible ore breaks. | Block break. |
+| Rebreather (`merlin:rebreather`) | `pickaxes` | III | Restores 20 air ticks per rank while mining underwater. | Block break. |
+| Replenish (`merlin:replenish`) | `pickaxes` | III | Restores food while mining. | Block break. |
+| Unbreakable (`merlin:unbreakable`) | `durable items` | I | Prevents item damage from reducing durability. | Item damage. |
+| Reforged (`merlin:reforged`) | `durable items` | V | Reduces incoming item damage. | Item damage. |
+
+## Armor and defense custom definitions (10)
+
+| Name / key | Target | Max | Implemented behavior | Trigger / storage |
+|---|---|---:|---|---|
+| Aegis (`merlin:aegis`) | `all armor` | III | Grants Speed after fall damage for 100 ticks per rank. | Environmental damage. |
+| Angelic (`merlin:angelic`) | `all armor` | III | Heals the wearer after taking damage. | Armor defense. |
+| Armored (`merlin:armored`) | `all armor` | III | Reduces damage from sword attackers by 10% per rank. | Armor defense. |
+| Chunky (`merlin:chunky`) | `all armor` | III | Reduces incoming damage by 5% per rank. | Armor defense. |
+| Dodge (`merlin:dodge`) | `all armor` | III | Has a 10% per-rank chance to cancel physical attacks; projectiles are not included. | Armor defense. |
+| Heavy (`merlin:heavy`) | `all armor` | III | Reduces arrow damage by 10% per rank. | Armor defense. |
+| Molten (`merlin:molten`) | `all armor` | III | Sets a living attacker on fire for 60 ticks per rank. | Armor defense. |
+| Reflect (`merlin:reflect`) | `all armor` | III | Reflects 10% of initial damage per rank. | Armor defense. |
+| Safeguard (`merlin:safeguard`) | `all armor` | III | Grants Resistance for 60 ticks per rank when defending. | Armor defense. |
+| Tank (`merlin:tank`) | `all armor` | III | Reduces damage from axe attackers by 10% per rank. | Armor defense. |
+
+## Combat custom definitions (7)
+
+| Name / key | Target | Max | Implemented behavior | Trigger / storage |
+|---|---|---:|---|---|
+| Bleed (`merlin:bleed`) | `weapons` | III | Applies Wither for 80 ticks per rank. | Entity hit. |
+| Blind (`merlin:blind`) | `weapons` | III | Applies Blindness for 100 ticks per rank. | Entity hit. |
+| Block (`merlin:block`) | `weapons` | III | Has an 8% per-rank chance to cancel the incoming hit. | Entity hit. |
+| Berserk (`merlin:berserk`) | `weapons` | III | Grants Strength and applies Mining Fatigue for 60 ticks per rank. | Entity hit. |
+| Critical (`merlin:critical`) | `weapons` | III | Adds 10% damage per rank for airborne critical hits. | Entity hit. |
+| Double Strike (`merlin:double_strike`) | `weapons` | III | Deals an additional hit based on initial damage multiplied by rank. | Entity hit. |
+| Thunderlord (`merlin:thunderlord`) | `weapons` | III | Calls lightning on every third consecutive hit. | Entity hit and bounded hit tracking. |
+
+## Ranged custom definitions (3)
+
+| Name / key | Target | Max | Implemented behavior | Trigger / storage |
+|---|---|---:|---|---|
+| Archer (`merlin:archer`) | `bows` | III | Increases projectile velocity by 10% per rank. | Bow shoot. |
+| Marksman (`merlin:marksman`) | `crossbows` | III | Increases projectile velocity by 8% per rank. | Bow shoot. |
+| Sniper (`merlin:sniper`) | `bows` | III | On a projectile hit near the victim's eye height, applies extra damage based on projectile base damage multiplied by rank. | Projectile hit. The runtime behavior is not a strict headshot raycast or a generic “double damage” rule. |
+
+## Fishing and water custom definitions (6)
+
+| Name / key | Target | Max | Implemented behavior | Trigger / storage |
+|---|---|---:|---|---|
+| Auto Reel (`merlin:auto_reel`) | `fishing rods` | III | Automatically pulls the hook on a bite. | Fishing bite. |
+| Bait (`merlin:bait`) | `fishing rods` | III | Duplicates caught item drops once per rank. | Fishing catch. |
+| Hook (`merlin:hook`) | `fishing rods` | III | Grants four experience per rank on a catch. | Fishing catch. |
+| Snap (`merlin:snap`) | `fishing rods` | III | Teleports a caught entity to the player. | Fishing catch. |
+| Fire Hook (`merlin:fire_hook`) | `fishing rods` | III | Sets a hook-contact victim on fire for 80 ticks per rank. | Hook contact. |
+| Poisoned Hook (`merlin:poisoned_hook`) | `fishing rods` | III | Applies Poison for 80 ticks per rank on hook contact. | Hook contact. |
+
+## Mobility and passive custom definitions (13)
+
+| Name / key | Target | Max | Implemented behavior | Trigger / storage |
+|---|---|---:|---|---|
+| Lava Walker (`merlin:lava_walker`) | `boots` | III | Converts nearby lava into obsidian while moving. | Player movement. |
+| Water Walker (`merlin:water_walker`) | `boots` | III | Creates temporary frosted ice while moving over water. | Player movement. |
+| Plummet (`merlin:plummet`) | `all armor` | III | Damages nearby mobs when the wearer takes fall damage. | Environmental damage. |
+| Jelly Legs (`merlin:jelly_legs`) | `all armor` | III | Cancels fall damage. | Environmental damage. |
+| Gears (`merlin:gears`) | `all armor` | III | Applies Speed while equipped; amplifier scales with rank. | Passive equipment tick. |
+| Springs (`merlin:springs`) | `all armor` | III | Applies Jump Boost while equipped. | Passive equipment tick. |
+| Aquatic (`merlin:aquatic`) | `all armor` | III | Applies Water Breathing while equipped. | Passive equipment tick. |
+| Glowing (`merlin:glowing`) | `all armor` | III | Applies Night Vision while equipped. | Passive equipment tick. |
+| Implants (`merlin:implants`) | `all armor` | III | Periodically restores food and saturation. | Passive equipment tick. |
+| Obsidianshield (`merlin:obsidianshield`) | `all armor` | III | Applies Fire Resistance while equipped. | Passive equipment tick. |
+| Overload (`merlin:overload`) | `all armor` | III | Adds two maximum-health points per rank while equipped. | Passive equipment tick. |
+| Wings (`merlin:wings`) | `elytra` | III | Allows flight while equipped. | Passive equipment tick. |
+| Momentum (`merlin:momentum`) | `elytra` | III | Increases elytra firework-boost velocity by 50% per rank. | Firework boost. |
+
+---

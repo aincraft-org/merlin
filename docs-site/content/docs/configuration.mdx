@@ -1,0 +1,29 @@
+---
+title: "Configuration and Permissions"
+description: "Commands, permissions, configuration keys, and runtime safety limits."
+---
+
+## Permissions
+
+| Permission | Default | Grants |
+|---|---|---|
+| `merlin.scribe.book` | true | Create and use Scribe books. |
+| `merlin.glyph.draw` | true | Draw and save glyph maps and, in the current command path, use tome actions. |
+| `merlin.glyph.tome` | true | Use glyph tome operations. |
+
+## Configuration
+
+- `model.repository`, `model.version`, and `model.allow-unreleased` select the classifier bundle. The bundle must contain the expected manifest/model/checksum files; unreleased bundles are disabled by default.
+- `altar.*` controls scan radii, block contributions, and Eterna/Quanta caps.
+- `enchanting_offers.*` controls tier requirements, XP costs, lapis costs, enchantment counts, and Quanta multipliers.
+- `enchantments.disabled` removes named `merlin:<key>` definitions from offer/application queries without removing them from registry inspection.
+
+## Runtime safety limits
+
+- Scribe source: 4,096 Unicode scalars and 16,384 UTF-8 bytes, at most 16 non-blank lines, four effects, and bounded numeric arguments.
+- Glyph drafts and classifier work use bounded serialized data and a bounded classifier queue; classifier callbacks return to the main thread.
+- Glyph tomes contain at most three pages.
+- Altar offers are validated before costs are deducted, and GUI inputs are reclaimed on close, quit, or death.
+- Custom damage, block-break, and hook cascades are bounded by their scope/guard contracts.
+
+---

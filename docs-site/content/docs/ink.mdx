@@ -1,0 +1,25 @@
+---
+title: "Magical Ink"
+description: "Elemental ink bottles, durability fill, flowers, and Mortar & Pestle grinding."
+---
+
+## Ink bottles
+
+Ink is stored in marked potion bottles. Each bottle records its element, remaining fill, and maximum fill in plugin-owned PDC. The current elements are physical, flame, frost, and arcane. The bottle is not drinkable, has custom styling, and uses remaining fill like a durability bar.
+
+`/glyph ink <element> [count]` remains the direct authoring shortcut. The `fire` input alias is normalized to `flame`.
+
+## Mortar and Pestle
+
+A Mortar & Pestle is a marked bowl crafted shapelessly from one bowl and one stick. Hold it in the main hand and a mapped flower in the off hand, then right-click air or a block. One flower is consumed and one full bottle of the matching ink is produced. Empty bottles are not refilled; unmapped flowers are not consumed.
+
+| Ink element | Mapped flowers |
+|---|---|
+| Flame | Torchflower, poppy |
+| Frost | Blue orchid, cornflower |
+| Arcane | Allium, wither rose, lilac |
+| Physical | Oxeye daisy, dandelion, azure bluet, sunflower |
+
+Relevant sources: [InkStore.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/ink/InkStore.java), [FlowerGrind.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/ink/FlowerGrind.java), [GrindListener.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/ink/GrindListener.java), and [MortarPestle.java](https://github.com/aincraft-org/merlin/blob/master/merlin-paper/src/main/java/dev/mintychochip/merlin/paper/ink/MortarPestle.java).
+
+---
