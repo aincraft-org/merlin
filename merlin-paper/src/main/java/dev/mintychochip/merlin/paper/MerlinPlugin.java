@@ -37,9 +37,11 @@ import dev.mintychochip.merlin.paper.enchanting.OvercapEnchantmentListener;
 import dev.mintychochip.merlin.paper.enchanting.OvercapItemAdapter;
 import dev.mintychochip.merlin.paper.enchanting.QuantaRollEngine;
 import dev.mintychochip.merlin.paper.enchanting.gui.AltarGuiListener;
-import dev.mintychochip.merlin.paper.enchanting.custom.CustomEnchantmentDispatcher;
-import dev.mintychochip.merlin.paper.enchanting.custom.CustomEnchantmentListener;
-import java.io.IOException;
+	import dev.mintychochip.merlin.paper.enchanting.custom.CustomEnchantmentDispatcher;
+	import dev.mintychochip.merlin.paper.enchanting.custom.CustomEnchantmentListener;
+	import dev.mintychochip.merlin.paper.enchanting.custom.passive.PassiveEffectApplier;
+	import dev.mintychochip.merlin.paper.enchanting.custom.passive.PassiveEquipListener;
+	import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -126,11 +128,18 @@ public final class MerlinPlugin extends JavaPlugin {
     getServer().getPluginManager().registerEvents(altarGuiListener, this);
     getServer().getPluginManager().registerEvents(new AltarInteractListener(altarScanner, enchantmentRegistry, quantaRollEngine, overcapAdapter), this);
     getServer().getPluginManager().registerEvents(new OvercapEnchantmentListener(overcapAdapter, enchantmentRegistry), this);
-    var customDispatcher = new CustomEnchantmentDispatcher(overcapAdapter, enchantmentRegistry);
-    getServer().getPluginManager().registerEvents(
-            new CustomEnchantmentListener(
-                    customDispatcher, task -> getServer().getScheduler().runTask(this, task)),
-            this);
+    	    var customDispatcher = new CustomEnchantmentDispatcher(overcapAdapter, enchantmentRegistry);
+	    getServer().getPluginManager().registerEvents(
+	            new CustomEnchantmentListener(
+	                    customDispatcher, task -> getServer().getScheduler().runTask(this, task)),
+	            this);
+	    var passiveApplier = new PassiveEffectApplier();
+	    getServer().getPluginManager().registerEvents(
+	            new PassiveEquipListener(
+	                    passiveApplier, task -> getServer().getScheduler().runTask(this, task)),
+	            this);
+	    getServer().getScheduler().runTaskTimer(
+	            this, passiveApplier::tickImplants, 40L, 40L);
   }
 
   private void preloadBundledClasses() {

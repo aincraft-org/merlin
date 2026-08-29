@@ -64,8 +64,16 @@ import dev.mintychochip.merlin.paper.enchanting.custom.handler.UnbreakableHandle
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.VacuumHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.VampirismHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.VorpalHandler;
-import dev.mintychochip.merlin.paper.enchanting.custom.handler.WisdomHandler;
-import java.util.List;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.WisdomHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.passive.AquaticHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.passive.GearsHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.passive.GlowingHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.passive.ImplantsHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.passive.ObsidianshieldHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.passive.OverloadHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.passive.SpringsHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.passive.WingsHandler;
+	import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -165,6 +173,7 @@ public final class EnchantmentRegistry {
 			Material.LEATHER_BOOTS, Material.CHAINMAIL_BOOTS, Material.IRON_BOOTS,
 			Material.GOLDEN_BOOTS, Material.DIAMOND_BOOTS, Material.NETHERITE_BOOTS
 	);
+	Set<Material> elytra = Set.of(Material.ELYTRA);
 	Set<Material> leggings = Set.of(
                 Material.LEATHER_LEGGINGS, Material.CHAINMAIL_LEGGINGS, Material.IRON_LEGGINGS,
                 Material.GOLDEN_LEGGINGS, Material.DIAMOND_LEGGINGS, Material.NETHERITE_LEGGINGS
@@ -274,6 +283,14 @@ public final class EnchantmentRegistry {
 		registerCustom(reg, "water_walker", "Water Walker", 3, 10, 5, 10, boots, new WaterWalkerHandler());
         registerCustom(reg, "plummet", "Plummet", 3, 10, 5, 10, allArmor, new PlummetHandler());
         registerCustom(reg, "jelly_legs", "Jelly Legs", 3, 10, 5, 10, allArmor, new JellyLegsHandler());
+        registerCustom(reg, "gears", "Gears", 3, 10, 5, 10, allArmor, new GearsHandler());
+        registerCustom(reg, "springs", "Springs", 3, 10, 5, 10, allArmor, new SpringsHandler());
+        registerCustom(reg, "aquatic", "Aquatic", 3, 10, 5, 10, allArmor, new AquaticHandler());
+        registerCustom(reg, "glowing", "Glowing", 3, 10, 5, 10, allArmor, new GlowingHandler());
+        registerCustom(reg, "implants", "Implants", 3, 10, 5, 10, allArmor, new ImplantsHandler());
+        registerCustom(reg, "obsidianshield", "Obsidianshield", 3, 10, 5, 10, allArmor, new ObsidianshieldHandler());
+        registerCustom(reg, "overload", "Overload", 3, 10, 5, 10, allArmor, new OverloadHandler());
+        registerCustom(reg, "wings", "Wings", 3, 10, 5, 10, elytra, new WingsHandler());
         return reg;
     }
 

@@ -76,7 +76,15 @@ final class CustomEnchantmentRegistryTest {
             entry("lava_walker", "Lava Walker", 3),
             entry("water_walker", "Water Walker", 3),
             entry("plummet", "Plummet", 3),
-            entry("jelly_legs", "Jelly Legs", 3)
+            entry("jelly_legs", "Jelly Legs", 3),
+            entry("gears", "Gears", 3),
+            entry("springs", "Springs", 3),
+            entry("aquatic", "Aquatic", 3),
+            entry("glowing", "Glowing", 3),
+            entry("implants", "Implants", 3),
+            entry("obsidianshield", "Obsidianshield", 3),
+            entry("overload", "Overload", 3),
+            entry("wings", "Wings", 3)
     );
 
     @Test
