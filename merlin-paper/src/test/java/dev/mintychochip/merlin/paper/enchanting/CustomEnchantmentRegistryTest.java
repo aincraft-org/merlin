@@ -36,7 +36,19 @@ final class CustomEnchantmentRegistryTest {
             entry("prismatic", "Prismatic", 1),
             entry("overflowing", "Overflowing", 1),
             entry("vacuum", "Vacuum", 1),
-            entry("heat_wave", "Heat Wave", 1)
+            entry("heat_wave", "Heat Wave", 1),
+            entry("telepathy", "Telepathy", 1),
+            entry("timber", "Timber", 3),
+            entry("trench", "Trench", 3),
+            entry("replanter", "Replanter", 1),
+            entry("planter", "Planter", 1),
+            entry("carrot_planter", "Carrot Planter", 1),
+            entry("potato_planter", "Potato Planter", 1),
+            entry("experience", "Experience", 3),
+            entry("rebreather", "Rebreather", 3),
+            entry("replenish", "Replenish", 3),
+            entry("unbreakable", "Unbreakable", 1),
+            entry("reforged", "Reforged", 5)
     );
 
     @Test
@@ -81,6 +93,21 @@ final class CustomEnchantmentRegistryTest {
         assertTargets(registry, "prismatic", Set.of(Material.SHEARS), Material.IRON_SWORD);
         assertTargets(registry, "overflowing", Set.of(Material.BUCKET, Material.WATER_BUCKET), Material.SHEARS);
         assertTargets(registry, "heat_wave", Set.of(Material.FLINT_AND_STEEL), Material.BUCKET);
+        assertTargets(registry, "telepathy", Set.of(Material.DIAMOND_PICKAXE), Material.DIAMOND_SWORD);
+        assertTargets(registry, "timber", Set.of(Material.DIAMOND_AXE), Material.DIAMOND_PICKAXE);
+        assertTargets(registry, "trench", Set.of(Material.DIAMOND_PICKAXE, Material.DIAMOND_SHOVEL),
+                Material.DIAMOND_SWORD);
+        assertTargets(registry, "replanter", Set.of(Material.DIAMOND_HOE), Material.DIAMOND_PICKAXE);
+        assertTargets(registry, "planter", Set.of(Material.DIAMOND_HOE), Material.DIAMOND_PICKAXE);
+        assertTargets(registry, "carrot_planter", Set.of(Material.DIAMOND_HOE), Material.DIAMOND_PICKAXE);
+        assertTargets(registry, "potato_planter", Set.of(Material.DIAMOND_HOE), Material.DIAMOND_PICKAXE);
+        assertTargets(registry, "experience", Set.of(Material.DIAMOND_PICKAXE), Material.DIAMOND_SWORD);
+        assertTargets(registry, "rebreather", Set.of(Material.DIAMOND_PICKAXE), Material.DIAMOND_SWORD);
+        assertTargets(registry, "replenish", Set.of(Material.DIAMOND_PICKAXE), Material.DIAMOND_SWORD);
+        assertTargets(registry, "unbreakable", Set.of(Material.DIAMOND_SWORD, Material.BOW),
+                Material.DIAMOND_CHESTPLATE);
+        assertTargets(registry, "reforged", Set.of(Material.DIAMOND_SWORD, Material.BOW),
+                Material.DIAMOND_CHESTPLATE);
     }
 
     @Test

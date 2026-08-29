@@ -3,11 +3,13 @@ package dev.mintychochip.merlin.paper.enchanting;
 import dev.mintychochip.merlin.paper.enchanting.handler.FortuneOvercapHandler;
 import dev.mintychochip.merlin.paper.enchanting.handler.SharpnessOvercapHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ArrayHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.CarrotPlanterHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ColdAspectHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ColoramaHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ConfusingAspectHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.DrillHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.EquilibriumHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ExperienceHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.FeatherHoovesHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.FlurryHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.HeatWaveHandler;
@@ -16,11 +18,21 @@ import dev.mintychochip.merlin.paper.enchanting.custom.handler.LeapingHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.MoltenTouchHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.NetherScourgeHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.OverflowingHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.PlanterHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.PlunderHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.PotatoPlanterHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.PrismaticHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.QuenchingHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ReforgedHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ReplanterHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ReplenishHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.RebreatherHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.StickyGripHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.TelepathyHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.TimberHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ToxinAspectHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.TrenchHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.UnbreakableHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.VacuumHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.VampirismHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.VorpalHandler;
@@ -91,6 +103,33 @@ public final class EnchantmentRegistry {
                 Material.WOODEN_HOE, Material.STONE_HOE, Material.IRON_HOE,
                 Material.GOLDEN_HOE, Material.DIAMOND_HOE, Material.NETHERITE_HOE
         ));
+        Set<Material> axes = Set.of(
+                Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE,
+                Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE
+        );
+        Set<Material> pickaxesAndShovels = Set.copyOf(List.of(
+                Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE,
+                Material.GOLDEN_PICKAXE, Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE,
+                Material.WOODEN_SHOVEL, Material.STONE_SHOVEL, Material.IRON_SHOVEL,
+                Material.GOLDEN_SHOVEL, Material.DIAMOND_SHOVEL, Material.NETHERITE_SHOVEL
+        ));
+        Set<Material> hoes = Set.of(
+                Material.WOODEN_HOE, Material.STONE_HOE, Material.IRON_HOE,
+                Material.GOLDEN_HOE, Material.DIAMOND_HOE, Material.NETHERITE_HOE
+        );
+        Set<Material> durableItems = Set.copyOf(List.of(
+                Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
+                Material.GOLDEN_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD,
+                Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE,
+                Material.GOLDEN_PICKAXE, Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE,
+                Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE,
+                Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE,
+                Material.WOODEN_SHOVEL, Material.STONE_SHOVEL, Material.IRON_SHOVEL,
+                Material.GOLDEN_SHOVEL, Material.DIAMOND_SHOVEL, Material.NETHERITE_SHOVEL,
+                Material.WOODEN_HOE, Material.STONE_HOE, Material.IRON_HOE,
+                Material.GOLDEN_HOE, Material.DIAMOND_HOE, Material.NETHERITE_HOE,
+                Material.BOW
+        ));
         Set<Material> bows = Set.of(Material.BOW);
         Set<Material> leggings = Set.of(
                 Material.LEATHER_LEGGINGS, Material.CHAINMAIL_LEGGINGS, Material.IRON_LEGGINGS,
@@ -153,6 +192,18 @@ public final class EnchantmentRegistry {
         registerCustom(reg, "vacuum", "Vacuum", 1, 10, 5, 10,
                 Set.of(Material.BUCKET, Material.WATER_BUCKET), new VacuumHandler());
         registerCustom(reg, "heat_wave", "Heat Wave", 1, 10, 5, 10, Set.of(Material.FLINT_AND_STEEL), new HeatWaveHandler());
+        registerCustom(reg, "telepathy", "Telepathy", 1, 10, 5, 10, customTools, new TelepathyHandler());
+        registerCustom(reg, "timber", "Timber", 3, 15, 10, 8, axes, new TimberHandler());
+        registerCustom(reg, "trench", "Trench", 3, 15, 10, 8, pickaxesAndShovels, new TrenchHandler());
+        registerCustom(reg, "replanter", "Replanter", 1, 10, 5, 10, hoes, new ReplanterHandler());
+        registerCustom(reg, "planter", "Planter", 1, 10, 5, 8, hoes, new PlanterHandler());
+        registerCustom(reg, "carrot_planter", "Carrot Planter", 1, 10, 5, 8, hoes, new CarrotPlanterHandler());
+        registerCustom(reg, "potato_planter", "Potato Planter", 1, 10, 5, 8, hoes, new PotatoPlanterHandler());
+        registerCustom(reg, "experience", "Experience", 3, 10, 5, 10, pickaxes, new ExperienceHandler());
+        registerCustom(reg, "rebreather", "Rebreather", 3, 10, 5, 10, pickaxes, new RebreatherHandler());
+        registerCustom(reg, "replenish", "Replenish", 3, 10, 5, 10, pickaxes, new ReplenishHandler());
+        registerCustom(reg, "unbreakable", "Unbreakable", 1, 20, 20, 3, durableItems, new UnbreakableHandler());
+        registerCustom(reg, "reforged", "Reforged", 5, 10, 5, 8, durableItems, new ReforgedHandler());
         return reg;
     }
 
