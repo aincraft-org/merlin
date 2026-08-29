@@ -2,6 +2,29 @@ package dev.mintychochip.merlin.paper.enchanting;
 
 import dev.mintychochip.merlin.paper.enchanting.handler.FortuneOvercapHandler;
 import dev.mintychochip.merlin.paper.enchanting.handler.SharpnessOvercapHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ArrayHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ColdAspectHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ColoramaHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ConfusingAspectHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.DrillHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.EquilibriumHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.FeatherHoovesHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.FlurryHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.HeatWaveHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.KnowledgeHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.LeapingHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.MoltenTouchHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.NetherScourgeHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.OverflowingHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.PlunderHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.PrismaticHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.QuenchingHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.StickyGripHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.ToxinAspectHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.VacuumHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.VampirismHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.VorpalHandler;
+import dev.mintychochip.merlin.paper.enchanting.custom.handler.WisdomHandler;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -91,41 +114,48 @@ public final class EnchantmentRegistry {
                 NamespacedKey.minecraft("unbreaking"), "Unbreaking", 3, 5, 0, 5, 8, swords,
                 Optional.empty()));
 
-        registerCustom(reg, "sticky_grip", "Sticky Grip", 1, 5, 5, 10, weaponsAndTools);
-        registerCustom(reg, "equilibrium", "Equilibrium", 5, 0, 5, 10, weapons);
-        registerCustom(reg, "nethers_scourge", "Nether's Scourge", 6, 0, 5, 10, weapons);
-        registerCustom(reg, "cold_aspect", "Cold Aspect", 3, 5, 10, 10, weapons);
-        registerCustom(reg, "confusing_aspect", "Confusing Aspect", 3, 5, 10, 10, weapons);
-        registerCustom(reg, "toxin_aspect", "Toxin Aspect", 3, 5, 10, 10, weapons);
-        registerCustom(reg, "knowledge", "Knowledge", 3, 10, 5, 10, weapons);
-        registerCustom(reg, "vorpal", "Vorpal", 3, 10, 5, 10, weapons);
-        registerCustom(reg, "vampirism", "Vampirism", 5, 5, 5, 10, weapons);
-        registerCustom(reg, "flurry", "Flurry", 3, 10, 5, 10, swords);
-        registerCustom(reg, "array", "Array", 2, 10, 10, 10, bows);
-        registerCustom(reg, "plunder", "Plunder", 3, 5, 5, 10, bows);
-        registerCustom(reg, "wisdom", "Wisdom", 3, 10, 5, 10, bows);
-        registerCustom(reg, "drill", "Drill", 3, 10, 5, 10, pickaxes);
+        registerCustom(reg, "sticky_grip", "Sticky Grip", 1, 5, 5, 10, weaponsAndTools, new StickyGripHandler());
+        registerCustom(reg, "equilibrium", "Equilibrium", 5, 0, 5, 10, weapons, new EquilibriumHandler());
+        registerCustom(reg, "nethers_scourge", "Nether's Scourge", 6, 0, 5, 10, weapons, new NetherScourgeHandler());
+        registerCustom(reg, "cold_aspect", "Cold Aspect", 3, 5, 10, 10, weapons, new ColdAspectHandler());
+        registerCustom(reg, "confusing_aspect", "Confusing Aspect", 3, 5, 10, 10, weapons, new ConfusingAspectHandler());
+        registerCustom(reg, "toxin_aspect", "Toxin Aspect", 3, 5, 10, 10, weapons, new ToxinAspectHandler());
+        registerCustom(reg, "knowledge", "Knowledge", 3, 10, 5, 10, weapons, new KnowledgeHandler());
+        registerCustom(reg, "vorpal", "Vorpal", 3, 10, 5, 10, weapons, new VorpalHandler());
+        registerCustom(reg, "vampirism", "Vampirism", 5, 5, 5, 10, weapons, new VampirismHandler());
+        registerCustom(reg, "flurry", "Flurry", 3, 10, 5, 10, swords, new FlurryHandler());
+        registerCustom(reg, "array", "Array", 2, 10, 10, 10, bows, new ArrayHandler());
+        registerCustom(reg, "plunder", "Plunder", 3, 5, 5, 10, bows, new PlunderHandler());
+        registerCustom(reg, "wisdom", "Wisdom", 3, 10, 5, 10, bows, new WisdomHandler());
+        registerCustom(reg, "drill", "Drill", 3, 10, 5, 10, pickaxes, new DrillHandler());
         registerCustom(reg, "expertise", "Expertise", 3, 10, 5, 10, pickaxes);
-        registerCustom(reg, "quenching", "Quenching", 4, 0, 5, 10, leggings);
-        registerCustom(reg, "colorama", "Colorama", 1, 10, 5, 10, leatherArmor);
-        registerCustom(reg, "leaping", "Leaping", 3, 5, 5, 10, Set.of(Material.SADDLE));
-        registerCustom(reg, "feather_hooves", "Feather Hooves", 1, 5, 5, 10, Set.of(Material.SADDLE));
-        registerCustom(reg, "molten_touch", "Molten Touch", 1, 15, 5, 10, customTools);
-        registerCustom(reg, "prismatic", "Prismatic", 1, 15, 5, 10, Set.of(Material.SHEARS));
+        registerCustom(reg, "quenching", "Quenching", 4, 0, 5, 10, leggings, new QuenchingHandler());
+        registerCustom(reg, "colorama", "Colorama", 1, 10, 5, 10, leatherArmor, new ColoramaHandler());
+        registerCustom(reg, "leaping", "Leaping", 3, 5, 5, 10, Set.of(Material.SADDLE), new LeapingHandler());
+        registerCustom(reg, "feather_hooves", "Feather Hooves", 1, 5, 5, 10, Set.of(Material.SADDLE), new FeatherHoovesHandler());
+        registerCustom(reg, "molten_touch", "Molten Touch", 1, 15, 5, 10, customTools, new MoltenTouchHandler());
+        registerCustom(reg, "prismatic", "Prismatic", 1, 15, 5, 10, Set.of(Material.SHEARS), new PrismaticHandler());
         registerCustom(reg, "overflowing", "Overflowing", 1, 10, 5, 10,
-                Set.of(Material.BUCKET, Material.WATER_BUCKET));
+                Set.of(Material.BUCKET, Material.WATER_BUCKET), new OverflowingHandler());
         registerCustom(reg, "vacuum", "Vacuum", 1, 10, 5, 10,
-                Set.of(Material.BUCKET, Material.WATER_BUCKET));
-        registerCustom(reg, "heat_wave", "Heat Wave", 1, 10, 5, 10, Set.of(Material.FLINT_AND_STEEL));
+                Set.of(Material.BUCKET, Material.WATER_BUCKET), new VacuumHandler());
+        registerCustom(reg, "heat_wave", "Heat Wave", 1, 10, 5, 10, Set.of(Material.FLINT_AND_STEEL), new HeatWaveHandler());
         return reg;
     }
 
     private static void registerCustom(EnchantmentRegistry registry, String key, String displayName,
                                        int absoluteMaxLevel, int baseEternaRequired, int eternaPerLevel,
                                        int weight, Set<Material> targetMaterials) {
+        registerCustom(registry, key, displayName, absoluteMaxLevel, baseEternaRequired, eternaPerLevel,
+                weight, targetMaterials, null);
+    }
+
+    private static void registerCustom(EnchantmentRegistry registry, String key, String displayName,
+                                       int absoluteMaxLevel, int baseEternaRequired, int eternaPerLevel,
+                                       int weight, Set<Material> targetMaterials, OvercapEffectHandler handler) {
         registry.register(new EnchantmentDefinition(
                 new NamespacedKey("merlin", key), displayName, 0, absoluteMaxLevel,
-                baseEternaRequired, eternaPerLevel, weight, targetMaterials, Optional.empty()));
+                baseEternaRequired, eternaPerLevel, weight, targetMaterials, Optional.ofNullable(handler)));
     }
 
     public void register(EnchantmentDefinition def) {

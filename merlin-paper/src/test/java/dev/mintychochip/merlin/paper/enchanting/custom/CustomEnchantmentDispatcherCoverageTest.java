@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import dev.mintychochip.merlin.paper.enchanting.EnchantmentDefinition;
@@ -22,6 +23,10 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
@@ -107,6 +112,85 @@ final class CustomEnchantmentDispatcherCoverageTest {
                 "toggleSprint", "entityInteract", "expGain"), handler.seen);
     }
 
+    @Test
+    void dispatchesPdcItemsToTheirRegisteredTriggerHandlers() {
+        Plugin plugin = mock(Plugin.class);
+        when(plugin.getName()).thenReturn("Merlin");
+        when(plugin.namespace()).thenReturn("merlin");
+        EnchantmentRegistry registry = new EnchantmentRegistry();
+        RecordingHandler combat = register(registry, "combat");
+        RecordingHandler kill = register(registry, "kill");
+        RecordingHandler bow = register(registry, "bow");
+        RecordingHandler blockBreak = register(registry, "block_break");
+        RecordingHandler food = register(registry, "food");
+        RecordingHandler horse = register(registry, "horse");
+        RecordingHandler bucketEmpty = register(registry, "bucket_empty");
+        RecordingHandler bucketFill = register(registry, "bucket_fill");
+        RecordingHandler shear = register(registry, "shear");
+        RecordingHandler drop = register(registry, "drop");
+        RecordingHandler playerDrop = register(registry, "player_drop");
+        OvercapItemAdapter adapter = new OvercapItemAdapter(plugin, registry);
+        CustomEnchantmentDispatcher dispatcher = new CustomEnchantmentDispatcher(adapter, registry);
+
+        Player player = mock(Player.class);
+        LivingEntity living = mock(LivingEntity.class);
+        Entity entity = mock(Entity.class);
+        Block block = mock(Block.class);
+        Item dropEntity = mock(Item.class);
+
+        dispatcher.dispatchPlayerDrop(player, pdcItem(plugin, "player_drop"));
+        dispatcher.dispatchEntityHit(player, living, new MutableDamage(10.0), pdcItem(plugin, "combat"));
+        dispatcher.dispatchEntityKill(player, living, new ArrayList<>(), new MutableExperience(3),
+                pdcItem(plugin, "kill"));
+        dispatcher.dispatchBowShoot(player, entity, pdcItem(plugin, "bow"), 1.0f);
+        dispatcher.dispatchBlockBreak(player, block, pdcItem(plugin, "block_break"), mock(CascadeScope.class));
+        dispatcher.dispatchFoodLevelChange(player, 10, 5, new ItemStack[]{pdcItem(plugin, "food")});
+        dispatcher.dispatchHorseJump(mock(org.bukkit.entity.AbstractHorse.class), 0.5f,
+                new ItemStack[]{pdcItem(plugin, "horse")});
+        dispatcher.dispatchBucketEmpty(player, block, BlockFace.UP, pdcItem(plugin, "bucket_empty"),
+                EquipmentSlot.HAND);
+        dispatcher.dispatchBucketFill(player, block, BlockFace.UP, pdcItem(plugin, "bucket_fill"),
+                EquipmentSlot.HAND);
+        dispatcher.dispatchShearEntity(player, entity, pdcItem(plugin, "shear"), EquipmentSlot.HAND);
+        dispatcher.dispatchBlockDrop(player, mock(BlockState.class), List.of(dropEntity), pdcItem(plugin, "drop"));
+
+        assertEquals(Set.of("entityHit"), combat.seen);
+        assertEquals(Set.of("entityKill"), kill.seen);
+        assertEquals(Set.of("bowShoot"), bow.seen);
+        assertEquals(Set.of("blockBreak"), blockBreak.seen);
+        assertEquals(Set.of("foodLevelChange"), food.seen);
+        assertEquals(Set.of("horseJump"), horse.seen);
+        assertEquals(Set.of("bucketEmpty"), bucketEmpty.seen);
+        assertEquals(Set.of("bucketFill"), bucketFill.seen);
+        assertEquals(Set.of("shearEntity"), shear.seen);
+        assertEquals(Set.of("blockDrop"), drop.seen);
+        assertEquals(Set.of("playerDrop"), playerDrop.seen);
+    }
+
+    private static RecordingHandler register(EnchantmentRegistry registry, String name) {
+        NamespacedKey key = new NamespacedKey("merlin", name);
+        RecordingHandler handler = new RecordingHandler(key);
+        registry.register(new EnchantmentDefinition(
+                key, name, 0, 3, 0, 5, 10, Set.of(Material.DIAMOND_SWORD), Optional.of(handler)));
+        return handler;
+    }
+
+    private static ItemStack pdcItem(Plugin plugin, String name) {
+        NamespacedKey key = new NamespacedKey("merlin", name);
+        NamespacedKey containerKey = new NamespacedKey(plugin, "overcap_enchantments");
+        PersistentDataContainer root = mock(PersistentDataContainer.class);
+        PersistentDataContainer sub = mock(PersistentDataContainer.class);
+        ItemMeta meta = mock(ItemMeta.class);
+        when(meta.getPersistentDataContainer()).thenReturn(root);
+        when(root.get(containerKey, PersistentDataType.TAG_CONTAINER)).thenReturn(sub);
+        when(sub.getKeys()).thenReturn(Set.of(key));
+        when(sub.get(key, PersistentDataType.INTEGER)).thenReturn(1);
+        ItemStack item = mock(ItemStack.class);
+        when(item.hasItemMeta()).thenReturn(true);
+        when(item.getItemMeta()).thenReturn(meta);
+        return item;
+    }
+
     private static final class RecordingHandler implements
             OvercapEffectHandler,
             EntityHitTrigger,
@@ -140,11 +224,20 @@ final class CustomEnchantmentDispatcherCoverageTest {
             PlayerToggleSprintTrigger,
             EntityInteractTrigger,
             ExpGainTrigger {
+        private final NamespacedKey key;
+        private RecordingHandler() {
+            this(KEY);
+        }
+
+        private RecordingHandler(NamespacedKey key) {
+            this.key = key;
+        }
+
         private final Set<String> seen = new java.util.LinkedHashSet<>();
 
         @Override
         public NamespacedKey key() {
-            return KEY;
+            return key;
         }
 
         @Override

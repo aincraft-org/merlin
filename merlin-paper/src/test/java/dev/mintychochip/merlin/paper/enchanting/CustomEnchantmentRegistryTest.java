@@ -53,9 +53,13 @@ final class CustomEnchantmentRegistryTest {
             assertEquals(entry.getValue().displayName(), definition.displayName());
             assertEquals(entry.getValue().maximum(), definition.absoluteMaxLevel());
             assertEquals(0, definition.vanillaMaxLevel());
-            assertTrue(definition.overcapHandler().isEmpty());
+            if (entry.getKey().equals("expertise")) {
+                assertTrue(definition.overcapHandler().isEmpty());
+            } else {
+                assertTrue(definition.overcapHandler().isPresent(), entry.getKey());
+                assertEquals(key(entry.getKey()), definition.overcapHandler().orElseThrow().key());
+            }
         }
-        assertTrue(registry.get(key("expertise")).orElseThrow().overcapHandler().isEmpty());
         assertEquals(2, registry.get(key("array")).orElseThrow().absoluteMaxLevel());
     }
 
