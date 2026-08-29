@@ -3,7 +3,7 @@ package dev.mintychochip.merlin.paper;
 import dev.mintychochip.merlin.api.dsl.Action;
 import dev.mintychochip.merlin.api.dsl.CompileResult;
 import dev.mintychochip.merlin.api.ml.ModelBundle;
-import dev.mintychochip.merlin.common.ml.OnnxGlyphClassifier;
+import dev.mintychochip.merlin.paper.ml.OnnxGlyphClassifier;
 import dev.mintychochip.merlin.paper.book.ScribeBookStore;
 import dev.mintychochip.merlin.paper.command.ScribeCommand;
 import dev.mintychochip.merlin.paper.dialog.ScribeDialog;
