@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,28 +27,38 @@ import org.junit.jupiter.api.Test;
 
 final class CustomEnchantmentPersistenceTest {
     @Test
-    void persistsCustomRankOneInPdcAndLore() {
+    void mergesSequentialCustomApplicationsWithoutDroppingExistingEnchantments() {
         Plugin plugin = mock(Plugin.class);
         when(plugin.getName()).thenReturn("Merlin");
         when(plugin.namespace()).thenReturn("merlin");
 
         PersistentDataContainer root = mock(PersistentDataContainer.class);
-        PersistentDataContainer sub = mock(PersistentDataContainer.class);
         PersistentDataAdapterContext context = mock(PersistentDataAdapterContext.class);
-        Map<NamespacedKey, Integer> values = new HashMap<>();
+        Map<PersistentDataContainer, Map<NamespacedKey, Integer>> valuesByContainer = new IdentityHashMap<>();
+        AtomicReference<PersistentDataContainer> subRef = new AtomicReference<>();
         when(root.getAdapterContext()).thenReturn(context);
-        when(context.newPersistentDataContainer()).thenReturn(sub);
-        when(root.get(any(NamespacedKey.class), eq(PersistentDataType.TAG_CONTAINER))).thenReturn(sub);
-        when(sub.getKeys()).thenAnswer(ignored -> Set.copyOf(values.keySet()));
-        when(sub.get(any(NamespacedKey.class), eq(PersistentDataType.INTEGER)))
-                .thenAnswer(invocation -> values.get(invocation.getArgument(0)));
+        when(root.get(any(NamespacedKey.class), eq(PersistentDataType.TAG_CONTAINER)))
+                .thenAnswer(ignored -> subRef.get());
+        when(context.newPersistentDataContainer()).thenAnswer(ignored -> {
+            PersistentDataContainer created = mock(PersistentDataContainer.class);
+            valuesByContainer.put(created, new HashMap<>());
+            wireContainer(created, valuesByContainer);
+            return created;
+        });
         doAnswer(invocation -> {
-            values.put(invocation.getArgument(0), invocation.getArgument(2));
+            subRef.set(invocation.getArgument(2));
             return null;
-        }).when(sub).set(any(NamespacedKey.class), eq(PersistentDataType.INTEGER), any(Integer.class));
+        }).when(root).set(any(NamespacedKey.class), eq(PersistentDataType.TAG_CONTAINER),
+                any(PersistentDataContainer.class));
 
         ItemMeta meta = mock(ItemMeta.class);
         when(meta.getPersistentDataContainer()).thenReturn(root);
+        PersistentDataContainer existingSub = mock(PersistentDataContainer.class);
+        valuesByContainer.put(existingSub, new HashMap<>());
+        wireContainer(existingSub, valuesByContainer);
+        NamespacedKey vanillaKey = new NamespacedKey("minecraft", "sharpness");
+        valuesByContainer.get(existingSub).put(vanillaKey, 7);
+        subRef.set(existingSub);
         AtomicReference<List<Component>> lore = new AtomicReference<>(List.of());
         when(meta.lore()).thenAnswer(ignored -> lore.get());
         doAnswer(invocation -> {
@@ -57,15 +68,39 @@ final class CustomEnchantmentPersistenceTest {
         ItemStack item = new TestItemStack(meta);
         OvercapItemAdapter adapter = new OvercapItemAdapter(plugin, EnchantmentRegistry.defaultRegistry());
         NamespacedKey stickyGrip = new NamespacedKey("merlin", "sticky_grip");
+        NamespacedKey equilibrium = new NamespacedKey("merlin", "equilibrium");
 
         assertTrue(adapter.applyEnchantments(item, Map.of(stickyGrip, 1)));
+        assertEquals(Map.of(vanillaKey, 7, stickyGrip, 1), adapter.readOvercap(item));
 
-        assertEquals(1, adapter.readOvercap(item).get(stickyGrip));
+        assertTrue(adapter.applyEnchantments(item, Map.of(equilibrium, 2)));
+        assertEquals(Map.of(vanillaKey, 7, stickyGrip, 1, equilibrium, 2), adapter.readOvercap(item));
+
+        assertTrue(adapter.applyEnchantments(item, Map.of(stickyGrip, 3)));
+        assertEquals(Map.of(vanillaKey, 7, stickyGrip, 3, equilibrium, 2), adapter.readOvercap(item));
+
         String loreText = lore.get().stream()
                 .map(PlainTextComponentSerializer.plainText()::serialize)
                 .reduce((left, right) -> left + "\n" + right)
                 .orElse("");
         assertTrue(loreText.contains("Sticky Grip I"));
+        assertTrue(loreText.contains("Equilibrium II"));
+        assertTrue(loreText.contains("Sticky Grip III"));
+    }
+
+    private static void wireContainer(PersistentDataContainer container,
+                                      Map<PersistentDataContainer, Map<NamespacedKey, Integer>> valuesByContainer) {
+        when(container.getKeys()).thenAnswer(ignored -> Set.copyOf(valuesByContainer.get(container).keySet()));
+        when(container.get(any(NamespacedKey.class), eq(PersistentDataType.INTEGER)))
+                .thenAnswer(invocation -> valuesByContainer.get(container).get(invocation.getArgument(0)));
+        doAnswer(invocation -> {
+            valuesByContainer.get(container).put(invocation.getArgument(0), invocation.getArgument(2));
+            return null;
+        }).when(container).set(any(NamespacedKey.class), eq(PersistentDataType.INTEGER), any(Integer.class));
+        doAnswer(invocation -> {
+            valuesByContainer.get(container).remove(invocation.getArgument(0));
+            return null;
+        }).when(container).remove(any(NamespacedKey.class));
     }
 
     private static final class TestItemStack extends ItemStack {

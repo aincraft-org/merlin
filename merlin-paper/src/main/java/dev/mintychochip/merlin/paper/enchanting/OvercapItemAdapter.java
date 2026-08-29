@@ -45,7 +45,10 @@ public final class OvercapItemAdapter {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return false;
         PersistentDataContainer root = meta.getPersistentDataContainer();
-        PersistentDataContainer sub = root.getAdapterContext().newPersistentDataContainer();
+        PersistentDataContainer sub = root.get(overcapContainerKey, PersistentDataType.TAG_CONTAINER);
+        if (sub == null) {
+            sub = root.getAdapterContext().newPersistentDataContainer();
+        }
 
         List<Component> overcapLore = new ArrayList<>();
         for (var entry : enchants.entrySet()) {
@@ -55,6 +58,7 @@ public final class OvercapItemAdapter {
             Enchantment vanilla = def != null && def.vanillaMaxLevel() == 0
                     ? null : Enchantment.getByKey(key);
             boolean registeredCustom = def != null && vanilla == null;
+            sub.remove(key);
             int vanillaMax = def != null ? def.vanillaMaxLevel() : (vanilla != null ? vanilla.getMaxLevel() : 1);
 
             if (registeredCustom && level > 0) {

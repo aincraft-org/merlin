@@ -22,4 +22,22 @@ final class EnchantmentRegistryTest {
         List<EnchantmentDefinition> highEterna = registry.findEligible(Material.DIAMOND_SWORD, 50.0);
         assertTrue(highEterna.size() >= lowEterna.size());
     }
+
+    @Test
+    void preservesVanillaToolTargetEligibility() {
+        EnchantmentRegistry registry = EnchantmentRegistry.defaultRegistry();
+
+        for (Material pickaxe : List.of(
+                Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE,
+                Material.GOLDEN_PICKAXE, Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE)) {
+            assertTrue(registry.get(org.bukkit.NamespacedKey.minecraft("fortune")).orElseThrow()
+                    .canApplyTo(pickaxe));
+            assertTrue(registry.get(org.bukkit.NamespacedKey.minecraft("efficiency")).orElseThrow()
+                    .canApplyTo(pickaxe));
+        }
+        assertFalse(registry.get(org.bukkit.NamespacedKey.minecraft("fortune")).orElseThrow()
+                .canApplyTo(Material.DIAMOND_AXE));
+        assertFalse(registry.get(org.bukkit.NamespacedKey.minecraft("efficiency")).orElseThrow()
+                .canApplyTo(Material.DIAMOND_SHOVEL));
+    }
 }
