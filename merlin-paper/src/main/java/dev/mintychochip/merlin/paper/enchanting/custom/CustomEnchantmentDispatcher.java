@@ -312,6 +312,18 @@ public final class CustomEnchantmentDispatcher {
         }
     }
 
+    public void dispatchFireworkBoost(Player player, org.bukkit.entity.LivingEntity shooter, ItemStack elytra) {
+        for (var bound : resolveTriggers(elytra, FireworkBoostTrigger.class)) {
+            bound.trigger().onFireworkBoost(player, shooter, elytra, bound.level());
+        }
+    }
+
+    public void dispatchHookContact(Player player, org.bukkit.entity.LivingEntity hit, ItemStack rod) {
+        for (var bound : resolveTriggers(rod, HookContactTrigger.class)) {
+            bound.trigger().onHookContact(player, hit, bound.level());
+        }
+    }
+
     public void dispatchToggleSneak(Player player, boolean isSneaking, ItemStack[] armor) {
         for (var bound : resolveAllEquipped(armor, PlayerToggleSneakTrigger.class)) {
             bound.trigger().onToggleSneak(player, isSneaking, bound.level());

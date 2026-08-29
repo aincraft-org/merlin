@@ -39,6 +39,7 @@ import dev.mintychochip.merlin.paper.enchanting.QuantaRollEngine;
 import dev.mintychochip.merlin.paper.enchanting.gui.AltarGuiListener;
 	import dev.mintychochip.merlin.paper.enchanting.custom.CustomEnchantmentDispatcher;
 	import dev.mintychochip.merlin.paper.enchanting.custom.CustomEnchantmentListener;
+	import dev.mintychochip.merlin.paper.enchanting.custom.HookContactListener;
 	import dev.mintychochip.merlin.paper.enchanting.custom.passive.PassiveEffectApplier;
 	import dev.mintychochip.merlin.paper.enchanting.custom.passive.PassiveEquipListener;
 	import java.io.IOException;
@@ -129,10 +130,11 @@ public final class MerlinPlugin extends JavaPlugin {
     getServer().getPluginManager().registerEvents(new AltarInteractListener(altarScanner, enchantmentRegistry, quantaRollEngine, overcapAdapter), this);
     getServer().getPluginManager().registerEvents(new OvercapEnchantmentListener(overcapAdapter, enchantmentRegistry), this);
     	    var customDispatcher = new CustomEnchantmentDispatcher(overcapAdapter, enchantmentRegistry);
-	    getServer().getPluginManager().registerEvents(
-	            new CustomEnchantmentListener(
-	                    customDispatcher, task -> getServer().getScheduler().runTask(this, task)),
-	            this);
+	    var hookContacts = new HookContactListener(customDispatcher);
+	    var enchantListener = new CustomEnchantmentListener(
+	            customDispatcher, task -> getServer().getScheduler().runTask(this, task), hookContacts);
+	    getServer().getPluginManager().registerEvents(enchantListener, this);
+	    getServer().getScheduler().runTaskTimer(this, hookContacts::tick, 5L, 5L);
 	    var passiveApplier = new PassiveEffectApplier();
 	    getServer().getPluginManager().registerEvents(
 	            new PassiveEquipListener(

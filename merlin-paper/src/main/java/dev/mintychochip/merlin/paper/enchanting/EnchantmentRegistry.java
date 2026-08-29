@@ -32,14 +32,17 @@ import dev.mintychochip.merlin.paper.enchanting.custom.handler.ConfusingAspectHa
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.DrillHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.EquilibriumHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ExperienceHandler;
-import dev.mintychochip.merlin.paper.enchanting.custom.handler.FeatherHoovesHandler;
-import dev.mintychochip.merlin.paper.enchanting.custom.handler.FlurryHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.FeatherHoovesHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.FireHookHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.FlurryHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.PoisonedHookHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.HeatWaveHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.KnowledgeHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.LeapingHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.DodgeHandler;
-import dev.mintychochip.merlin.paper.enchanting.custom.handler.MoltenTouchHandler;
-import dev.mintychochip.merlin.paper.enchanting.custom.handler.NetherScourgeHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.MoltenTouchHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.MomentumHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.NetherScourgeHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.OverflowingHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.HeavyHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.PlanterHandler;
@@ -291,6 +294,9 @@ public final class EnchantmentRegistry {
         registerCustom(reg, "obsidianshield", "Obsidianshield", 3, 10, 5, 10, allArmor, new ObsidianshieldHandler());
         registerCustom(reg, "overload", "Overload", 3, 10, 5, 10, allArmor, new OverloadHandler());
         registerCustom(reg, "wings", "Wings", 3, 10, 5, 10, elytra, new WingsHandler());
+        registerCustom(reg, "momentum", "Momentum", 3, 10, 5, 10, elytra, new MomentumHandler());
+        registerCustom(reg, "fire_hook", "Fire Hook", 3, 10, 5, 10, fishingRods, new FireHookHandler());
+        registerCustom(reg, "poisoned_hook", "Poisoned Hook", 3, 10, 5, 10, fishingRods, new PoisonedHookHandler());
         return reg;
     }
 

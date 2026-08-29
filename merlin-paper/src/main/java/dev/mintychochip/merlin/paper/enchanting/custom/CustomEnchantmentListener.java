@@ -63,6 +63,7 @@ public final class CustomEnchantmentListener implements Listener {
     private final Map<EntityShootBowEvent, ItemStack> pendingBowSources = new IdentityHashMap<>();
     private final Map<UUID, ItemStack> fishingRods = new HashMap<>();
     private final Map<PlayerBucketEvent, BucketRestoration> pendingBucketRestorations = new IdentityHashMap<>();
+    private final HookContactListener hookContactListener;
 
     public CustomEnchantmentListener(CustomEnchantmentDispatcher dispatcher) {
         this(dispatcher, Runnable::run);
@@ -70,8 +71,20 @@ public final class CustomEnchantmentListener implements Listener {
 
     public CustomEnchantmentListener(
             CustomEnchantmentDispatcher dispatcher, Consumer<Runnable> schedulePostOperation) {
+        this(dispatcher, schedulePostOperation, new HookContactListener(dispatcher));
+    }
+
+    public CustomEnchantmentListener(
+            CustomEnchantmentDispatcher dispatcher,
+            Consumer<Runnable> schedulePostOperation,
+            HookContactListener hookContactListener) {
         this.dispatcher = dispatcher;
         this.schedulePostOperation = schedulePostOperation;
+        this.hookContactListener = hookContactListener;
+    }
+
+    public HookContactListener hookContactListener() {
+        return hookContactListener;
     }
 
     private static ItemStack mainHandItem(LivingEntity entity) {
@@ -343,9 +356,15 @@ public final class CustomEnchantmentListener implements Listener {
 
         if (state == PlayerFishEvent.State.FISHING && hookId != null && rod != null) {
             fishingRods.put(hookId, rod);
+            if (hookContactListener != null) {
+                hookContactListener.register(hookId, event.getPlayer(), rod);
+            }
         }
         if (isTerminalFishingState(state) && hookId != null) {
             fishingRods.remove(hookId);
+            if (hookContactListener != null) {
+                hookContactListener.unregister(hookId);
+            }
         }
         if (!CascadeGuard.canCascade() || rod == null) return;
 
@@ -515,6 +534,19 @@ public final class CustomEnchantmentListener implements Listener {
                 dispatcher.dispatchToggleGlide(player, event.isGliding(), chestplate);
             });
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onFireworkExplode(org.bukkit.event.entity.FireworkExplodeEvent event) {
+        if (!CascadeGuard.canCascade()) return;
+        org.bukkit.entity.Firework firework = event.getEntity();
+        if (firework == null) return;
+        org.bukkit.projectiles.ProjectileSource shooter = firework.getShooter();
+        if (!(shooter instanceof org.bukkit.entity.Player player)) return;
+        CascadeGuard.runInScope(() -> {
+            ItemStack elytra = player.getInventory().getChestplate();
+            dispatcher.dispatchFireworkBoost(player, player, elytra);
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

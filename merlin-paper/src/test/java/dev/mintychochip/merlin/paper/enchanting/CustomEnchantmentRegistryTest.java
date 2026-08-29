@@ -84,7 +84,10 @@ final class CustomEnchantmentRegistryTest {
             entry("implants", "Implants", 3),
             entry("obsidianshield", "Obsidianshield", 3),
             entry("overload", "Overload", 3),
-            entry("wings", "Wings", 3)
+            entry("wings", "Wings", 3),
+            entry("momentum", "Momentum", 3),
+            entry("fire_hook", "Fire Hook", 3),
+            entry("poisoned_hook", "Poisoned Hook", 3)
     );
 
     @Test
