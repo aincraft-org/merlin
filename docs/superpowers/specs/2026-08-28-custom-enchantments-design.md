@@ -7,7 +7,7 @@
 
 ## 1. Goal and scope
 
-Implement every entry in the source page's **Custom** enchantment table. The existing vanilla registry entries remain unchanged. The custom set contains 23 definitions; 22 have source-described mechanics and Expertise is metadata-only because the source gives it no description.
+Implement every entry in the source page's **Custom** enchantment table. The existing vanilla registry entries remain unchanged. The custom set contains 24 definitions; 23 have source-described mechanics and Expertise is metadata-only because the source gives it no description.
 
 Custom enchantments use the existing `EnchantmentRegistry`, `OvercapItemAdapter`, `CustomEnchantmentDispatcher`, and `CustomEnchantmentListener`. No second item-storage format or independent event bus is introduced.
 
@@ -98,7 +98,7 @@ Handlers are no-ops when their context is incompatible: wrong target type, non-l
 
 Add focused behavioral coverage for:
 
-1. all 23 registry keys, target sets, and maximum ranks;
+1. all 24 registry keys, target sets, and maximum ranks;
 2. rank-I custom PDC persistence and lore;
 3. each active handler's observable effect and incompatible-context no-op;
 4. every new Paper event adapter and mutable entity-kill experience write-back;
