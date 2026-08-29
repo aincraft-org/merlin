@@ -126,9 +126,11 @@ final class CustomEnchantmentRegistryTest {
         assertTargets(registry, "experience", Set.of(Material.DIAMOND_PICKAXE), Material.DIAMOND_SWORD);
         assertTargets(registry, "rebreather", Set.of(Material.DIAMOND_PICKAXE), Material.DIAMOND_SWORD);
         assertTargets(registry, "replenish", Set.of(Material.DIAMOND_PICKAXE), Material.DIAMOND_SWORD);
-        assertTargets(registry, "unbreakable", Set.of(Material.DIAMOND_SWORD, Material.BOW),
+        assertTargets(registry, "unbreakable",
+                Set.of(Material.DIAMOND_SWORD, Material.BOW, Material.CROSSBOW, Material.TRIDENT),
                 Material.DIAMOND_CHESTPLATE);
-        assertTargets(registry, "reforged", Set.of(Material.DIAMOND_SWORD, Material.BOW),
+        assertTargets(registry, "reforged",
+                Set.of(Material.DIAMOND_SWORD, Material.BOW, Material.CROSSBOW, Material.TRIDENT),
                 Material.DIAMOND_CHESTPLATE);
     }
 

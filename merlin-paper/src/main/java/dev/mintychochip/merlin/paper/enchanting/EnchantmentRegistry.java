@@ -138,7 +138,7 @@ public final class EnchantmentRegistry {
                 Material.GOLDEN_SHOVEL, Material.DIAMOND_SHOVEL, Material.NETHERITE_SHOVEL,
                 Material.WOODEN_HOE, Material.STONE_HOE, Material.IRON_HOE,
                 Material.GOLDEN_HOE, Material.DIAMOND_HOE, Material.NETHERITE_HOE,
-                Material.BOW
+                Material.BOW, Material.CROSSBOW, Material.TRIDENT
         ));
         Set<Material> bows = Set.of(Material.BOW);
         Set<Material> leggings = Set.of(
