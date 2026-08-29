@@ -22,7 +22,9 @@ public final class ToxinAspectHandler implements OvercapEffectHandler, EntityHit
 
         int requestedTicks = 80 * level;
         PotionEffect existing = victim.getPotionEffect(PotionEffectType.POISON);
-        if (existing != null && existing.getDuration() >= requestedTicks) return;
+        if (existing != null
+                && (existing.getDuration() == PotionEffect.INFINITE_DURATION
+                        || existing.getDuration() >= requestedTicks)) return;
         victim.addPotionEffect(new PotionEffect(PotionEffectType.POISON, requestedTicks, 0));
     }
 }

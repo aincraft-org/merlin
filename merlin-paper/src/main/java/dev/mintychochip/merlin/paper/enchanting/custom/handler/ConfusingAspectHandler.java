@@ -22,7 +22,9 @@ public final class ConfusingAspectHandler implements OvercapEffectHandler, Entit
 
         int requestedTicks = 100 * level;
         PotionEffect existing = victim.getPotionEffect(PotionEffectType.NAUSEA);
-        if (existing != null && existing.getDuration() >= requestedTicks) return;
+        if (existing != null
+                && (existing.getDuration() == PotionEffect.INFINITE_DURATION
+                        || existing.getDuration() >= requestedTicks)) return;
         victim.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, requestedTicks, 0));
     }
 }

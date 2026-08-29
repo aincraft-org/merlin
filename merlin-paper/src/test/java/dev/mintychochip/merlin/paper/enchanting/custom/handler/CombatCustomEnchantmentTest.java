@@ -163,6 +163,18 @@ final class CombatCustomEnchantmentTest {
     }
 
     @Test
+    void confusingAspectPreservesInfiniteNausea() {
+        LivingEntity victim = mock(LivingEntity.class);
+        ConfusingAspectHandler handler = new ConfusingAspectHandler();
+        when(victim.getPotionEffect(PotionEffectType.NAUSEA))
+                .thenReturn(new PotionEffect(PotionEffectType.NAUSEA, PotionEffect.INFINITE_DURATION, 0));
+
+        handler.onEntityHit(mock(LivingEntity.class), victim, new MutableDamage(1.0), 2);
+
+        verify(victim, never()).addPotionEffect(org.mockito.ArgumentMatchers.any(PotionEffect.class));
+    }
+
+    @Test
     void confusingAspectIgnoresNullContextsAndNonPositiveLevels() {
         ConfusingAspectHandler handler = new ConfusingAspectHandler();
         LivingEntity victim = mock(LivingEntity.class);
@@ -185,6 +197,18 @@ final class CombatCustomEnchantmentTest {
         handler.onEntityHit(mock(LivingEntity.class), victim, new MutableDamage(1.0), 2);
 
         verify(victim).addPotionEffect(new PotionEffect(PotionEffectType.POISON, 160, 0));
+    }
+
+    @Test
+    void toxinAspectPreservesInfinitePoison() {
+        LivingEntity victim = mock(LivingEntity.class);
+        ToxinAspectHandler handler = new ToxinAspectHandler();
+        when(victim.getPotionEffect(PotionEffectType.POISON))
+                .thenReturn(new PotionEffect(PotionEffectType.POISON, PotionEffect.INFINITE_DURATION, 0));
+
+        handler.onEntityHit(mock(LivingEntity.class), victim, new MutableDamage(1.0), 2);
+
+        verify(victim, never()).addPotionEffect(org.mockito.ArgumentMatchers.any(PotionEffect.class));
     }
 
     @Test
