@@ -5,8 +5,26 @@ import dev.mintychochip.merlin.paper.enchanting.handler.SharpnessOvercapHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ArrayHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.AegisHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.AngelicHandler;
-import dev.mintychochip.merlin.paper.enchanting.custom.handler.ArmoredHandler;
-import dev.mintychochip.merlin.paper.enchanting.custom.handler.ChunkyHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.ArmoredHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.ArcherHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.AutoReelHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.BaitHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.BerserkHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.BleedHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.BlindHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.BlockHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.CriticalHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.DoubleStrikeHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.HookHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.JellyLegsHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.LavaWalkerHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.MarksmanHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.PlummetHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.SnapHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.SniperHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.ThunderlordHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.WaterWalkerHandler;
+	import dev.mintychochip.merlin.paper.enchanting.custom.handler.ChunkyHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.CarrotPlanterHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ColdAspectHandler;
 import dev.mintychochip.merlin.paper.enchanting.custom.handler.ColoramaHandler;
@@ -140,8 +158,14 @@ public final class EnchantmentRegistry {
                 Material.GOLDEN_HOE, Material.DIAMOND_HOE, Material.NETHERITE_HOE,
                 Material.BOW, Material.CROSSBOW, Material.TRIDENT
         ));
-        Set<Material> bows = Set.of(Material.BOW);
-        Set<Material> leggings = Set.of(
+        	Set<Material> bows = Set.of(Material.BOW);
+	Set<Material> crossbows = Set.of(Material.CROSSBOW);
+	Set<Material> fishingRods = Set.of(Material.FISHING_ROD);
+	Set<Material> boots = Set.of(
+			Material.LEATHER_BOOTS, Material.CHAINMAIL_BOOTS, Material.IRON_BOOTS,
+			Material.GOLDEN_BOOTS, Material.DIAMOND_BOOTS, Material.NETHERITE_BOOTS
+	);
+	Set<Material> leggings = Set.of(
                 Material.LEATHER_LEGGINGS, Material.CHAINMAIL_LEGGINGS, Material.IRON_LEGGINGS,
                 Material.GOLDEN_LEGGINGS, Material.DIAMOND_LEGGINGS, Material.NETHERITE_LEGGINGS
         );
@@ -232,6 +256,24 @@ public final class EnchantmentRegistry {
         registerCustom(reg, "reflect", "Reflect", 3, 10, 5, 10, allArmor, new ReflectHandler());
         registerCustom(reg, "safeguard", "Safeguard", 3, 10, 5, 10, allArmor, new SafeguardHandler());
         registerCustom(reg, "tank", "Tank", 3, 10, 5, 10, allArmor, new TankHandler());
+        registerCustom(reg, "bleed", "Bleed", 3, 10, 5, 10, weapons, new BleedHandler());
+        registerCustom(reg, "blind", "Blind", 3, 10, 5, 10, weapons, new BlindHandler());
+        registerCustom(reg, "block", "Block", 3, 10, 5, 10, weapons, new BlockHandler());
+        registerCustom(reg, "berserk", "Berserk", 3, 10, 5, 10, weapons, new BerserkHandler());
+        registerCustom(reg, "critical", "Critical", 3, 10, 5, 10, weapons, new CriticalHandler());
+        registerCustom(reg, "double_strike", "Double Strike", 3, 10, 5, 10, weapons, new DoubleStrikeHandler());
+        registerCustom(reg, "thunderlord", "Thunderlord", 3, 10, 5, 10, weapons, new ThunderlordHandler());
+        registerCustom(reg, "archer", "Archer", 3, 10, 5, 10, bows, new ArcherHandler());
+        		registerCustom(reg, "marksman", "Marksman", 3, 10, 5, 10, crossbows, new MarksmanHandler());
+		registerCustom(reg, "sniper", "Sniper", 3, 10, 5, 10, bows, new SniperHandler());
+		registerCustom(reg, "auto_reel", "Auto Reel", 3, 10, 5, 10, fishingRods, new AutoReelHandler());
+		registerCustom(reg, "bait", "Bait", 3, 10, 5, 10, fishingRods, new BaitHandler());
+		registerCustom(reg, "hook", "Hook", 3, 10, 5, 10, fishingRods, new HookHandler());
+		registerCustom(reg, "snap", "Snap", 3, 10, 5, 10, fishingRods, new SnapHandler());
+		registerCustom(reg, "lava_walker", "Lava Walker", 3, 10, 5, 10, boots, new LavaWalkerHandler());
+		registerCustom(reg, "water_walker", "Water Walker", 3, 10, 5, 10, boots, new WaterWalkerHandler());
+        registerCustom(reg, "plummet", "Plummet", 3, 10, 5, 10, allArmor, new PlummetHandler());
+        registerCustom(reg, "jelly_legs", "Jelly Legs", 3, 10, 5, 10, allArmor, new JellyLegsHandler());
         return reg;
     }
 

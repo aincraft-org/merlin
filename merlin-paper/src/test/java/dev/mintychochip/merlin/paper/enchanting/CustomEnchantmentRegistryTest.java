@@ -58,7 +58,25 @@ final class CustomEnchantmentRegistryTest {
             entry("molten", "Molten", 3),
             entry("reflect", "Reflect", 3),
             entry("safeguard", "Safeguard", 3),
-            entry("tank", "Tank", 3)
+            entry("tank", "Tank", 3),
+            entry("bleed", "Bleed", 3),
+            entry("blind", "Blind", 3),
+            entry("block", "Block", 3),
+            entry("berserk", "Berserk", 3),
+            entry("critical", "Critical", 3),
+            entry("double_strike", "Double Strike", 3),
+            entry("thunderlord", "Thunderlord", 3),
+            entry("archer", "Archer", 3),
+            entry("marksman", "Marksman", 3),
+            entry("sniper", "Sniper", 3),
+            entry("auto_reel", "Auto Reel", 3),
+            entry("bait", "Bait", 3),
+            entry("hook", "Hook", 3),
+            entry("snap", "Snap", 3),
+            entry("lava_walker", "Lava Walker", 3),
+            entry("water_walker", "Water Walker", 3),
+            entry("plummet", "Plummet", 3),
+            entry("jelly_legs", "Jelly Legs", 3)
     );
 
     @Test
